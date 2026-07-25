@@ -1,41 +1,45 @@
 # Along - Tech Stack Deep-Dive Research
 
-This document provides a detailed comparative analysis of different mobile-first framework combinations, backend architectures, geospatial databases, and chat solutions for Along.
+This document provides a detailed comparative analysis of different mobile-first framework combinations, backend architectures, geospatial databases, chat solutions, and AI & Maps search engine choices for Along.
 
 ---
 
 ## 👥 Task Debate Transcript (Custom Workflow)
 
 > 👤 **Product Manager (PM)**: 
-> "Along must be a native mobile app for iOS and Android because users check coordinates, chat, and check in on-the-go. We need high-reliability background location tracking and instant push notifications. 
-> Let's compare **React Native (Expo)** vs **Flutter** vs **Kotlin Multiplatform (KMP)** for the client. On the backend, we need to choose between **Supabase**, **Firebase**, or a **Custom Node.js/FastAPI** server. Our core requirement is that location-based plans must be queried dynamically based on distance, category, and time."
+> "Our core features rely on two major utilities: 
+> 1. **AI Natural Language parsing**: A user types a quick sentence (e.g. *"Badminton at Siri Fort complex tomorrow morning at 7am"*), and we must extract the structured plan properties (Title, Category, DateTime, Location) in under 1.5 seconds.
+> 2. **Hyper-local Places Search**: Users are specifying local corners, arenas, and mall shops (e.g. *"Zara Select Citywalk"*, *"Narsingi cycle track rentals desk"*). We need a place search autocomplete engine that covers these exact micro-locations, particularly in target Indian cities.
+> Let's debate what models and API providers fit these criteria."
 > 
 > 💻 **Senior Software Engineer (SE)**: 
-> "From a database perspective, **Firebase Firestore is a major risk**. It lacks native multi-conditional geospatial search. We would have to use geohashing on the client side, which loads redundant documents and calculates distances on the device—draining battery.
-> **PostgreSQL + PostGIS** is the gold standard. It allows us to index geographic coordinate points with GIST spatial indices. We can query plans within a 5km radius, filter by sports categories, and filter out full plans in a single SQL query:
+> "For the AI parser, we should use **OpenAI gpt-4o-mini** via structured JSON output (JSON Schema tool-calling). It has sub-second response latency and extremely low API cost.
+> For search, **Google Places API (New/v1)** is essential. Mapbox and Radar are cheaper, but they lack database density in India. A user trying to search for a specific sports arena or cafe will get frustrated if it doesn't resolve. 
+> To calculate semantic similarity for plan suggestions, we can generate vector embeddings of user profiles and plan tags using OpenAI's **text-embedding-3-small** (1536 dimensions) and run similarity queries directly inside PostgreSQL using the **pgvector extension**:
 > ```sql
-> SELECT * FROM plans
-> WHERE ST_DWithin(geom, ST_MakePoint(user_lon, user_lat)::geography, 5000)
->   AND category = 'badminton'
->   AND spots_filled < total_spots;
+> SELECT *, (interest_vector <=> user_profile_vector) AS cosine_distance
+> FROM plans
+> ORDER BY cosine_distance ASC LIMIT 10;
 > ```
-> Therefore, I recommend **Supabase** (built on Postgres) or a **Custom Postgres Backend**. For the client, **React Native + Expo** is great because Expo's `expo-location` and `expo-notifications` plug directly into iOS/Android native APIs with zero configuration."
+> This eliminates the need to maintain an external vector database like Pinecone."
 > 
 > 🎨 **UI/UX Engineer**: 
-> "If we choose React Native, we can use **NativeWind (Tailwind CSS v4)**. NativeWind compiles Tailwind utility classes into native stylesheets at build-time. This gives us the exact styling flexibility of our Vite prototype, with zero runtime styling overhead.
-> If we choose Flutter, we have to write verbose nested Dart widget trees, and we cannot reuse any of our CSS tokens or typography layouts from the React mockup. React Native keeps our web prototypes and native mobile code aligned."
+> "From a layout perspective:
+> - **Google Places Autocomplete** will feed directly into our Stage 2 creation form, rendering a neat, clean prediction list overlay.
+> - For map styling, we will use **React Native Maps with custom styled Google Maps tiles** on both iOS and Android. We can supply a custom retro/slate JSON style configuration to hide default Google Points-of-Interest (POIs) and style our proximity circles (200m radius) using our HSL coral brand colors."
 > 
 > 🚀 **Entrepreneur (Founder)**: 
-> "Speed-to-market and budget are everything. 
-> * **React Native + Expo** allows us to push **Over-The-Air (OTA) Updates** via Expo Updates. We can fix chat or UI bugs instantly without waiting 24–48 hours for App Store and Google Play reviews.
-> * **Supabase** handles OAuth, phone OTP signups (via Twilio/MessageBird), and database scaling out-of-the-box. This cuts our backend development timeline from 3 months to 2 weeks.
-> Let's document a detailed comparison table of these options so we have a clear architectural consensus."
+> "Google Places API is notoriously expensive if not managed carefully. To protect our operational budget:
+> 1. We will use **session tokens** for Places Autocomplete. This groups a user's keystrokes into a single billing event instead of charging per character typed.
+> 2. We will limit prediction lists to 5 items and use a 350ms debounce threshold.
+> 3. OpenAI's `gpt-4o-mini` is extremely cheap ($0.150 per 1M input tokens), so AI parsing operations will cost virtually nothing even at scale."
 
 ### Consensus Recommendation
-* **Frontend Mobile Framework**: React Native + Expo (TypeScript).
-* **Styling**: NativeWind (Tailwind CSS v4).
-* **Backend Database**: Supabase (PostgreSQL + PostGIS + pgvector).
-* **Real-time Sync**: Supabase Realtime Channels (WebSockets).
+* **AI NLP Parser**: OpenAI `gpt-4o-mini` (via structured JSON outputs).
+* **AI Matchmaking**: OpenAI `text-embedding-3-small` + PostgreSQL `pgvector`.
+* **Toxicity Moderation**: OpenAI Moderation API (free checks).
+* **Places Autocomplete**: Google Places API (New/v1) with session tokens.
+* **Map Views**: React Native Maps (Google Maps rendering on both platforms with slate styling).
 
 ---
 
@@ -63,23 +67,88 @@ This document provides a detailed comparative analysis of different mobile-first
 
 ---
 
-## 3. Real-Time Chat & Coordination Solutions
+## 3. AI Pipeline & Semantic Matchmaking Architecture
 
-For our ephemeral chats, coordination coordinates must sync instantly:
+```mermaid
+graph TD
+    UserText[User Description Text] --> EdgeFunc[Supabase Edge Function]
+    EdgeFunc --> |Parse Request| OpenAINLP[OpenAI gpt-4o-mini]
+    OpenAINLP --> |Structured JSON Details| ConfirmForm[User Confirmation Form]
+    
+    ConfirmForm --> |Publish Plan| SaveDB[Postgres Database]
+    SaveDB --> |Trigger Embedding| OpenAIEmbed[OpenAI text-embedding-3-small]
+    OpenAIEmbed --> |1536d Vector| VectorCol[pgvector: plans.embedding_vector]
+    
+    UserPref[User Profile Preferences] --> |Embed Profile| ProfileVector[pgvector: profiles.preferences_vector]
+    
+    ProfileVector & VectorCol --> |Cosine Match Query| MatchEngine[ST_DWithin + <=> Operator]
+    MatchEngine --> MatchResults[Suggested Plans on Feed]
+```
 
-1. **Supabase Realtime (WebSockets)**:
-   - *How it works*: Subscribes to insert events on the `messages` SQL table.
-   - *Verdict*: **Recommended**. Simple, secure via Postgres Row Level Security (RLS), and keeps message logs persistent.
-2. **Firebase Firestore Listeners**:
-   - *How it works*: Syncs Firestore document state in real-time.
-   - *Verdict*: High cost on high write/read frequencies, but excellent offline syncing.
-3. **WebSockets (Socket.io) via custom Node.js Gateway**:
-   - *How it works*: Custom socket server routing messages in-memory.
-   - *Verdict*: Overkill for Phase 1; requires hosting an active websocket server.
+### A. NLP Parsing Integration
+* **Model**: `gpt-4o-mini`
+* **Workflow**:
+  1. The user inputs their plan draft.
+  2. The frontend sends it to `/api/v1/plans/parse-nlp`.
+  3. The endpoint instructs the LLM with a system prompt and a schema tool definition:
+     ```json
+     {
+       "name": "extract_plan",
+       "parameters": {
+         "type": "object",
+         "properties": {
+           "title": { "type": "string" },
+           "category": { "type": "string", "enum": ["sports", "running", "shopping", "yoga", "cycling", "hiking"] },
+           "datetime": { "type": "string" },
+           "venue_name": { "type": "string" }
+         },
+         "required": ["title", "category", "datetime", "venue_name"]
+       }
+     }
+     ```
+  4. The returned structured properties populate the React Native details state immediately.
+
+### B. pgvector Matchmaking Engine
+Along represents user profiles and plans as vectors to suggest plans matching user interests:
+* User profile vector represents their historically completed activity types and self-declared tags.
+* Plan vector represents category, title description, and vibe tags.
+* Similarity ranking uses the cosine distance operator `<=>` (where `0` is identical, `1` is orthogonal):
+  ```sql
+  SELECT id, title, category, (embedding_vector <=> $1) as distance
+  FROM plans
+  WHERE status = 'active'
+  ORDER BY distance ASC
+  LIMIT 5;
+  ```
 
 ---
 
-## 4. Location Proximity & GPS Check-In Architecture
+## 4. Maps & Search Autocomplete Engine
+
+### A. Place Search Autocomplete (Google Places API v1)
+We use the Google Places API (New) for location search input:
+* **Session Tokens**: Every place autocomplete search uses a unique UUID session token. Keystroke inputs are compiled under a single session billing unit.
+* **Geocoding**: Once the user selects a place from autocomplete, we request the details (Latitude, Longitude, and formatted address) using the Place ID.
+* **Database Storage**: Coordinates are saved in Postgres using the PostGIS spatial type:
+  ```sql
+  ALTER TABLE plans ADD COLUMN geom geography(Point, 4326);
+  -- Insert statement:
+  INSERT INTO plans (geom) VALUES (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography);
+  ```
+
+### B. Proximity Maps (React Native Maps + styled tiles)
+* **Parity**: We enforce Google Maps SDK on both iOS and Android to prevent visual inconsistencies.
+* **Privacy Proximity Mask**: The coordinates pinned on the Explore map use a randomized offset (200m radius circle) to mask the host's actual coordinates before acceptance.
+  ```typescript
+  // Simple proximity obfuscation for public maps views
+  const randomOffset = () => (Math.random() - 0.5) * 0.003; // ~150-200m offset
+  const displayLat = exactLat + randomOffset();
+  const displayLng = exactLng + randomOffset();
+  ```
+
+---
+
+## 5. Location Proximity & GPS Check-In Architecture
 
 ```mermaid
 sequenceDiagram
