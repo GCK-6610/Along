@@ -18,8 +18,9 @@ Instead of scrolling through digital content feeds or managing large community l
 
 The Along repository contains the following core files and directories:
 
-* **[00_User_Flows_And_Features.md](file:///Users/gopalchoudhary/Desktop/codes/Along/00_User_Flows_And_Features.md)**: Details the end-to-end Tag-Along lifecycle (Intents Posting $\rightarrow$ Requests Vetting $\rightarrow$ Coordination Chat $\rightarrow$ Proximity GPS Check-in) and tab navigation lists.
-* **[01_UI_UX_Design.md](file:///Users/gopalchoudhary/Desktop/codes/Along/01_UI_UX_Design.md)**: Declares design style guidelines, typography rules, color tokens, and links to the live interactive Figma designs.
+* **[docs/00_User_Flows_And_Features.md](file:///Users/gopalchoudhary/Desktop/codes/Along/docs/00_User_Flows_And_Features.md)**: Details the end-to-end Tag-Along lifecycle (Intents Posting $\rightarrow$ Requests Vetting $\rightarrow$ Coordination Chat $\rightarrow$ Proximity GPS Check-in) and tab navigation lists.
+* **[docs/01_UI_UX_Design.md](file:///Users/gopalchoudhary/Desktop/codes/Along/docs/01_UI_UX_Design.md)**: Declares design style guidelines, typography rules, color tokens, and links to the live interactive Figma designs.
+* **[docs/02_Tech_Stack_Research.md](file:///Users/gopalchoudhary/Desktop/codes/Along/docs/02_Tech_Stack_Research.md)**: Mobile-first React Native + Expo & Supabase technical architectural stack breakdown.
 * **[prototype/](file:///Users/gopalchoudhary/Desktop/codes/Along/prototype/)**: A Vite + React + Tailwind CSS v4 prototype. It has a fully mockable dashboard in [App.tsx](file:///Users/gopalchoudhary/Desktop/codes/Along/prototype/src/app/App.tsx) simulating OTP auth, category filters, AI NLP text description parsing, group chat coordination, and check-ins.
 * **[assets/](file:///Users/gopalchoudhary/Desktop/codes/Along/assets/)**: Houses screenshots of the actual running local prototype screens.
 
