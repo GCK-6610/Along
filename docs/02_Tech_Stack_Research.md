@@ -29,17 +29,19 @@ This document provides a detailed comparative analysis of different mobile-first
 
 ---
 
-## 3. AI Pipeline & Semantic Matchmaking Architecture
+## 3. Google Gemini AI Pipeline & Matchmaking Architecture
+
+We leverage DeepMind's Gemini API for NLP parsing and semantic vector embeddings, ensuring enterprise-grade speed and latency:
 
 ```mermaid
 graph TD
     UserText[User Description Text] --> EdgeFunc[Supabase Edge Function]
-    EdgeFunc --> |Parse Request| OpenAINLP[OpenAI gpt-4o-mini]
-    OpenAINLP --> |Structured JSON Details| ConfirmForm[User Confirmation Form]
+    EdgeFunc --> |Parse Request| GeminiNLP[Gemini 1.5 Flash]
+    GeminiNLP --> |Structured JSON Details| ConfirmForm[User Confirmation Form]
     
     ConfirmForm --> |Publish Plan| SaveDB[Postgres Database]
-    SaveDB --> |Trigger Embedding| OpenAIEmbed[OpenAI text-embedding-3-small]
-    OpenAIEmbed --> |1536d Vector| VectorCol[pgvector: plans.embedding_vector]
+    SaveDB --> |Trigger Embedding| GeminiEmbed[Google text-embedding-004]
+    GeminiEmbed --> |768d Vector| VectorCol[pgvector: plans.embedding_vector]
     
     UserPref[User Profile Preferences] --> |Embed Profile| ProfileVector[pgvector: profiles.preferences_vector]
     
@@ -47,34 +49,35 @@ graph TD
     MatchEngine --> MatchResults[Suggested Plans on Feed]
 ```
 
-### A. NLP Parsing Integration
-* **Model**: `gpt-4o-mini`
+### A. NLP Parsing Integration (Gemini 1.5 Flash)
+* **Model**: `gemini-1.5-flash`
+* **Why it's production-ready**: It offers sub-300ms latency, supports structured outputs via JSON Schema tool calling, and is significantly more cost-efficient than GPT-4o-mini.
 * **Workflow**:
   1. The user inputs their plan draft.
   2. The frontend sends it to `/api/v1/plans/parse-nlp`.
-  3. The endpoint instructs the LLM with a system prompt and a schema tool definition:
+  3. The endpoint instructs Gemini with a system prompt and a JSON structured schema:
      ```json
      {
-       "name": "extract_plan",
-       "parameters": {
-         "type": "object",
-         "properties": {
-           "title": { "type": "string" },
-           "category": { "type": "string", "enum": ["sports", "running", "shopping", "yoga", "cycling", "hiking"] },
-           "datetime": { "type": "string" },
-           "venue_name": { "type": "string" }
-         },
-         "required": ["title", "category", "datetime", "venue_name"]
-       }
+       "type": "OBJECT",
+       "properties": {
+         "title": { "type": "STRING" },
+         "category": { "type": "STRING", "enum": ["sports", "running", "shopping", "yoga", "cycling", "hiking", "other"] },
+         "datetime": { "type": "STRING" },
+         "venue_name": { "type": "STRING" }
+       },
+       "required": ["title", "category", "datetime", "venue_name"]
      }
      ```
-  4. The returned structured properties populate the React Native details state immediately.
+  4. The returned structured JSON parameters populate the details form state immediately.
 
-### B. pgvector Matchmaking Engine
-Along represents user profiles and plans as vectors to suggest plans matching user interests:
-* User profile vector represents their historically completed activity types and self-declared tags.
-* Plan vector represents category, title description, and vibe tags.
-* Similarity ranking uses the cosine distance operator `<=>` (where `0` is identical, `1` is orthogonal):
+### B. pgvector Matchmaking Engine (text-embedding-004)
+Along represents user profiles and plans as 768-dimensional vectors to calculate match suggestions:
+* **Model**: Google `text-embedding-004` (768-dimensional vectors).
+* **Database Storage**: The vectors are stored in PostgreSQL using the `pgvector` extension:
+  ```sql
+  ALTER TABLE plans ADD COLUMN embedding_vector vector(768);
+  ```
+* **Similarity Query**: Similarity ranking uses the cosine distance operator `<=>` (where `0` is identical, `1` is orthogonal):
   ```sql
   SELECT id, title, category, (embedding_vector <=> $1) as distance
   FROM plans
@@ -133,3 +136,30 @@ sequenceDiagram
 1. **Expo Location SDK**: Sets a background location task on the phone that wakes up when the user crosses a geofence (within 200m of the venue).
 2. **Proximity Check**: Once within 100 meters, the app prompts a "Check-In" button.
 3. **Database Assertion**: The server calculates the mathematical distance using PostGIS geography points to verify the user did not spoof their GPS coordinates on the client.
+
+---
+
+## 6. Gender-Restricted Visibility & Safety Boundary Assertions
+
+To protect user safety and restrict reach based on host preferences:
+* **Database Schema**:
+  ```sql
+  ALTER TABLE plans ADD COLUMN gender_reach VARCHAR(10) DEFAULT 'all' CHECK (gender_reach IN ('all', 'same'));
+  ```
+* **API Assertion Guardrails**:
+  Before insert or query matching, edge functions evaluate visibility access:
+  ```typescript
+  // Validation during intent creation
+  if (post.gender_reach === 'same') {
+    // Assert host is same gender
+    if (host.gender !== user.gender) {
+      throw new Error("Security Violation: You can only restrict reach to your own gender.");
+    }
+  }
+  ```
+* **Feed Query Filtration**:
+  ```sql
+  SELECT * FROM plans
+  WHERE (gender_reach = 'all')
+     OR (gender_reach = 'same' AND host_gender = :viewer_gender);
+  ```

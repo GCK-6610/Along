@@ -55,11 +55,15 @@ The portal for search exploration, categorizations, and sponsored venue recommen
 * **Filter Mode Switcher**: Segmented control with four toggle tabs in the following priority:
   1. **Trending (Default)**: Lists plans sorted by highest request count and trending tags.
   2. **By Interest**: Renders a grid of 6 Category cards (Sports, Food & Coffee, Entertainment, Shopping, Outdoor, Learning).
-  3. **Map / Nearby**: Launches an interactive map plotting general 200m proximity circles and category emojis.
+  3. **Map / Nearby**: Launches an interactive map displaying two layers:
+     - **Active Plans**: Obfuscated 200m circular proximity markers. Clicking opens the request-to-join card.
+     - **Partner Hotspots**: Coordinates pins for Starbucks, arenas, malls. Clicking pins opens a sponsored detail card with a direct shortcut: `[ Host Here ⚡ ]`.
+     - *Filter Toggles*: Floating checkbar pills enabling users to show/hide plans vs. hotspots.
   4. **By Time**: Filter sub-tabs: *Happening Now*, *Today*, *Tomorrow*, *This Weekend*.
-* **Sponsors Suggestion List**:
-  - A horizontal list of **Sponsored Venue Cards** displaying partnerships.
-  - **Sponsor Card Structure**: Venue Name, Location, and basic suggestion details: *"Ideal workspace cafe"* or *"Perfect venue for badminton doubles."*
+* **Sponsors Suggestion List (Sticky across all sub-tabs)**:
+  - Rendered directly below the filter segmented tabs control.
+  - Keeps partner venue recommendations visible when switching between Trending, Map, Interest, or Time views.
+  - Tapping a suggestion card opens the Create Form pre-filled with the sponsor location details.
 
 ---
 
@@ -72,8 +76,11 @@ Triggered by tapping the floating center button.
     - **Date & Time**: Calendar/schedules picker.
     - **Location Map Verification**: Tapping the location search autocomplete pins the venue coordinates on an interactive **mini-map verification widget**, showing a draggable pin marker so hosts can align coordinates accurately.
     - **Exact Coordination spot (Locked)**: Secret details hidden from public view (e.g., *"Meet at the cycle rentals counter."*).
-    - **Capacity Slider**: Range slider starting at **1** slot up to **12** slots (represents extra partners needed).
-    - **Visibility Toggle**: Selector switch between `Public` and `Verified Only` (Identity Match Badge).
+    - **Gender Reach Selector**: Allows hosts to restrict plan visibility:
+      - `Open to Everyone` (all genders can view and request).
+      - `Same Gender Only` (males-only if hosted by a male, females-only if hosted by a female).
+      - *Safety Guardrail*: Men are strictly blocked from selecting the "Females Only" visibility configuration.
+    - **Verification Toggle**: Selector switch between `Public` (Everyone) and `Verified Only` (Identity Match Badge).
   - **NSFW Safety Filter**: All text fields (Title, Venue, Spot) run through an automated profanity/NSFW text filter to block vulgarity and offensive language.
 * **Secondary View: Fill with AI [Secondary]**:
   - An optional toggle card at the top of the form: `Fill with AI ⚡`.

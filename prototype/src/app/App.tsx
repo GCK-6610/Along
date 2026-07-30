@@ -251,6 +251,9 @@ export default function App() {
   // Explore tab states
   const [exploreTab, setExploreTab] = useState<"trending" | "interest" | "nearby" | "time">("trending");
   const [selectedExploreCategory, setSelectedExploreCategory] = useState<string | null>(null);
+  const [showMapPlans, setShowMapPlans] = useState(true);
+  const [showMapHotspots, setShowMapHotspots] = useState(true);
+  const [selectedMapPin, setSelectedMapPin] = useState<any | null>(null);
 
   // Create overlay form states
   const [createStep, setCreateStep] = useState<0 | 1>(0);
@@ -264,6 +267,7 @@ export default function App() {
   const [newCapacity, setNewCapacity] = useState(4);
   const [newVibeTags, setNewVibeTags] = useState<string[]>([]);
   const [newVisibility, setNewVisibility] = useState("public");
+  const [newGenderReach, setNewGenderReach] = useState<"all" | "same">("all");
 
   // Chat message logs
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
@@ -389,9 +393,10 @@ export default function App() {
       spots: newCapacity,
       totalSpots: newCapacity,
       rating: 5.0,
-      tags: [...newVibeTags, newCategory === "other" ? (customCategory || "Custom") : newCategory, newVisibility === "verified" ? "Verified" : "Public"],
+      tags: [...newVibeTags, newCategory === "other" ? (customCategory || "Custom") : newCategory, newVisibility === "verified" ? "Verified" : "Public", newGenderReach === "same" ? "Males Only" : "All Genders"],
       joined: true,
       exactSpot: newExactSpot || "Meet near the entrance gate.",
+      genderReach: newGenderReach,
     };
 
     setActivitiesList((prev) => [newActivity, ...prev]);
@@ -400,6 +405,7 @@ export default function App() {
     setCreateStep(0);
     setNlpInput("");
     setCustomCategory("");
+    setNewGenderReach("all");
   };
 
   const handleSendMessage = (activityId: number) => {
@@ -535,9 +541,16 @@ export default function App() {
                             }
                           />
                         </button>
-                        <span className="absolute bottom-3 left-3 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
-                          {activity.category}
-                        </span>
+                        <div className="absolute bottom-3 left-3 flex gap-1.5">
+                          <span className="bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
+                            {activity.category}
+                          </span>
+                          {(activity.genderReach === "same" || activity.id === 2) && (
+                            <span className="bg-blue-600 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
+                              ♂ Males Only
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="p-4">
                         <div className="flex justify-between items-start mb-1">
@@ -686,9 +699,16 @@ export default function App() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
-                          <h3 className="font-bold text-sm text-neutral-800 truncate pr-2">
-                            {activity.title}
-                          </h3>
+                          <div>
+                            <h3 className="font-bold text-sm text-neutral-800 truncate pr-2">
+                              {activity.title}
+                            </h3>
+                            {(activity.genderReach === "same" || activity.id === 2) && (
+                              <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black rounded border border-blue-200 uppercase tracking-wider">
+                                ♂ Males Only
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-0.5 flex-shrink-0 text-xs font-bold">
                             <Star size={10} className="fill-amber-400 text-amber-400" />
                             <span className="text-neutral-800">{activity.rating}</span>
@@ -756,13 +776,14 @@ export default function App() {
             </div>
 
             {/* Switcher tabs */}
-            <div className="flex bg-neutral-100 rounded-xl p-1 mb-6">
+            <div className="flex bg-neutral-100 rounded-xl p-1 mb-4">
               {(["trending", "interest", "nearby", "time"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => {
                     setExploreTab(tab);
                     setSelectedExploreCategory(null);
+                    setSelectedMapPin(null);
                   }}
                   className={`flex-1 py-2 text-xs font-bold rounded-lg capitalize transition-colors ${
                     exploreTab === tab
@@ -773,6 +794,50 @@ export default function App() {
                   {tab === "interest" ? "By Interest" : tab === "time" ? "By Time" : tab === "nearby" ? "Map / Nearby" : tab}
                 </button>
               ))}
+            </div>
+
+            {/* Sticky Featured Sponsors Carousel across all Explore Sub-Tabs */}
+            <div className="mb-6 bg-red-50/15 border border-red-500/10 p-3 rounded-2xl">
+              <h2 className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                🎁 Suggested Hotspots
+              </h2>
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+                {SPONSORS.map((sp) => (
+                  <button
+                    key={sp.id}
+                    onClick={() => {
+                      // Tap to quick fill
+                      setNewTitle(`Hangout @ ${sp.name}`);
+                      setNewCategory(sp.id === 1 ? "badminton" : sp.id === 2 ? "shopping" : "running");
+                      setNewVenue(sp.location);
+                      setNewTime("Today, 6:00 PM");
+                      setNewCapacity(4);
+                      setNewExactSpot("Look for Along table near entrance.");
+                      setActiveNav("create");
+                      setCreateStep(0);
+                      setErrorMsg(null);
+                    }}
+                    className="flex-shrink-0 w-52 bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden text-left hover:border-red-500/30 transition"
+                  >
+                    <div className="h-20 bg-neutral-100">
+                      <img
+                        src={sp.image}
+                        alt={sp.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="p-2.5">
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-extrabold text-[11px] text-neutral-800 truncate pr-1">{sp.name}</h4>
+                        <span className="px-1 py-0.2 text-[7px] bg-red-50 text-red-500 font-black rounded uppercase">HOT</span>
+                      </div>
+                      <p className="text-[9px] text-neutral-400 truncate mt-0.5">
+                        📍 {sp.location}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* By Interest Category Grid */}
@@ -803,40 +868,6 @@ export default function App() {
                   ))}
                 </div>
 
-                {/* Featured Sponsors Horizontal Carousel */}
-                <div className="mb-4">
-                  <h2 className="text-base font-bold text-neutral-900 mb-3 flex items-center gap-1.5">
-                    🎁 Suggested Hotspots
-                  </h2>
-                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-                    {SPONSORS.map((sp) => (
-                      <div
-                        key={sp.id}
-                        className="flex-shrink-0 w-64 bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden"
-                      >
-                        <div className="h-28 bg-neutral-100">
-                          <img
-                            src={sp.image}
-                            alt={sp.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="p-3">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-bold text-xs text-neutral-800">{sp.name}</h4>
-                            <span className="px-1.5 py-0.5 text-[8px] bg-red-50 text-red-500 font-black rounded-md">PARTNER</span>
-                          </div>
-                          <p className="text-[10px] text-neutral-400 mt-0.5 flex items-center gap-1">
-                            <MapPin size={9} /> {sp.location}
-                          </p>
-                          <p className="text-[10px] text-neutral-500 font-semibold leading-tight mt-1.5 border-t border-dashed border-neutral-100 pt-1.5">
-                            {sp.description}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
 
@@ -937,20 +968,190 @@ export default function App() {
               </div>
             )}
 
-            {/* Map Placeholder */}
+            {/* Map view with layers, filters, and markers details popup */}
             {exploreTab === "nearby" && (
-              <div className="relative border border-neutral-200 rounded-2xl h-80 overflow-hidden bg-neutral-100 shadow-sm flex items-center justify-center">
-                <div className="absolute inset-0 bg-neutral-200" />
-                {/* Proximity circles */}
-                <div className="relative w-44 h-44 rounded-full border border-red-400 bg-red-500/10 flex items-center justify-center animate-pulse">
-                  <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-md" />
+              <div className="space-y-4">
+                {/* Floating Checkbox layers toggles */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setShowMapPlans(!showMapPlans);
+                      setSelectedMapPin(null);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+                      showMapPlans
+                        ? "bg-red-500 border-red-500 text-white shadow-sm"
+                        : "bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50"
+                    }`}
+                  >
+                    <span>{showMapPlans ? "✓" : "+"}</span> Active Plans
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMapHotspots(!showMapHotspots);
+                      setSelectedMapPin(null);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+                      showMapHotspots
+                        ? "bg-green-600 border-green-600 text-white shadow-sm"
+                        : "bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50"
+                    }`}
+                  >
+                    <span>{showMapHotspots ? "✓" : "+"}</span> Partner Hotspots
+                  </button>
                 </div>
-                <div className="absolute top-1/4 left-1/3 p-2 bg-white rounded-full shadow-lg border border-neutral-200 text-base">🏸</div>
-                <div className="absolute bottom-1/4 right-1/4 p-2 bg-white rounded-full shadow-lg border border-neutral-200 text-base">🏃</div>
-                <div className="absolute top-1/2 right-1/3 p-2 bg-white rounded-full shadow-lg border border-neutral-200 text-base">☕</div>
-                <span className="absolute bottom-4 left-4 px-3 py-1.5 bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold rounded-lg">
-                  📍 Interactive proximity map
-                </span>
+
+                {/* Interactive Map Area */}
+                <div className="relative border border-neutral-200 rounded-3xl h-80 overflow-hidden bg-neutral-100 shadow-sm flex items-center justify-center">
+                  <div className="absolute inset-0 bg-neutral-200" style={{
+                    backgroundImage: "radial-gradient(#d4d4d4 1.5px, transparent 1.5px)",
+                    backgroundSize: "24px 24px"
+                  }} />
+
+                  {/* Active plans pins */}
+                  {showMapPlans && (
+                    <>
+                      {/* Plan Marker 1 */}
+                      <button
+                        onClick={() => setSelectedMapPin({
+                          type: "plan",
+                          id: 1,
+                          title: "Morning Badminton",
+                          location: "Siri Fort Sports Complex",
+                          time: "Tomorrow, 7:00 AM",
+                          spots: "2 left",
+                          emoji: "🏸"
+                        })}
+                        className="absolute top-1/4 left-1/3 w-10 h-10 bg-white rounded-full shadow-lg border-2 border-red-500 flex items-center justify-center text-lg hover:scale-110 transition-transform active:scale-95 z-10"
+                      >
+                        🏸
+                      </button>
+
+                      {/* Plan Marker 2 */}
+                      <button
+                        onClick={() => setSelectedMapPin({
+                          type: "plan",
+                          id: 3,
+                          title: "Morning Cycling",
+                          location: "Narsingi Cycle Track, Hyderabad",
+                          time: "Tomorrow, 6:30 AM",
+                          spots: "4 left",
+                          emoji: "🚴"
+                        })}
+                        className="absolute bottom-1/3 left-1/4 w-10 h-10 bg-white rounded-full shadow-lg border-2 border-red-500 flex items-center justify-center text-lg hover:scale-110 transition-transform active:scale-95 z-10"
+                      >
+                        🚴
+                      </button>
+                    </>
+                  )}
+
+                  {/* Sponsored hotspot venues pins */}
+                  {showMapHotspots && (
+                    <>
+                      {/* Hotspot Marker 1 */}
+                      <button
+                        onClick={() => setSelectedMapPin({
+                          type: "hotspot",
+                          id: 2,
+                          name: "Starbucks Coffee",
+                          location: "Sarath City Mall, Gachibowli",
+                          desc: "10% off Along groups of 3+ check-ins",
+                          category: "shopping",
+                          emoji: "☕"
+                        })}
+                        className="absolute top-1/3 right-1/4 w-10 h-10 bg-green-55 rounded-full shadow-lg border-2 border-green-600 flex items-center justify-center text-lg hover:scale-110 transition-transform active:scale-95 z-10"
+                      >
+                        ☕
+                      </button>
+
+                      {/* Hotspot Marker 2 */}
+                      <button
+                        onClick={() => setSelectedMapPin({
+                          type: "hotspot",
+                          id: 1,
+                          name: "PlayAll Sports Arena",
+                          location: "Gachibowli, Hyderabad",
+                          desc: "Sponsor Code: ALONGCOURT for 15% off",
+                          category: "badminton",
+                          emoji: "🏸"
+                        })}
+                        className="absolute bottom-1/4 right-1/3 w-10 h-10 bg-green-55 rounded-full shadow-lg border-2 border-green-600 flex items-center justify-center text-lg hover:scale-110 transition-transform active:scale-95 z-10"
+                      >
+                        🏸
+                      </button>
+                    </>
+                  )}
+
+                  {/* Details popup card overlay */}
+                  {selectedMapPin && (
+                     <div className="absolute bottom-4 left-4 right-4 bg-white border border-neutral-200 rounded-2xl p-3 shadow-xl z-20 flex gap-3">
+                       <span className="text-2xl bg-neutral-50 w-10 h-10 rounded-xl flex items-center justify-center border border-neutral-100 flex-shrink-0">
+                         {selectedMapPin.emoji}
+                       </span>
+                       <div className="min-w-0 flex-1">
+                         <div className="flex items-center gap-1.5">
+                           <span className={`px-1 py-0.2 text-[7px] font-black rounded uppercase tracking-wider ${
+                             selectedMapPin.type === "hotspot" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-500 border border-red-200"
+                           }`}>
+                             {selectedMapPin.type === "hotspot" ? "Suggested Hotspot" : "Active Plan"}
+                           </span>
+                           {selectedMapPin.type === "plan" && (
+                             <span className="text-[9px] text-red-500 font-extrabold">{selectedMapPin.spots}</span>
+                           )}
+                         </div>
+                         <h4 className="font-extrabold text-[11px] text-neutral-800 truncate mt-0.5">
+                           {selectedMapPin.title || selectedMapPin.name}
+                         </h4>
+                         <p className="text-[9px] text-neutral-400 truncate">
+                           📍 {selectedMapPin.location}
+                         </p>
+                         {selectedMapPin.type === "hotspot" && (
+                           <p className="text-[9px] text-green-600 font-extrabold mt-0.5 truncate">
+                             {selectedMapPin.desc}
+                           </p>
+                         )}
+                       </div>
+                       <div className="flex-shrink-0 flex items-center">
+                         {selectedMapPin.type === "hotspot" ? (
+                           <button
+                             onClick={() => {
+                               setNewTitle(`Hangout @ ${selectedMapPin.name}`);
+                               setNewCategory(selectedMapPin.category);
+                               setNewVenue(selectedMapPin.location);
+                               setNewTime("Today, 6:00 PM");
+                               setNewCapacity(4);
+                               setNewExactSpot("Meet inside main entrance.");
+                               setActiveNav("create");
+                               setCreateStep(0);
+                               setErrorMsg(null);
+                             }}
+                             className="bg-green-600 hover:bg-green-700 text-white font-extrabold text-[9px] px-2.5 py-1.5 rounded-lg shadow-sm transition"
+                           >
+                             Host Here ⚡
+                           </button>
+                         ) : (
+                           <button
+                             onClick={() => {
+                               setJoinedMap((prev) => ({ ...prev, [selectedMapPin.id]: true }));
+                               setSelectedMapPin(null);
+                               setSelectedChatId(selectedMapPin.id);
+                               setActiveNav("messages");
+                             }}
+                             className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[9px] px-2.5 py-1.5 rounded-lg shadow-sm transition"
+                           >
+                             Join & Chat 💬
+                           </button>
+                         )}
+                       </div>
+                     </div>
+                  )}
+
+                  {/* Map overlay background click close detail */}
+                  <div
+                    className="absolute inset-0 z-0 cursor-default"
+                    onClick={() => setSelectedMapPin(null)}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -1125,7 +1326,47 @@ export default function App() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-neutral-500 mb-2">Visibility Settings</label>
+                  <label className="block text-xs font-bold text-neutral-500 mb-2">Gender Reach Option</label>
+                  <div className="flex flex-col gap-2 mb-4 bg-neutral-50 p-3 rounded-2xl border border-neutral-100">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-neutral-700">
+                      <input
+                        type="radio"
+                        name="genderReach"
+                        value="all"
+                        checked={newGenderReach === "all"}
+                        onChange={() => setNewGenderReach("all")}
+                        className="accent-red-500"
+                      />
+                      Open to Everyone (All Genders)
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-neutral-700">
+                      <input
+                        type="radio"
+                        name="genderReach"
+                        value="same"
+                        checked={newGenderReach === "same"}
+                        onChange={() => setNewGenderReach("same")}
+                        className="accent-red-500"
+                      />
+                      Males Only (Restricted to same gender)
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-neutral-400 cursor-not-allowed opacity-60">
+                      <input
+                        type="radio"
+                        name="genderReach"
+                        disabled
+                        className="accent-neutral-300"
+                      />
+                      <span>Females Only (Restricted to same gender)</span>
+                      <span className="text-[7px] bg-neutral-100 text-neutral-400 border border-neutral-200 px-1 py-0.2 rounded font-black">
+                        Only available for female hosts
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-500 mb-2">Verification Setting</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 text-xs font-semibold text-neutral-700">
                       <input
@@ -1136,7 +1377,7 @@ export default function App() {
                         onChange={() => setNewVisibility("public")}
                         className="accent-red-500"
                       />
-                      Public (Everyone)
+                      Everyone (Public)
                     </label>
                     <label className="flex items-center gap-2 text-xs font-semibold text-neutral-700">
                       <input

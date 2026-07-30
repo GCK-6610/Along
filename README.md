@@ -38,19 +38,23 @@ The Along repository contains the following core files and directories:
 
 ***
 
-### 🔍 Tab 2: Explore Discovery
-Discovery grid with category counts and sponsored café/venue suggestion cards.
-![Explore UI](assets/explore_mockup.png)
+### 🔍 Tab 2: Explore Discovery & Proximity Maps
+* **Sticky Hotspots**: Sponsored venue recommendation cards remain sticky at the top across all explore sub-tabs.
+* **Nearby Map Filters**: Choose overlay layers to show/hide active plans and partner venues. Tapping a partner pin triggers a sponsored popup detail card with a hosting shortcut.
+
+| Explore Categories | Nearby Map & Hotspot Popup |
+| :---: | :---: |
+| ![Explore UI](assets/explore_mockup.png) | ![Nearby Map](assets/explore_nearby_map_overlays.png) |
 
 ***
 
 ### ➕ Tab 3: Create Plan Studio
-* **Primary Form**: Manual entry details form presented by default.
-* **AI Autofill [Secondary]**: Optional prompt text-area overlay to parse custom descriptions.
+* **Primary Form**: draggably verified location mini-map picker, custom categories, capacity ranges starting at 1, and **Gender Reach** options (limiting views to same gender).
+* **AI Autofill [Secondary]**: Optional prompt parser using **Gemini 1.5 Flash** structured tool outputs.
 
-| Primary Intent Form | Secondary AI Autofill |
+| Primary Form & Gender Reach | Secondary AI Autofill |
 | :---: | :---: |
-| ![Create Plan Form](assets/create_plan_mockup.png) | ![AI Autofill Prompt](assets/create_ai_mockup.png) |
+| ![Create Plan Form](assets/create_gender_reach.png) | ![AI Autofill Prompt](assets/create_ai_mockup.png) |
 
 ***
 

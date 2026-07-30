@@ -108,30 +108,31 @@ For structured searches and sponsored venue listings.
 |                                                       |
 |  [ Q Search by plan, place, or interest... ]          |
 |                                                       |
-|  [ By Interest ]   [ By Time ]   [ Trending ]  [Nearby] |
+|  [ Trending ] [ By Interest ] [ Map/Nearby ] [ By Time] |
 |                                                       |
-|  +---------------------+   +---------------------+    |
-|  | 🏅 Sports           |   | ☕ Food & Coffee    |    |
-|  | 24 active plans     |   | 18 active plans     |    |
-|  +---------------------+   +---------------------+    |
-|  | 🎭 Entertainment    |   | 🛍️ Shopping         |    |
-|  | 12 active plans     |   | 9 active plans      |    |
-|  +---------------------+   +---------------------+    |
-|                                                       |
-|  🎁 Featured Sponsors                                 |
+|  🎁 Suggested Hotspots (Sticky across all sub-tabs):   |
 |  +--------------------+   +--------------------+      |
 |  | [Sponsor Image]    |   | [Sponsor Image]    |      |
 |  | PlayAll Arena      |   | Starbucks Cafe     |      |
-|  | "Perfect court venue|  | "Ideal workspace   |      |
-|  | for badminton"     |   | with fast Wi-Fi"   |      |
+|  | *Tap to host here* |   | *Tap to host here* |      |
 |  +--------------------+   +--------------------+      |
 |                                                       |
-|  Suggested for You                                    |
-|  +-------------------------------------------------+  |
-|  | Badminton Doubles — Need Two                    |  |
-|  | 📍 Siri Fort Complex • 1.2km                    |  |
-|  | 📅 Starts in 40 min  •  2 spots left            |  |
-|  +-------------------------------------------------+  |
+|  ================= [ SUB-TAB VIEW ] =================  |
+|  (A) If By Interest:                                  |
+|      Grid of category cards (Sports, Food, etc.).     |
+|                                                       |
+|  (B) If Map / Nearby (Active Map layers):             |
+|      Filter toggles:  [✓] Active Plans  [✓] Hotspots  |
+|      +-------------------------------------------+    |
+|      |               (🏸 Active Circular Zone)   |    |
+|      |                                           |    |
+|      |   (☕ Green Hotspot Pin)                  |    |
+|      |                                           |    |
+|      |   +-----------------------------------+   |    |
+|      |   | Starbucks Coffee • Hotspot        |   |    |
+|      |   | 10% off groups. [ Host Here ⚡ ]  |   |    |
+|      |   +-----------------------------------+   |    |
+|      +-------------------------------------------+    |
 +-------------------------------------------------------+
 ```
 
@@ -177,7 +178,10 @@ Triggered via the bottom navigation red floating button. The manual details form
 |  Capacity: 1 slot [o===============================]  |
 |  *(Range: 1 to 12 slots needed)*                      |
 |                                                       |
-|  Visibility:  (x) Public  ( ) Identity Verified Only  |
+|  Gender Reach: (x) Everyone  ( ) Same Gender Only     |
+|                ( ) Females Only (Disabled: Host Male) |
+|                                                       |
+|  Verification: (x) Everyone  ( ) Identity Match Only  |
 |                                                       |
 |  [ Publish Tag-Along Intent ]                         |
 +-------------------------------------------------------+
