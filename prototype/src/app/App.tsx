@@ -32,6 +32,7 @@ const CATEGORIES = [
   { id: "yoga", label: "Yoga", emoji: "🧘" },
   { id: "cycling", label: "Cycling", emoji: "🚴" },
   { id: "hiking", label: "Hiking", emoji: "🥾" },
+  { id: "other", label: "Other / Custom", emoji: "🏷️" },
 ];
 
 const INITIAL_ACTIVITIES = [
@@ -244,11 +245,11 @@ export default function App() {
   const [likedMap, setLikedMap] = useState<Record<number, boolean>>({});
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [userAvatar, setUserAvatar] = useState("🦊");
+  const [userAvatar, setUserAvatar] = useState("🙋‍♀️");
   const [selectedAvatarType, setSelectedAvatarType] = useState<"avatar" | "image">("avatar");
 
   // Explore tab states
-  const [exploreTab, setExploreTab] = useState<"interest" | "time" | "trending" | "nearby">("interest");
+  const [exploreTab, setExploreTab] = useState<"trending" | "interest" | "nearby" | "time">("trending");
   const [selectedExploreCategory, setSelectedExploreCategory] = useState<string | null>(null);
 
   // Create overlay form states
@@ -256,6 +257,7 @@ export default function App() {
   const [nlpInput, setNlpInput] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState("running");
+  const [customCategory, setCustomCategory] = useState("");
   const [newTime, setNewTime] = useState("");
   const [newVenue, setNewVenue] = useState("");
   const [newExactSpot, setNewExactSpot] = useState("");
@@ -371,7 +373,7 @@ export default function App() {
 
     const newActivity = {
       id: activitiesList.length + 1,
-      category: newCategory,
+      category: newCategory === "other" ? "other" : newCategory,
       title: newTitle,
       host: "Rahul D.",
       avatar: selectedAvatarType === "avatar" ? userAvatar : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&auto=format",
@@ -387,7 +389,7 @@ export default function App() {
       spots: newCapacity,
       totalSpots: newCapacity,
       rating: 5.0,
-      tags: [...newVibeTags, newVisibility === "verified" ? "Verified" : "Public"],
+      tags: [...newVibeTags, newCategory === "other" ? (customCategory || "Custom") : newCategory, newVisibility === "verified" ? "Verified" : "Public"],
       joined: true,
       exactSpot: newExactSpot || "Meet near the entrance gate.",
     };
@@ -397,6 +399,7 @@ export default function App() {
     setActiveNav("home");
     setCreateStep(0);
     setNlpInput("");
+    setCustomCategory("");
   };
 
   const handleSendMessage = (activityId: number) => {
@@ -492,7 +495,7 @@ export default function App() {
             </div>
 
             {/* Happening Near You */}
-            {featured.length > 0 && (
+            {featured.length > 0 ? (
               <div className="mb-6">
                 <div className="flex items-center justify-between px-5 mb-3">
                   <div className="flex items-center gap-2">
@@ -524,7 +527,7 @@ export default function App() {
                           className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center transition-transform hover:scale-110"
                         >
                           <Heart
-                            size={15}
+                            size={16}
                             className={
                               likedMap[activity.id]
                                 ? "fill-red-500 text-red-500"
@@ -532,21 +535,14 @@ export default function App() {
                             }
                           />
                         </button>
-                        <div className="absolute bottom-3 left-3 flex gap-1.5">
-                          {activity.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-sm text-white text-[10px] font-bold"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
+                        <span className="absolute bottom-3 left-3 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
+                          {activity.category}
+                        </span>
                       </div>
                       <div className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-bold text-sm text-neutral-800 leading-tight">
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="min-w-0">
+                            <h3 className="font-extrabold text-sm text-neutral-800 truncate">
                               {activity.title}
                             </h3>
                             <p className="text-xs text-neutral-400 mt-0.5 flex items-center gap-1">
@@ -597,46 +593,77 @@ export default function App() {
                   ))}
                 </div>
               </div>
+            ) : (
+              /* Cold Start State */
+              <div className="px-5 py-8 text-center bg-neutral-50 border border-dashed border-neutral-300 rounded-3xl mx-5 mb-6 flex flex-col items-center shadow-sm">
+                <span className="text-4xl mb-3">🌱</span>
+                <h3 className="font-extrabold text-sm text-neutral-800">No active plans nearby in this category</h3>
+                <p className="text-[11px] text-neutral-500 font-bold mt-1 max-w-[240px]">
+                  Be the first one in your area to start a Tag-Along! Invite others to join.
+                </p>
+                <button
+                  onClick={() => {
+                    setActiveNav("create");
+                    setNewCategory(activeCategory === "all" ? "running" : activeCategory);
+                    setCreateStep(0);
+                    setErrorMsg(null);
+                  }}
+                  className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-extrabold text-xs rounded-xl shadow transition animate-pulse"
+                >
+                  ➕ Create First Plan
+                </button>
+
+                {/* Hotspot templates */}
+                <div className="w-full mt-6 border-t border-neutral-200 pt-4">
+                  <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-3 text-center">
+                    💡 Quick Start Templates at Sponsor Hotspots
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      {
+                        title: "Coffee Chat @ Starbucks",
+                        cat: "shopping",
+                        venue: "Starbucks, Vasant Kunj",
+                        desc: "10% off on group of 3+ check-ins",
+                        emoji: "☕"
+                      },
+                      {
+                        title: "Doubles Badminton Match",
+                        cat: "badminton",
+                        venue: "Siri Fort Sports Complex",
+                        desc: "Sponsor Code: ALONGCOURT for 15% off",
+                        emoji: "🏸"
+                      }
+                    ].map((tpl, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setNewTitle(tpl.title);
+                          setNewCategory(tpl.cat);
+                          setNewVenue(tpl.venue);
+                          setNewTime("Today, 6:00 PM");
+                          setNewCapacity(4);
+                          setNewExactSpot("Look for Along table near entrance.");
+                          setActiveNav("create");
+                          setCreateStep(0);
+                          setErrorMsg(null);
+                        }}
+                        className="w-full bg-white border border-neutral-200 rounded-xl p-2.5 flex items-center gap-3 text-left hover:border-red-500/30 transition shadow-sm"
+                      >
+                        <span className="text-xl bg-neutral-50 w-8 h-8 rounded-lg flex items-center justify-center border border-neutral-100 flex-shrink-0">{tpl.emoji}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-black text-neutral-800 truncate">{tpl.title}</p>
+                          <p className="text-[9px] text-red-500 font-bold leading-tight mt-0.5 truncate">{tpl.desc}</p>
+                        </div>
+                        <span className="text-[9px] bg-red-50 text-red-500 px-2 py-0.5 rounded-md font-black">QUICK</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
 
-            {/* Nearby Active People */}
-            <div className="px-5 mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base font-bold text-neutral-900">
-                  Active Nearby
-                </h2>
-                <button className="flex items-center gap-0.5 text-xs font-semibold text-red-500">
-                  See all <ChevronRight size={14} />
-                </button>
-              </div>
-              <div className="grid grid-cols-4 gap-3">
-                {NEARBY_PEOPLE.map((person) => (
-                  <button
-                    key={person.id}
-                    className="flex flex-col items-center gap-1.5 group"
-                  >
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-neutral-100 group-hover:border-red-500 transition-colors">
-                        <img
-                          src={person.avatar}
-                          alt={person.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      {person.online && (
-                        <span className="absolute bottom-1 right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                      )}
-                    </div>
-                    <p className="text-[11px] font-bold text-neutral-800 leading-tight text-center">
-                      {person.name}
-                    </p>
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">
-                      {person.activity}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+
 
             {/* More Activities */}
             {rest.length > 0 && (
@@ -730,7 +757,7 @@ export default function App() {
 
             {/* Switcher tabs */}
             <div className="flex bg-neutral-100 rounded-xl p-1 mb-6">
-              {(["interest", "time", "trending", "nearby"] as const).map((tab) => (
+              {(["trending", "interest", "nearby", "time"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => {
@@ -743,7 +770,7 @@ export default function App() {
                       : "text-neutral-500 hover:text-neutral-800"
                   }`}
                 >
-                  {tab === "interest" ? "By Interest" : tab === "time" ? "By Time" : tab}
+                  {tab === "interest" ? "By Interest" : tab === "time" ? "By Time" : tab === "nearby" ? "Map / Nearby" : tab}
                 </button>
               ))}
             </div>
@@ -1001,8 +1028,22 @@ export default function App() {
                       <option value="yoga">🧘 Yoga</option>
                       <option value="cycling">🚴 Cycling</option>
                       <option value="hiking">🥾 Hiking</option>
+                      <option value="other">🏷️ Other (Custom)</option>
                     </select>
                   </div>
+
+                  {newCategory === "other" && (
+                    <div className="col-span-2">
+                      <label className="block text-xs font-bold text-neutral-500 mb-1">Custom Category / Vibe Name</label>
+                      <input
+                        type="text"
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        placeholder="e.g. Board Games, Study Crew, Coffee Chat"
+                        className="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-800 bg-neutral-50 focus:outline-none"
+                      />
+                    </div>
+                  )}
                   <div>
                     <label className="block text-xs font-bold text-neutral-500 mb-1">Scheduled Time</label>
                     <input
@@ -1026,6 +1067,36 @@ export default function App() {
                   />
                 </div>
 
+                {newVenue && (
+                  <div className="border border-neutral-200 rounded-2xl p-3 bg-neutral-50/50 shadow-sm space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest flex items-center gap-1">
+                        🗺️ Verify Location Coordinates
+                      </span>
+                      <span className="text-[9px] bg-green-50 text-green-700 font-extrabold px-1.5 py-0.5 rounded-md border border-green-200">
+                        GPS Pinned
+                      </span>
+                    </div>
+                    <div className="relative h-28 w-full bg-neutral-200 rounded-xl overflow-hidden border border-neutral-300 flex items-center justify-center">
+                      <div className="absolute inset-0 opacity-20" style={{
+                        backgroundImage: "radial-gradient(#000 1px, transparent 1px)",
+                        backgroundSize: "16px 16px"
+                      }} />
+                      <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center animate-pulse">
+                          <div className="w-3.5 h-3.5 rounded-full bg-red-500 border border-white" />
+                        </div>
+                      </div>
+                      <span className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-[8px] text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                        Map Preview
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-neutral-400 font-bold leading-normal text-center">
+                      📍 Marker placed at center. Drag marker on phone device to adjust exact coordinates.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-bold text-neutral-500 mb-1">
                     🔒 Exact Meeting Spot (Secret - shown on accept)
@@ -1041,11 +1112,11 @@ export default function App() {
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-500 mb-1.5">
-                    Max Capacity Slots: {newCapacity}
+                    Max Capacity Slots: {newCapacity} {newCapacity === 1 ? "person" : "people"}
                   </label>
                   <input
                     type="range"
-                    min="2"
+                    min="1"
                     max="12"
                     value={newCapacity}
                     onChange={(e) => setNewCapacity(parseInt(e.target.value))}
@@ -1354,7 +1425,7 @@ export default function App() {
 
                 {selectedAvatarType === "avatar" && (
                   <div className="flex gap-2.5 bg-neutral-50 p-2 rounded-2xl border border-neutral-200 overflow-x-auto scrollbar-hide">
-                    {["🦊", "🐼", "🦁", "🐯", "🐨", "🐸", "🏃", "🏸", "☕"].map((emoji) => (
+                    {["🙋‍♀️", "🙋‍♂️", "🧑‍💻", "👩‍🎨", "🏃‍♂️", "🧘‍♀️", "🚴‍♂️", "🥾", "🏸", "☕", "🍕", "🎭"].map((emoji) => (
                       <button
                         key={emoji}
                         onClick={() => setUserAvatar(emoji)}

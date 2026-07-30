@@ -77,11 +77,6 @@ The landing feed showcasing active local tag-along opportunities.
 |  | 2/4 spots [======] |   | 1/3 spots [===]    |      |
 |  +--------------------+   +--------------------+      |
 |                                                       |
-|  👥 Active Nearby                           See all >  |
-|    ( O )       ( O )       ( O )       ( O )          |
-|   Kiran B.    Divya N.   Aakash P.   Sneha M.         |
-|  Badminton      Yoga      Running    Shopping         |
-|                                                       |
 |  ✨ More Activities                                    |
 |  +-------------------------------------------------+  |
 |  | [Img] 5K Dawn Run                      ★ 4.9    |  |
@@ -97,7 +92,7 @@ The landing feed showcasing active local tag-along opportunities.
 +-------------------------------------------------------+
 ```
 
-* **Active Nearby Avatars**: Row of circle images. Green dot in top-right indicates online. Directly below is the Display Name in black and their current interest tag in red.
+* **Cold Start templates**: Pre-set draft plans at sponsor hotspot locations shown when lists are empty.
 * **Availability Progress Bar**: The red/coral bar at the base of the card visualizes spots left (e.g. `2/4 spots` shows half full).
 * **Joined Badge**: Green pill with a checkmark indicating accepted state.
 
@@ -163,14 +158,24 @@ Triggered via the bottom navigation red floating button. The manual details form
 |                                                       |
 |  Category:                   Scheduled Time:          |
 |  [ Sports          ] ▼       [ Tomorrow, 6:30 AM   ]  |
+|  *(If 'Other' selected, Custom Category text field opens)*|
 |                                                       |
 |  Venue Location:                                      |
 |  [ Narsingi Cycle Track, Hyderabad                 ]  |
 |                                                       |
-|  🔒 Exact Meeting Spot (Only shown to accepted joiners):|
+|  +-------------------------------------------------+  |
+|  | [🗺️ MINI-MAP COORDINATES PREVIEW]               |  |
+|  |           • (Pulsing Red Marker Pin)            |  |
+|  |                                                 |  |
+|  |           [📍 GPS Coordinates Pinned]           |  |
+|  |  *Drag pin to modify exact coordinate spot*     |  |
+|  +-------------------------------------------------+  |
+|                                                       |
+|  🔒 Exact Meeting Spot (Secret - shown to accepted):   |
 |  [ Meet at the cycle rentals desk. Wearing red cap.]  |
 |                                                       |
-|  Capacity: 4 slots [=============o                 ]  |
+|  Capacity: 1 slot [o===============================]  |
+|  *(Range: 1 to 12 slots needed)*                      |
 |                                                       |
 |  Visibility:  (x) Public  ( ) Identity Verified Only  |
 |                                                       |

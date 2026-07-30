@@ -28,9 +28,13 @@ The Along repository contains the following core files and directories:
 
 ## 3. UI Prototype Visual Catalog (Screenshots)
 
-### 🏠 Tab 1: Home Dashboard
-The landing feed displaying category filters, online neighbors ("Active Nearby"), and local tag-along cards.
-![Home Feed UI](assets/home_feed_mockup.png)
+### 🏠 Tab 1: Home Dashboard & Cold Starts
+* **Active Feed**: Lists local plans matching selected category filters.
+* **Empty Feed (Cold Start Fallback)**: If a category (like Yoga or custom tags) has zero local plans, Along displays dynamic CTAs and quick-start templates at sponsored partner hotspot venues (e.g. Starbucks, sports arenas) to prompt creation.
+
+| Clean Active Feed | Cold Start Hotspots |
+| :---: | :---: |
+| ![Home Feed UI](assets/home_feed_mockup.png) | ![Cold Start Fallbacks](assets/cold_start_mockup.png) |
 
 ***
 
@@ -61,7 +65,7 @@ Discovery grid with category counts and sponsored café/venue suggestion cards.
 ***
 
 ### 👤 Tab 5: Profile Passport
-Displays user verification check, stats (Hosted/Joined), interests, and badges grid.
+Displays user verification check, stats (Hosted/Joined), interests, badges grid, and the inline selector list of 12 Notion-style character illustration avatars.
 ![Profile UI](assets/profile_mockup.png)
 
 ---

@@ -52,24 +52,14 @@ The primary screen for immediate social discovery.
 
 ### Tab 2: 🔍 Explore (Discovery & Sponsored Suggestions)
 The portal for search exploration, categorizations, and sponsored venue recommendations.
-* **Filter Mode Switcher**: Segmented control with four toggle tabs:
-  1. **By Interest (Default)**: Renders a grid of 6 Category cards:
-     - 🏅 **Sports** (active local plans count, medal icon)
-     - ☕ **Food & Coffee** (active count, coffee cup icon)
-     - 🎭 **Entertainment** (active count, masks icon)
-     - 🛍 **Shopping** (active count, bags icon)
-     - 🌿 **Outdoor** (active count, leaf icon)
-     - 📚 **Learning** (active count, books icon)
-  2. **By Time**: Filter sub-tabs: *Happening Now*, *Today*, *Tomorrow*, *This Weekend*.
-  3. **Trending**: Lists plans sorted by highest request count and trending tags.
-  4. **Nearby**: Launches an interactive map plotting general 200m proximity circles and category emojis.
-* **Sponsors Suggestion List (New Feature Layout)**:
+* **Filter Mode Switcher**: Segmented control with four toggle tabs in the following priority:
+  1. **Trending (Default)**: Lists plans sorted by highest request count and trending tags.
+  2. **By Interest**: Renders a grid of 6 Category cards (Sports, Food & Coffee, Entertainment, Shopping, Outdoor, Learning).
+  3. **Map / Nearby**: Launches an interactive map plotting general 200m proximity circles and category emojis.
+  4. **By Time**: Filter sub-tabs: *Happening Now*, *Today*, *Tomorrow*, *This Weekend*.
+* **Sponsors Suggestion List**:
   - A horizontal list of **Sponsored Venue Cards** displaying partnerships.
-  - **Sponsor Card Structure**:
-    - Simple banner image of the venue.
-    - Venue Name & Location (e.g., *"Third Wave Coffee, Vasant Vihar"*, *"PlayAll Sports Arena, Gachibowli"*).
-    - Basic suggestion details: *"Ideal workspace cafe with high-speed Wi-Fi"* or *"Perfect venue for badminton doubles. Open till midnight."*
-* **Suggested Feed**: Personalized matching recommendation cards sorted by semantic similarity score.
+  - **Sponsor Card Structure**: Venue Name, Location, and basic suggestion details: *"Ideal workspace cafe"* or *"Perfect venue for badminton doubles."*
 
 ---
 
@@ -78,18 +68,25 @@ Triggered by tapping the floating center button.
 * **Primary View: Intent Creation Form**:
   - Renders the details input fields for manual configuration:
     - **Activity Title**: e.g., *"Morning Run"*
-    - **Category Dropdown**: e.g., *"Sports"*
+    - **Category Dropdown**: Includes core options (Running, Badminton, etc.) and a dedicated **🏷️ Other (Custom)** category allowing users to input any custom category name to prevent layout restrictions.
     - **Date & Time**: Calendar/schedules picker.
-    - **Location Lookup**: Autocompleted venue address coordinates.
-    - **Exact Coordination spot (Locked)**: Secret details hidden from public view (e.g., *"Meet at the cycle rentals counter. I'll be in blue shorts."*).
-    - **Capacity Slider**: Range slider (2 to 12 users).
+    - **Location Map Verification**: Tapping the location search autocomplete pins the venue coordinates on an interactive **mini-map verification widget**, showing a draggable pin marker so hosts can align coordinates accurately.
+    - **Exact Coordination spot (Locked)**: Secret details hidden from public view (e.g., *"Meet at the cycle rentals counter."*).
+    - **Capacity Slider**: Range slider starting at **1** slot up to **12** slots (represents extra partners needed).
     - **Visibility Toggle**: Selector switch between `Public` and `Verified Only` (Identity Match Badge).
   - **NSFW Safety Filter**: All text fields (Title, Venue, Spot) run through an automated profanity/NSFW text filter to block vulgarity and offensive language.
 * **Secondary View: Fill with AI [Secondary]**:
   - An optional toggle card at the top of the form: `Fill with AI ⚡`.
   - Opens a text input prompt where the user describes the plan (e.g., *"Going to run Narsingi Cycle track tomorrow at 6:30am, who wants to join?"*).
   - Tapping **Parse** extracts the parameters, populates the fields, runs safety/NSFW audits, and returns the user to the Primary Form.
-* **Action**: Tap **Publish Tag-Along Intent**.
+
+---
+
+### Cold Start & Empty State Architecture
+When a category or search region has zero active plans, Along prevents blank views by triggering automated placeholder components:
+1. **Be the First CTA**: Displays an active button inviting users to post: `[ ➕ Create First Plan ]`. Tapping it pre-fills the creation form with the active filter parameters.
+2. **Sponsor Hotspot Templates**: Displays pre-set sponsored template intents (e.g., *"Doubles Badminton Match @ Siri Fort"* or *"Coffee Chat @ Starbucks"*). Tapping a template automatically opens the creation form pre-filled with the sponsor's location, time, and coordinates to streamline the hosting pipeline.
+
 
 
 ---

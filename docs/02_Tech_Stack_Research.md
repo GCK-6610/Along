@@ -87,10 +87,11 @@ Along represents user profiles and plans as vectors to suggest plans matching us
 
 ## 4. Maps & Search Autocomplete Engine
 
-### A. Place Search Autocomplete (Google Places API v1)
+### A. Place Search Autocomplete & Map Picker (Google Places API v1 + Google Maps SDK)
 We use the Google Places API (New) for location search input:
 * **Session Tokens**: Every place autocomplete search uses a unique UUID session token. Keystroke inputs are compiled under a single session billing unit.
 * **Geocoding**: Once the user selects a place from autocomplete, we request the details (Latitude, Longitude, and formatted address) using the Place ID.
+* **Interactive Map Picker Verification**: To avoid formatting errors, the geocoded coordinate details are instantly loaded onto an interactive `<MapView>` component inside the creation form. The user can drag the red coordinates pin directly to align or confirm the exact meeting point.
 * **Database Storage**: Coordinates are saved in Postgres using the PostGIS spatial type:
   ```sql
   ALTER TABLE plans ADD COLUMN geom geography(Point, 4326);
