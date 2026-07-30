@@ -4,44 +4,6 @@ This document provides a detailed comparative analysis of different mobile-first
 
 ---
 
-## 👥 Task Debate Transcript (Custom Workflow)
-
-> 👤 **Product Manager (PM)**: 
-> "Our core features rely on two major utilities: 
-> 1. **AI Natural Language parsing**: A user types a quick sentence (e.g. *"Badminton at Siri Fort complex tomorrow morning at 7am"*), and we must extract the structured plan properties (Title, Category, DateTime, Location) in under 1.5 seconds.
-> 2. **Hyper-local Places Search**: Users are specifying local corners, arenas, and mall shops (e.g. *"Zara Select Citywalk"*, *"Narsingi cycle track rentals desk"*). We need a place search autocomplete engine that covers these exact micro-locations, particularly in target Indian cities.
-> Let's debate what models and API providers fit these criteria."
-> 
-> 💻 **Senior Software Engineer (SE)**: 
-> "For the AI parser, we should use **OpenAI gpt-4o-mini** via structured JSON output (JSON Schema tool-calling). It has sub-second response latency and extremely low API cost.
-> For search, **Google Places API (New/v1)** is essential. Mapbox and Radar are cheaper, but they lack database density in India. A user trying to search for a specific sports arena or cafe will get frustrated if it doesn't resolve. 
-> To calculate semantic similarity for plan suggestions, we can generate vector embeddings of user profiles and plan tags using OpenAI's **text-embedding-3-small** (1536 dimensions) and run similarity queries directly inside PostgreSQL using the **pgvector extension**:
-> ```sql
-> SELECT *, (interest_vector <=> user_profile_vector) AS cosine_distance
-> FROM plans
-> ORDER BY cosine_distance ASC LIMIT 10;
-> ```
-> This eliminates the need to maintain an external vector database like Pinecone."
-> 
-> 🎨 **UI/UX Engineer**: 
-> "From a layout perspective:
-> - **Google Places Autocomplete** will feed directly into our Stage 2 creation form, rendering a neat, clean prediction list overlay.
-> - For map styling, we will use **React Native Maps with custom styled Google Maps tiles** on both iOS and Android. We can supply a custom retro/slate JSON style configuration to hide default Google Points-of-Interest (POIs) and style our proximity circles (200m radius) using our HSL coral brand colors."
-> 
-> 🚀 **Entrepreneur (Founder)**: 
-> "Google Places API is notoriously expensive if not managed carefully. To protect our operational budget:
-> 1. We will use **session tokens** for Places Autocomplete. This groups a user's keystrokes into a single billing event instead of charging per character typed.
-> 2. We will limit prediction lists to 5 items and use a 350ms debounce threshold.
-> 3. OpenAI's `gpt-4o-mini` is extremely cheap ($0.150 per 1M input tokens), so AI parsing operations will cost virtually nothing even at scale."
-
-### Consensus Recommendation
-* **AI NLP Parser**: OpenAI `gpt-4o-mini` (via structured JSON outputs).
-* **AI Matchmaking**: OpenAI `text-embedding-3-small` + PostgreSQL `pgvector`.
-* **Toxicity Moderation**: OpenAI Moderation API (free checks).
-* **Places Autocomplete**: Google Places API (New/v1) with session tokens.
-* **Map Views**: React Native Maps (Google Maps rendering on both platforms with slate styling).
-
----
 
 ## 1. Mobile Frameworks Comparison (Client)
 
