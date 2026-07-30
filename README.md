@@ -41,8 +41,12 @@ Discovery grid with category counts and sponsored café/venue suggestion cards.
 ***
 
 ### ➕ Tab 3: Create Plan Studio
-AI NLP text input parser and confirmation form for scheduling activities.
-![Create Plan UI](assets/create_plan_mockup.png)
+* **Primary Form**: Manual entry details form presented by default.
+* **AI Autofill [Secondary]**: Optional prompt text-area overlay to parse custom descriptions.
+
+| Primary Intent Form | Secondary AI Autofill |
+| :---: | :---: |
+| ![Create Plan Form](assets/create_plan_mockup.png) | ![AI Autofill Prompt](assets/create_ai_mockup.png) |
 
 ***
 

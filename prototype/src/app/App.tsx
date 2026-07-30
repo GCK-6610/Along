@@ -211,6 +211,29 @@ const BOTTOM_NAV = [
   { id: "profile", label: "Profile", icon: User },
 ];
 
+const renderAvatar = (avatarStr: string, sizeClass = "w-6 h-6", roundedClass = "rounded-full") => {
+  if (avatarStr.startsWith("http")) {
+    return (
+      <img
+        src={avatarStr}
+        alt="Avatar"
+        className={`${sizeClass} ${roundedClass} object-cover border-2 border-white`}
+      />
+    );
+  }
+  return (
+    <div className={`${sizeClass} ${roundedClass} bg-red-100 border-2 border-white flex items-center justify-center text-xs font-bold leading-none`}>
+      {avatarStr}
+    </div>
+  );
+};
+
+const PROFANITY_LIST = ["fuck", "shit", "bitch", "asshole", "bastard", "dick", "cunt", "vulgar", "abuse", "spam"];
+const isProfane = (text: string) => {
+  const lower = text.toLowerCase();
+  return PROFANITY_LIST.some(word => lower.includes(word));
+};
+
 export default function App() {
   const [activitiesList, setActivitiesList] = useState(INITIAL_ACTIVITIES);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -219,6 +242,10 @@ export default function App() {
     Object.fromEntries(INITIAL_ACTIVITIES.map((a) => [a.id, a.joined]))
   );
   const [likedMap, setLikedMap] = useState<Record<number, boolean>>({});
+
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState("🦊");
+  const [selectedAvatarType, setSelectedAvatarType] = useState<"avatar" | "image">("avatar");
 
   // Explore tab states
   const [exploreTab, setExploreTab] = useState<"interest" | "time" | "trending" | "nearby">("interest");
@@ -269,6 +296,12 @@ export default function App() {
 
   // Mock NLP text parser simulation
   const handleNlpParse = () => {
+    setErrorMsg(null);
+    if (isProfane(nlpInput)) {
+      setErrorMsg("Inappropriate or vulgar language detected in AI description. Please keep it clean.");
+      return;
+    }
+
     const text = nlpInput.toLowerCase();
     let title = "Tag-Along Activity";
     let cat = "running";
@@ -323,18 +356,25 @@ export default function App() {
     setNewTime(time);
     setNewVenue(venue);
     setNewVibeTags(tags);
-    setCreateStep(1); // Advance to parsed details confirmation step
+    setCreateStep(0); // Take the user back to the primary form step with filled details!
+    setNlpInput("");
   };
 
   const handlePublishPlan = () => {
+    setErrorMsg(null);
     if (!newTitle.trim()) return;
+
+    if (isProfane(newTitle) || isProfane(newVenue) || isProfane(newExactSpot)) {
+      setErrorMsg("Inappropriate or vulgar language detected in form fields. Please revise.");
+      return;
+    }
 
     const newActivity = {
       id: activitiesList.length + 1,
       category: newCategory,
       title: newTitle,
       host: "Rahul D.",
-      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&auto=format",
+      avatar: selectedAvatarType === "avatar" ? userAvatar : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&auto=format",
       image:
         newCategory === "badminton"
           ? "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=600&h=340&fit=crop&auto=format"
@@ -520,11 +560,7 @@ export default function App() {
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <img
-                              src={activity.avatar}
-                              alt={activity.host}
-                              className="w-6 h-6 rounded-full object-cover border-2 border-white"
-                            />
+                            {renderAvatar(activity.avatar, "w-6 h-6")}
                             <span className="text-xs text-neutral-500 font-bold">
                               {activity.host}
                             </span>
@@ -644,11 +680,7 @@ export default function App() {
                         </div>
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center gap-1.5">
-                            <img
-                              src={activity.avatar}
-                              alt={activity.host}
-                              className="w-5 h-5 rounded-full object-cover"
-                            />
+                            {renderAvatar(activity.avatar, "w-5 h-5")}
                             <span className="text-[10px] text-neutral-400 font-bold">
                               {activity.host}
                             </span>
@@ -908,6 +940,7 @@ export default function App() {
                 onClick={() => {
                   setActiveNav("home");
                   setCreateStep(0);
+                  setErrorMsg(null);
                 }}
                 className="text-xs text-neutral-400 hover:text-neutral-700 font-bold"
               >
@@ -915,34 +948,32 @@ export default function App() {
               </button>
             </div>
 
-            {/* STEP 0: NLP Text Input area */}
-            {createStep === 0 && (
-              <div>
-                <label className="block text-xs font-black text-neutral-400 uppercase tracking-widest mb-2">
-                  Describe what you are planning to do
-                </label>
-                <textarea
-                  value={nlpInput}
-                  onChange={(e) => setNlpInput(e.target.value)}
-                  placeholder="e.g., Planning to hit the Narsingi Cycle track tomorrow morning at 6:30 AM. Wanna tag along?"
-                  rows={4}
-                  className="w-full border border-neutral-200 rounded-2xl p-4 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-neutral-50 mb-4 resize-none leading-relaxed"
-                />
-                <button
-                  onClick={handleNlpParse}
-                  disabled={!nlpInput.trim()}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition disabled:opacity-50"
-                >
-                  ⚡ Parse with AI & Autofill
-                </button>
+            {/* Error Banner */}
+            {errorMsg && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl text-xs font-bold flex items-start gap-2 shadow-sm">
+                <span className="font-extrabold">⚠️</span>
+                <span>{errorMsg}</span>
               </div>
             )}
 
-            {/* STEP 1: Parsed form confirmation */}
-            {createStep === 1 && (
+            {/* STEP 0: Create Form (Primary) */}
+            {createStep === 0 && (
               <div className="space-y-4">
-                <div className="bg-red-50 text-red-600 p-3 rounded-2xl text-xs font-bold flex items-center gap-1.5">
-                  <Check size={14} className="stroke-[3]" /> AI successfully extracted plan details below!
+                {/* Secondary AI Option */}
+                <div className="bg-red-50/50 border border-red-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                  <div>
+                    <h4 className="text-xs font-black text-red-500 uppercase tracking-wide">💡 Got a quick draft?</h4>
+                    <p className="text-[10px] text-neutral-500 font-bold mt-0.5">Let AI extract location, time, and details.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setCreateStep(1); // open AI description input
+                      setErrorMsg(null);
+                    }}
+                    className="px-3.5 py-2 bg-white border border-red-200 text-red-500 hover:bg-red-50 rounded-xl text-xs font-black shadow-sm transition"
+                  >
+                    Fill with AI ⚡
+                  </button>
                 </div>
 
                 <div>
@@ -951,6 +982,7 @@ export default function App() {
                     type="text"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="e.g. Morning Badminton"
                     className="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-800 bg-neutral-50 focus:outline-none"
                   />
                 </div>
@@ -977,6 +1009,7 @@ export default function App() {
                       type="text"
                       value={newTime}
                       onChange={(e) => setNewTime(e.target.value)}
+                      placeholder="e.g. Tomorrow, 7:00 AM"
                       className="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-800 bg-neutral-50 focus:outline-none"
                     />
                   </div>
@@ -988,6 +1021,7 @@ export default function App() {
                     type="text"
                     value={newVenue}
                     onChange={(e) => setNewVenue(e.target.value)}
+                    placeholder="e.g. Siri Fort Sports Complex"
                     className="w-full border border-neutral-200 rounded-xl px-4 py-2.5 text-sm text-neutral-800 bg-neutral-50 focus:outline-none"
                   />
                 </div>
@@ -1047,20 +1081,48 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => setCreateStep(0)}
-                    className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-2xl transition"
-                  >
-                    Edit Draft
-                  </button>
+                <div className="pt-2">
                   <button
                     onClick={handlePublishPlan}
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition"
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition"
                   >
-                    Publish Tag-Along
+                    Publish Tag-Along Intent
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* STEP 1: AI Parser (Secondary Option) */}
+            {createStep === 1 && (
+              <div>
+                <div className="mb-4">
+                  <button
+                    onClick={() => {
+                      setCreateStep(0);
+                      setErrorMsg(null);
+                    }}
+                    className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-800 font-bold"
+                  >
+                    <ArrowLeft size={14} /> Back to Form
+                  </button>
+                </div>
+                <label className="block text-xs font-black text-neutral-400 uppercase tracking-widest mb-2">
+                  Describe what you are planning to do
+                </label>
+                <textarea
+                  value={nlpInput}
+                  onChange={(e) => setNlpInput(e.target.value)}
+                  placeholder="e.g., Planning to hit the Narsingi Cycle track tomorrow morning at 6:30 AM. Wanna tag along?"
+                  rows={4}
+                  className="w-full border border-neutral-200 rounded-2xl p-4 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-neutral-50 mb-4 resize-none leading-relaxed"
+                />
+                <button
+                  onClick={handleNlpParse}
+                  disabled={!nlpInput.trim()}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition disabled:opacity-50"
+                >
+                  ⚡ Parse with AI & Autofill
+                </button>
               </div>
             )}
           </div>
@@ -1089,12 +1151,8 @@ export default function App() {
                         onClick={() => setSelectedChatId(activity.id)}
                         className="flex items-center gap-4 bg-white border border-neutral-200 rounded-2xl p-4 text-left hover:border-red-500/20 transition-colors"
                       >
-                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-100">
-                          <img
-                            src={activity.avatar}
-                            alt={activity.host}
-                            className="w-full h-full object-cover"
-                          />
+                        <div className="flex-shrink-0">
+                          {renderAvatar(activity.avatar, "w-12 h-12 text-xl", "rounded-2xl")}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-baseline">
@@ -1236,12 +1294,16 @@ export default function App() {
                 className="w-full h-full object-cover"
               />
               <div className="absolute -bottom-10 left-5">
-                <div className="relative w-20 h-20 rounded-3xl overflow-hidden border-4 border-white bg-neutral-100 shadow-md">
-                  <img
-                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&h=120&fit=crop&auto=format"
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="relative w-20 h-20 rounded-3xl overflow-hidden border-4 border-white bg-neutral-100 flex items-center justify-center shadow-md">
+                  {selectedAvatarType === "avatar" ? (
+                    <span className="text-4xl">{userAvatar}</span>
+                  ) : (
+                    <img
+                      src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&h=120&fit=crop&auto=format"
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </div>
                 <span className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow" />
               </div>
@@ -1261,6 +1323,51 @@ export default function App() {
               <p className="text-xs text-neutral-600 mt-3 font-semibold leading-relaxed">
                 Runner, reader, occasional badminton player. Always down for good coffee.
               </p>
+
+              {/* Avatar Selector configuration */}
+              <div className="mt-4 pt-3 border-t border-neutral-100">
+                <label className="block text-[10px] font-black text-neutral-400 uppercase tracking-widest mb-2">
+                  Configure Profile Picture
+                </label>
+                <div className="flex gap-3 mb-3">
+                  <button
+                    onClick={() => setSelectedAvatarType("avatar")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                      selectedAvatarType === "avatar"
+                        ? "bg-red-50 border-red-500 text-red-500"
+                        : "bg-neutral-50 border-neutral-200 text-neutral-500"
+                    }`}
+                  >
+                    Illustration Avatar
+                  </button>
+                  <button
+                    onClick={() => setSelectedAvatarType("image")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                      selectedAvatarType === "image"
+                        ? "bg-red-50 border-red-500 text-red-500"
+                        : "bg-neutral-50 border-neutral-200 text-neutral-500"
+                    }`}
+                  >
+                    Custom Photo (Future V2)
+                  </button>
+                </div>
+
+                {selectedAvatarType === "avatar" && (
+                  <div className="flex gap-2.5 bg-neutral-50 p-2 rounded-2xl border border-neutral-200 overflow-x-auto scrollbar-hide">
+                    {["🦊", "🐼", "🦁", "🐯", "🐨", "🐸", "🏃", "🏸", "☕"].map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => setUserAvatar(emoji)}
+                        className={`flex-shrink-0 w-10 h-10 rounded-xl text-xl flex items-center justify-center transition-transform hover:scale-110 ${
+                          userAvatar === emoji ? "bg-white border-2 border-red-500 shadow-sm" : "bg-neutral-100"
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Stats row column metrics */}

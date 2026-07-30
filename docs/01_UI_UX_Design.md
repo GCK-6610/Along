@@ -144,40 +144,42 @@ For structured searches and sponsored venue listings.
 
 ---
 
-### Screen 3: ➕ Create Plan Overlay
+### Screen 3: ➕ Create Plan Screen (Primary Form with Secondary AI)
 
-Triggered via the bottom navigation red floating button.
+Triggered via the bottom navigation red floating button. The manual details form is presented by default.
 
 ```
 +-------------------------------------------------------+
 |  Create a Plan                                     [X] |
-|  Tell us what you are planning to do:                 |
 |                                                       |
 |  +-------------------------------------------------+  |
-|  | "Planning to hit the Narsingi Cycle track       |  |
-|  | tomorrow morning at 6:30 AM. Wanna tag along?"  |  |
+|  | 💡 Got a quick draft?                           |  |
+|  | Let AI parse your details automatically.        |  |
+|  |                               [ Fill with AI ⚡ ]|  |
 |  +-------------------------------------------------+  |
-|                                           [ Parse ]   |
-|  ---------------------------------------------------  |
-|  Parsed Details Confirmation:                         |
 |                                                       |
-|  Title:    [ Morning Cycling                     ]   |
-|  Category: [ Sports (Badge)                      ]   |
-|  Time:     [ Thu, 26 July • 06:30 AM - 08:30 AM  ]   |
-|  Venue:    [ Narsingi Cycle Track, Hyderabad     ]   |
+|  Activity Title:                                      |
+|  [ Morning Cycling                                 ]  |
+|                                                       |
+|  Category:                   Scheduled Time:          |
+|  [ Sports          ] ▼       [ Tomorrow, 6:30 AM   ]  |
+|                                                       |
+|  Venue Location:                                      |
+|  [ Narsingi Cycle Track, Hyderabad                 ]  |
 |                                                       |
 |  🔒 Exact Meeting Spot (Only shown to accepted joiners):|
 |  [ Meet at the cycle rentals desk. Wearing red cap.]  |
 |                                                       |
-|  Capacity: 2 [=============o                       ]  |
-|                                                       |
-|  Vibe Tags:  [+ Cardio]  [+ Outdoor]  [+ Early Bird]  |
+|  Capacity: 4 slots [=============o                 ]  |
 |                                                       |
 |  Visibility:  (x) Public  ( ) Identity Verified Only  |
 |                                                       |
-|  [ Publish Tag-Along ]                                |
+|  [ Publish Tag-Along Intent ]                         |
 +-------------------------------------------------------+
 ```
+
+*Note: Clicking `[ Fill with AI ⚡ ]` opens the secondary text input dialog (Stage 2) where the user types a raw plan description, clicks `Parse`, and returns to this form prefilled.*
+
 
 ---
 
@@ -211,13 +213,19 @@ Displays user identity, stats, and trust credentials.
 +-------------------------------------------------------+
 |  [Cover Photo: Sun rising over park]                  |
 |                                                       |
-|      ( Avatar )                                       |
+|      ( Avatar Emoji / Image )                         |
 |                                                       |
 |   Rahul D.   [✔ Verified]                             |
 |   📍 Vasant Vihar, New Delhi                          |
 |                                                       |
 |   "Runner, reader, occasional badminton player.       |
 |   Always down for good coffee."                       |
+|                                                       |
+|   Configure Profile Picture:                          |
+|   [ Illustration Avatar ]   [ Custom Photo (V2) ]     |
+|   +-----------------------------------------------+   |
+|   |  (🦊)  (🐼)  (🦁)  (🐯)  (🐨)  (🐸)  (🏃)  (🏸)     |   |
+|   +-----------------------------------------------+   |
 |                                                       |
 |   +-----------------------------------------------+   |
 |   |   6 Hosted    |   21 Joined   |   6 Badges    |   |
@@ -233,17 +241,11 @@ Displays user identity, stats, and trust credentials.
 |   | [🎯] Active         |   | [💪] Fitness        |   |
 |   |     Organizer       |   |     Enthusiast      |   |
 |   +---------------------+   +---------------------+   |
-|   | [☕] Coffee         |   | [🏁] First          |   |
-|   |     Lover           |   |     Plan            |   |
-|   +---------------------+   +---------------------+   |
 |                                                       |
 |   [ Upcoming Plans ]      [[ Past Plans ]]            |
 |   +-------------------------------------------------+ |
 |   | IKEA Run — Need One More                        | |
 |   | Sat, 11:00 AM • IKEA Gurugram                   | |
-|   +-------------------------------------------------+ |
-|   | Aravalli Sunrise Hike                           | |
-|   | Sun, 5:30 AM • Aravalli Biodiversity Park       | |
 |   +-------------------------------------------------+ |
 +-------------------------------------------------------+
 ```

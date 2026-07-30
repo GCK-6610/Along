@@ -75,22 +75,22 @@ The portal for search exploration, categorizations, and sponsored venue recommen
 
 ### Tab 3: ➕ Create Plan (Overlay Studio)
 Triggered by tapping the floating center button.
-* **State 1: AI NLP Text Input**:
-  - A simple text area where the user describes their plan in natural language.
-  - *Placeholder*: *"Going to Narsingi Cycle Track tomorrow morning at 6:30 AM. Wanna tag along?"*
-  - Action: Tap **Process**.
-* **State 2: Autofilled Details Form**:
-  - Renders the pre-filled parameters parsed by the AI:
+* **Primary View: Intent Creation Form**:
+  - Renders the details input fields for manual configuration:
     - **Activity Title**: e.g., *"Morning Run"*
     - **Category Dropdown**: e.g., *"Sports"*
-    - **Date & Time Picker**: Pre-set to tomorrow, 6:30 AM.
-    - **Location Lookup**: Autocompleted venue address (e.g., *"Narsingi Cycle Track, Hyderabad"*).
-  - **Manual inputs left for User confirmation**:
-    - **Exact Coordination spot (Locked)**: Input text area details hidden from public view (e.g., *"Meet at the cycle rentals counter. I'll be in blue shorts."*).
-    - **Capacity Slider**: Range slider (2 to 20 users).
-    - **Vibe Tags**: Selectable interest pills (e.g., *"Intermediate"*, *"Cardio"*, *"Outdoor"*).
-    - **Visibility Toggle**: Selector switch between `Public` and `Verified Only`.
-* **Action**: Tap **Publish Plan**.
+    - **Date & Time**: Calendar/schedules picker.
+    - **Location Lookup**: Autocompleted venue address coordinates.
+    - **Exact Coordination spot (Locked)**: Secret details hidden from public view (e.g., *"Meet at the cycle rentals counter. I'll be in blue shorts."*).
+    - **Capacity Slider**: Range slider (2 to 12 users).
+    - **Visibility Toggle**: Selector switch between `Public` and `Verified Only` (Identity Match Badge).
+  - **NSFW Safety Filter**: All text fields (Title, Venue, Spot) run through an automated profanity/NSFW text filter to block vulgarity and offensive language.
+* **Secondary View: Fill with AI [Secondary]**:
+  - An optional toggle card at the top of the form: `Fill with AI ⚡`.
+  - Opens a text input prompt where the user describes the plan (e.g., *"Going to run Narsingi Cycle track tomorrow at 6:30am, who wants to join?"*).
+  - Tapping **Parse** extracts the parameters, populates the fields, runs safety/NSFW audits, and returns the user to the Primary Form.
+* **Action**: Tap **Publish Tag-Along Intent**.
+
 
 ---
 
@@ -105,7 +105,8 @@ Triggered by tapping the floating center button.
 ---
 
 ### Tab 5: 👤 Profile (User Identity Passport)
-* **Header Card**: Cover photo, user avatar with green online badge, display name, blue `Verified` badge check, and home location.
+* **Header Card**: Cover photo, user avatar (pre-selected illustration emoji/vector avatar in Phase 1, with options to upload custom photos in V2) with green online badge, display name, blue `Verified` badge check, and home location.
+* **Avatar Configuration**: An inline selection tray enabling users to choose from standard vector illustration avatars (fox, panda, lion, tiger, koala, frog, etc.) or opt-in to custom image uploads in future versions.
 * **Stats Row**: Three numeric blocks displaying count of plans `Hosted`, `Joined`, and unlocked `Badges`.
 * **Interests List**: Color-outlined capsule chips indicating hobbies (e.g., Running, Coffee, Books).
 * **Badges Grid**: Displays the user's earned badges in high-contrast icons:
