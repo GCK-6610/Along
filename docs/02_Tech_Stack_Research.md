@@ -178,3 +178,20 @@ To protect user safety and restrict reach based on host preferences:
   WHERE (gender_reach = 'all')
      OR (gender_reach = 'same' AND host_gender = :viewer_gender);
   ```
+
+---
+
+## 7. Required External Services & API Integrations
+
+To deploy Along in production, the engineering team must configure and provision the following third-party services and APIs:
+
+| Category | External Service / Provider | Purpose / Integration Detail | Billing & Infrastructure Strategy |
+| :--- | :--- | :--- | :--- |
+| **Backend & Hosting** | **Supabase Cloud** (or AWS RDS PostgreSQL) | Core Relational DB, Edge Functions compute, Row-Level Security, real-time message broadcasting. | Pro Tier ($25/mo) for dedicated backups, connection pooling, and PostGIS usage limits. |
+| **Mobile Compilation** | **Expo Application Services (EAS)** | Building native APK/IPA credentials, OTA (Over-the-Air) JS/TS bundle updates. | Free tier covers build queues; $29/mo priority queues as user volume scales. |
+| **Geospatial & Maps** | **Google Cloud Platform (GCP)** | - **Places API (New)**: Location autocomplete search.<br>- **Geocoding API**: Coordinate conversion.<br>- **Maps SDK (iOS & Android)**: Visual maps. | Pay-as-you-go. Leverage UUID session tokens on autocomplete to bundle keystrokes into 1 billable item. |
+| **Artificial Intelligence** | **OpenAI API** (or Vertex AI Gemini) | - `gpt-4o-mini`: Structuring unstructured user inputs.<br>- `text-embedding-3-small`: Generating interest match vectors. | Pay-as-you-go based on token usage. gpt-4o-mini is heavily subsidized (~$0.15 per million input tokens). |
+| **Notifications Delivery** | **Apple Developer Program + Google Firebase** | Native APNS certificates for iOS and FCM configs for Android to trigger push warnings. | Apple: $99/year membership. Google Firebase: Free/Spark Tier. |
+| **User Authentication** | **Twilio** (or Telesign) | OTP SMS carrier for secure phone number logins. | Pay-as-you-go per SMS dispatched (typically $0.007 to $0.05 per verification text). |
+| **NSFW Content Safety** | **Sightengine** (or OpenAI Moderation API) | Text & media filtering to block vulgarity, offensive descriptions, or inappropriate profile pictures. | OpenAI Moderation API is free. Sightengine has standard pricing tiers for image audits. |
+| **Asset Storage CDN** | **Supabase Storage** (or AWS S3) | Hosting uploaded user profile pictures, chat media uploads, and venue logos. | Free tier covers first 1GB; $0.021 per GB thereafter. |
