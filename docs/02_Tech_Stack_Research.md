@@ -29,19 +29,17 @@ This document provides a detailed comparative analysis of different mobile-first
 
 ---
 
-## 3. Google Gemini AI Pipeline & Matchmaking Architecture
-
-We leverage DeepMind's Gemini API for NLP parsing and semantic vector embeddings, ensuring enterprise-grade speed and latency:
+## 3. AI Pipeline & Semantic Matchmaking Architecture
 
 ```mermaid
 graph TD
     UserText[User Description Text] --> EdgeFunc[Supabase Edge Function]
-    EdgeFunc --> |Parse Request| GeminiNLP[Gemini 1.5 Flash]
-    GeminiNLP --> |Structured JSON Details| ConfirmForm[User Confirmation Form]
+    EdgeFunc --> |Parse Request| OpenAINLP[OpenAI gpt-4o-mini]
+    OpenAINLP --> |Structured JSON Details| ConfirmForm[User Confirmation Form]
     
     ConfirmForm --> |Publish Plan| SaveDB[Postgres Database]
-    SaveDB --> |Trigger Embedding| GeminiEmbed[Google text-embedding-004]
-    GeminiEmbed --> |768d Vector| VectorCol[pgvector: plans.embedding_vector]
+    SaveDB --> |Trigger Embedding| OpenAIEmbed[OpenAI text-embedding-3-small]
+    OpenAIEmbed --> |1536d Vector| VectorCol[pgvector: plans.embedding_vector]
     
     UserPref[User Profile Preferences] --> |Embed Profile| ProfileVector[pgvector: profiles.preferences_vector]
     
@@ -49,33 +47,35 @@ graph TD
     MatchEngine --> MatchResults[Suggested Plans on Feed]
 ```
 
-### A. NLP Parsing Integration (Gemini 1.5 Flash)
-* **Model**: `gemini-1.5-flash`
-* **Why it's production-ready**: It offers sub-300ms latency, supports structured outputs via JSON Schema tool calling, and is significantly more cost-efficient than GPT-4o-mini.
+### A. NLP Parsing Integration
+* **Model**: `gpt-4o-mini`
 * **Workflow**:
   1. The user inputs their plan draft.
   2. The frontend sends it to `/api/v1/plans/parse-nlp`.
-  3. The endpoint instructs Gemini with a system prompt and a JSON structured schema:
+  3. The endpoint instructs the LLM with a system prompt and a schema tool definition:
      ```json
      {
-       "type": "OBJECT",
-       "properties": {
-         "title": { "type": "STRING" },
-         "category": { "type": "STRING", "enum": ["sports", "running", "shopping", "yoga", "cycling", "hiking", "other"] },
-         "datetime": { "type": "STRING" },
-         "venue_name": { "type": "STRING" }
-       },
-       "required": ["title", "category", "datetime", "venue_name"]
+       "name": "extract_plan",
+       "parameters": {
+         "type": "object",
+         "properties": {
+           "title": { "type": "string" },
+           "category": { "type": "string", "enum": ["sports", "running", "shopping", "yoga", "cycling", "hiking", "other"] },
+           "datetime": { "type": "string" },
+           "venue_name": { "type": "string" }
+         },
+         "required": ["title", "category", "datetime", "venue_name"]
+       }
      }
      ```
-  4. The returned structured JSON parameters populate the details form state immediately.
+  4. The returned structured properties populate the React Native details state immediately.
 
-### B. pgvector Matchmaking Engine (text-embedding-004)
-Along represents user profiles and plans as 768-dimensional vectors to calculate match suggestions:
-* **Model**: Google `text-embedding-004` (768-dimensional vectors).
-* **Database Storage**: The vectors are stored in PostgreSQL using the `pgvector` extension:
+### B. pgvector Matchmaking Engine
+Along represents user profiles and plans as vectors to suggest plans matching user interests:
+* **Model**: OpenAI `text-embedding-3-small` (1536-dimensional vectors).
+* **Database Storage**:
   ```sql
-  ALTER TABLE plans ADD COLUMN embedding_vector vector(768);
+  ALTER TABLE plans ADD COLUMN embedding_vector vector(1536);
   ```
 * **Similarity Query**: Similarity ranking uses the cosine distance operator `<=>` (where `0` is identical, `1` is orthogonal):
   ```sql
@@ -85,6 +85,21 @@ Along represents user profiles and plans as 768-dimensional vectors to calculate
   ORDER BY distance ASC
   LIMIT 5;
   ```
+
+---
+
+### C. AI Provider Comparison: OpenAI vs. Google Gemini
+
+| Metric / Feature | OpenAI (Vetted Baseline) | Google Gemini (Alternative Option) | Decision Recommendation |
+| :--- | :--- | :--- | :--- |
+| **Primary NLP Model** | `gpt-4o-mini` | `gemini-1.5-flash` | Both are high-speed, cost-efficient models. |
+| **NLP Pricing (Input/Output)** | $0.150 / $0.600 per 1M tokens | $0.075 / $0.300 per 1M tokens | **Gemini 1.5 Flash** is 50% cheaper, optimizing startup budgets. |
+| **Average Latency** | ~350 - 450ms | ~250 - 350ms | **Gemini 1.5 Flash** is slightly faster for quick-parsing updates. |
+| **Context Window** | 128,000 tokens | 1,000,000 tokens | **Gemini** handles massive history logs if doing bulk user recommendation summary. |
+| **Structured Output Support** | JSON Schema Tool calling (100% rigid match) | Structured JSON output modes & Tool schemas | Parity. Both enforce strict JSON parsing formats. |
+| **Embedding Model** | `text-embedding-3-small` | `text-embedding-004` | **OpenAI** outputs 1536d, **Google** outputs 768d. |
+| **Embedding Cost** | $0.020 per 1M tokens | $0.025 per 1M tokens | Parity. Negligible cost difference. |
+| **Vector DB Dimension** | **1536 Dimensions**: Higher precision for complex queries. | **768 Dimensions**: Lower database footprint and faster index checks in Postgres. | **768 Dimensions (Google)** is faster to execute under Supabase Postgres pgvector indexes. |
 
 ---
 

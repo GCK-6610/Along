@@ -1327,8 +1327,8 @@ export default function App() {
 
                 <div>
                   <label className="block text-xs font-bold text-neutral-500 mb-2">Gender Reach Option</label>
-                  <div className="flex flex-col gap-2 mb-4 bg-neutral-50 p-3 rounded-2xl border border-neutral-100">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-neutral-700">
+                  <div className="flex flex-col gap-2.5 mb-4 bg-neutral-50 p-3.5 rounded-2xl border border-neutral-100">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-neutral-700 cursor-pointer">
                       <input
                         type="radio"
                         name="genderReach"
@@ -1339,7 +1339,7 @@ export default function App() {
                       />
                       Open to Everyone (All Genders)
                     </label>
-                    <label className="flex items-center gap-2 text-xs font-semibold text-neutral-700">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-neutral-700 cursor-pointer">
                       <input
                         type="radio"
                         name="genderReach"
@@ -1349,18 +1349,6 @@ export default function App() {
                         className="accent-red-500"
                       />
                       Males Only (Restricted to same gender)
-                    </label>
-                    <label className="flex items-center gap-2 text-xs font-semibold text-neutral-400 cursor-not-allowed opacity-60">
-                      <input
-                        type="radio"
-                        name="genderReach"
-                        disabled
-                        className="accent-neutral-300"
-                      />
-                      <span>Females Only (Restricted to same gender)</span>
-                      <span className="text-[7px] bg-neutral-100 text-neutral-400 border border-neutral-200 px-1 py-0.2 rounded font-black">
-                        Only available for female hosts
-                      </span>
                     </label>
                   </div>
                 </div>
