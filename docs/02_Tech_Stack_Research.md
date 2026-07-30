@@ -195,3 +195,23 @@ To deploy Along in production, the engineering team must configure and provision
 | **User Authentication** | **Twilio** (or Telesign) | OTP SMS carrier for secure phone number logins. | Pay-as-you-go per SMS dispatched (typically $0.007 to $0.05 per verification text). |
 | **NSFW Content Safety** | **Sightengine** (or OpenAI Moderation API) | Text & media filtering to block vulgarity, offensive descriptions, or inappropriate profile pictures. | OpenAI Moderation API is free. Sightengine has standard pricing tiers for image audits. |
 | **Asset Storage CDN** | **Supabase Storage** (or AWS S3) | Hosting uploaded user profile pictures, chat media uploads, and venue logos. | Free tier covers first 1GB; $0.021 per GB thereafter. |
+
+---
+
+## 8. Projected Monthly Cost Analysis (India-Based Startup)
+
+This is a rough monthly projection for an early-stage production deployment, assuming a baseline of **1,000 - 5,000 Monthly Active Users (MAU)**. Pricing is optimized for a startup based in India.
+
+| Service / Infrastructure | Estimated Usage | Projected Monthly Cost (USD) | Projected Monthly Cost (INR ~₹83/$) | Notes for India Market |
+| :--- | :--- | :--- | :--- | :--- |
+| **Backend (Supabase Pro)** | Dedicated instance, No Pausing | $25.00 | ₹2,075 | Essential for production stability, daily backups, and no cold-starts. |
+| **OTP Auth (Twilio / MSG91)** | 2,000 verifications | $5.00 - $10.00 | ₹400 - ₹800 | **Cost-saving tip**: Use local Indian providers like MSG91 (₹0.15 - ₹0.20 per SMS) instead of Twilio ($0.05/SMS to India) to save up to 90% on auth costs. |
+| **Geospatial & Maps (GCP)** | 10,000 sessions/loads | $0.00 (within free tier) | ₹0 | GCP provides a recurring $200/mo free credit, which covers ~11,000 Places Autocomplete sessions. |
+| **AI (OpenAI gpt-4o-mini)** | 5M input / 1M output tokens | $1.35 | ₹115 | `gpt-4o-mini` is extremely cost-efficient for structing JSON plans and analyzing text. |
+| **AI (Embeddings)** | 5M tokens | $0.10 | ₹8 | Negligible cost for generating vector embeddings. |
+| **App Stores (Apple + Google)** | Annual fees amortized | ~$10.00 | ₹830 | Apple: $99/year. Google Play: $25 one-time (negligible monthly). |
+| **CDN & Storage (AWS / Supabase)**| 10 GB media storage | $0.00 - $1.00 | ₹0 - ₹83 | Free tier handles initial load; very cheap thereafter. |
+| **Total Estimated Run Rate** | **Baseline Startup Tier** | **~$40.00 - $45.00 / mo** | **~₹3,300 - ₹3,800 / mo** | Highly scalable and cost-effective tech stack for early product-market-fit phase. |
+
+> [!TIP]
+> **India Localization Note:** The biggest variable cost in India is OTP SMS verifications. Switching from Twilio/Firebase Auth SMS to an Indian aggregator (like MSG91, Textlocal, or Fast2SMS) for phone verification can drastically reduce authentication overhead.
