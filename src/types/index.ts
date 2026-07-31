@@ -19,5 +19,7 @@ export interface Plan {
   max_capacity: number;
   current_participants: number;
   gender_reach: 'all' | 'same';
+  distance_km?: number;
+  participants_list?: Profile[];
   status: 'active' | 'cancelled' | 'completed';
 }

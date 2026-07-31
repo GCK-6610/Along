@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, FlatList, SafeAreaView, StatusBar } from 'react-native';
+import { router } from 'expo-router';
 import { Compass } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { MOCK_PLANS } from '../../lib/mockData';
@@ -7,7 +8,7 @@ import { Plan } from '../../types';
 
 export default function HomeScreen() {
   const renderItem = ({ item }: { item: Plan }) => (
-    <PlanCard plan={item} onPress={() => console.log('Plan pressed:', item.id)} />
+    <PlanCard plan={item} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: item.id } })} />
   );
 
   return (
