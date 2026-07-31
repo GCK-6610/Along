@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Along — App Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #0D0C1A;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background-image: 
+        radial-gradient(ellipse at 20% 50%, rgba(255, 71, 87, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(255, 211, 42, 0.05) 0%, transparent 50%);
+    }
+
+    /* Top bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+    }
+
+    .logo span {
+      color: #FF4757;
+    }
+
+    .badge {
+      background: rgba(255, 71, 87, 0.15);
+      border: 1px solid rgba(255, 71, 87, 0.3);
+      color: #FF4757;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Phone wrapper */
+    .phone-scene {
+      position: relative;
+    }
+
+    .phone-outer {
+      position: relative;
+      width: 390px;
+      background: #1A1A2E;
+      border-radius: 54px;
+      padding: 14px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.06),
+        0 0 0 3px #2A2A3E,
+        0 0 0 4px rgba(255,255,255,0.04),
+        0 40px 80px rgba(0,0,0,0.6),
+        0 0 60px rgba(255, 71, 87, 0.08);
+    }
+
+    /* Dynamic Island */
+    .dynamic-island {
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 34px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 10;
+    }
+
+    /* Screen bezel */
+    .phone-screen {
+      position: relative;
+      width: 100%;
+      height: 760px;
+      border-radius: 42px;
+      overflow: hidden;
+      background: #F7F6F1;
+    }
+
+    /* Status bar */
+    .status-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      background: #F7F6F1;
+      z-index: 5;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 28px 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1C1B2E;
+    }
+
+    .status-time {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-icons svg {
+      opacity: 0.85;
+    }
+
+    /* The iframe */
+    iframe {
+      position: absolute;
+      top: 54px;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 54px);
+      border: none;
+      display: block;
+    }
+
+    /* Side buttons */
+    .btn-silent {
+      position: absolute;
+      top: 100px;
+      left: -4px;
+      width: 4px;
+      height: 32px;
+      background: #2A2A3E;
+      border-radius: 2px 0 0 2px;
+    }
+
+    .btn-vol-up {
+      position: absolute;
+      top: 150px;
+      left: -4px;
+      width: 4px;
+      height: 56px;
+      background: #2A2A3E;
+      border-radius: 2px 0 0 2px;
+    }
+
+    .btn-vol-down {
+      position: absolute;
+      top: 220px;
+      left: -4px;
+      width: 4px;
+      height: 56px;
+      background: #2A2A3E;
+      border-radius: 2px 0 0 2px;
+    }
+
+    .btn-power {
+      position: absolute;
+      top: 160px;
+      right: -4px;
+      width: 4px;
+      height: 72px;
+      background: #2A2A3E;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* Bottom info */
+    .bottom-info {
+      margin-top: 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .info-pill {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4CAF50;
+      animation: pulse 2s infinite;
+    }
+
+    .info-pill .dot.red {
+      background: #FF4757;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Reload button */
+    .reload-btn {
+      background: rgba(255, 71, 87, 0.12);
+      border: 1px solid rgba(255, 71, 87, 0.25);
+      color: #FF4757;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .reload-btn:hover {
+      background: rgba(255, 71, 87, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="logo">Along<span>.</span></div>
+    <div class="badge">LIVE PREVIEW</div>
+  </div>
+
+  <div class="phone-scene">
+    <!-- Side buttons -->
+    <div class="btn-silent"></div>
+    <div class="btn-vol-up"></div>
+    <div class="btn-vol-down"></div>
+    <div class="btn-power"></div>
+
+    <div class="phone-outer">
+      <!-- Dynamic Island -->
+      <div class="dynamic-island"></div>
+
+      <div class="phone-screen">
+        <!-- Fake iOS status bar -->
+        <div class="status-bar">
+          <div class="status-time">9:41</div>
+          <div class="status-icons">
+            <!-- Signal -->
+            <svg width="17" height="12" viewBox="0 0 17 12" fill="#1C1B2E">
+              <rect x="0" y="6" width="3" height="6" rx="1"/>
+              <rect x="4.5" y="4" width="3" height="8" rx="1"/>
+              <rect x="9" y="2" width="3" height="10" rx="1"/>
+              <rect x="13.5" y="0" width="3" height="12" rx="1"/>
+            </svg>
+            <!-- WiFi -->
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="#1C1B2E" stroke-width="1.5">
+              <path d="M1 4.5C3.5 2 6.5 0.5 8 0.5C9.5 0.5 12.5 2 15 4.5"/>
+              <path d="M3 7C4.8 5.2 6.5 4.2 8 4.2C9.5 4.2 11.2 5.2 13 7"/>
+              <circle cx="8" cy="10.5" r="1.5" fill="#1C1B2E" stroke="none"/>
+            </svg>
+            <!-- Battery -->
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+              <rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="#1C1B2E" stroke-opacity="0.35"/>
+              <rect x="2" y="2" width="16" height="8" rx="2" fill="#1C1B2E"/>
+              <path d="M23 4.5V7.5C23.8 7.2 24.5 6.5 24.5 6C24.5 5.5 23.8 4.8 23 4.5Z" fill="#1C1B2E" fill-opacity="0.4"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Expo app in iframe -->
+        <iframe 
+          src="http://localhost:8082"
+          title="Along App Preview"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-info">
+    <div class="info-pill">
+      <div class="dot"></div>
+      Metro Bundler Running
+    </div>
+    <div class="info-pill">
+      <div class="dot"></div>
+      localhost:8082
+    </div>
+    <button class="reload-btn" onclick="document.querySelector('iframe').src = document.querySelector('iframe').src">
+      ↺ Reload
+    </button>
+  </div>
+
+</body>
+</html>
