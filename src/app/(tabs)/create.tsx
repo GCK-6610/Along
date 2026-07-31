@@ -130,7 +130,7 @@ export default function CreateScreen() {
                   <Text style={[styles.toggleText, genderReach === 'all' && styles.toggleTextActive]}>👥 Everyone</Text>
                 </Pressable>
                 <Pressable style={[styles.toggle, genderReach === 'same' && styles.toggleActive]} onPress={() => setGenderReach('same')}>
-                  <Text style={[styles.toggleText, genderReach === 'same' && styles.toggleTextActive]}>🔒 Same Gender</Text>
+                  <Text style={[styles.toggleText, genderReach === 'same' && styles.toggleTextActive]}>🔒 Women Only</Text>
                 </Pressable>
               </View>
             </View>

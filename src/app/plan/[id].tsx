@@ -67,7 +67,9 @@ export default function PlanDetailsScreen() {
             <Text style={styles.hostLabel}>Host & Organizer</Text>
           </View>
           <View style={styles.reachBadge}>
-            <Text style={styles.reachText}>{gender_reach === 'same' ? '🔒 Same Gender' : '👥 Everyone'}</Text>
+            <Text style={styles.reachText}>
+              {gender_reach === 'same' ? (host?.gender === 'male' ? '🔒 Men Only' : '🔒 Women Only') : '👥 Everyone'}
+            </Text>
           </View>
         </View>
 
