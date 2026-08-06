@@ -1,14 +1,40 @@
+import { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, SafeAreaView, Pressable } from 'react-native';
 import { MessageCircle } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
-
-const MOCK_CHATS = [
-  { id: '1', planTitle: 'Morning Yoga in the Park', lastMessage: 'See you all at 7 AM! 🧘', time: '9:41 AM', unread: 2 },
-  { id: '2', planTitle: 'Co-working & Coffee', lastMessage: 'I\'ll grab a table by the window', time: 'Yesterday', unread: 0 },
-  { id: '3', planTitle: 'Photography Walk', lastMessage: 'Golden hour starts at 6:15 📸', time: 'Mon', unread: 5 },
-];
+import { router, useFocusEffect } from 'expo-router';
+import { useAuth } from '../../context/AuthContext';
+import { usePlans } from '../../hooks/usePlans';
 
 export default function MessagesScreen() {
+  const { user } = useAuth();
+  const [chats, setChats] = useState<any[]>([]);
+  const { plans, refetch: refetchPlans } = usePlans();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchPlans();
+    }, [])
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    const userChats = plans
+      .filter(p => p.host_id === user.id || p.participants_list?.some(u => u.id === user.id && u.join_status === 'approved'))
+      .map(p => {
+        // We aren't fetching real messages yet for the chat list for MVP to save time. 
+        // A real impl would fetch the latest message from chat_messages table.
+        return {
+          id: p.id,
+          planTitle: p.title,
+          lastMessage: 'Tap to view chat...',
+          time: '',
+          unread: 0
+        };
+      });
+    setChats(userChats);
+  }, [user, plans]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -16,12 +42,12 @@ export default function MessagesScreen() {
       </View>
 
       <FlatList
-        data={MOCK_CHATS}
+        data={chats}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item }) => (
-          <Pressable style={styles.chatRow}>
+          <Pressable style={styles.chatRow} onPress={() => router.push({ pathname: '/messages/[id]', params: { id: item.id } })}>
             <View style={styles.iconWrap}>
               <MessageCircle size={22} color={theme.colors.primary} />
             </View>

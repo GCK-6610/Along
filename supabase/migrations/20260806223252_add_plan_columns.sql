@@ -1,0 +1,4 @@
+ALTER TABLE public.plans 
+  ADD COLUMN scheduled_at TIMESTAMP WITH TIME ZONE,
+  ADD COLUMN description TEXT,
+  ADD COLUMN distance_km DOUBLE PRECISION;

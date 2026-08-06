@@ -7,6 +7,24 @@
 export const USE_MOCK_AUTH = __DEV__ && (process.env.EXPO_PUBLIC_USE_MOCK_AUTH !== 'false');
 
 let currentSession: any = null;
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    const stored = window.localStorage.getItem('along_mock_session');
+    if (stored) currentSession = JSON.parse(stored);
+  } catch (e) {}
+}
+
+const persistSession = (session: any) => {
+  currentSession = session;
+  if (typeof window !== 'undefined' && window.localStorage) {
+    if (session) {
+      window.localStorage.setItem('along_mock_session', JSON.stringify(session));
+    } else {
+      window.localStorage.removeItem('along_mock_session');
+    }
+  }
+};
+
 const listeners = new Set<Function>();
 
 // Simple mock that mimics Supabase's auth API and query builder for dev mode.
@@ -32,13 +50,14 @@ export const mockAuth = {
   },
   verifyOtp: async ({ phone, token }: { phone: string; token: string }) => {
     await new Promise((res) => setTimeout(res, 200));
-    const mockUser = { id: 'mock-user-123', phone: phone || '+919876543210' };
-    currentSession = { user: mockUser, access_token: 'mock-jwt-token' };
-    listeners.forEach((cb) => cb('SIGNED_IN', currentSession));
-    return { data: { session: currentSession, user: mockUser }, error: null };
+    const mockUser = { id: 'user-me', phone: phone || '+919876543210' };
+    const newSession = { user: mockUser, access_token: 'mock-jwt-token' };
+    persistSession(newSession);
+    listeners.forEach((cb) => cb('SIGNED_IN', newSession));
+    return { data: { session: newSession, user: mockUser }, error: null };
   },
   signOut: async () => {
-    currentSession = null;
+    persistSession(null);
     listeners.forEach((cb) => cb('SIGNED_OUT', null));
     return { error: null };
   },

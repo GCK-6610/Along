@@ -1,16 +1,37 @@
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Pressable } from 'react-native';
-import { CheckCircle2, LogOut, Settings, Star, Shield } from 'lucide-react-native';
+import { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Pressable, Image } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { CheckCircle2, LogOut, Settings, Star, Shield, Edit2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { useAuth } from '../../context/AuthContext';
-
-const STAT_ITEMS = [
-  { label: 'Plans Joined', value: '12' },
-  { label: 'Plans Hosted', value: '4' },
-  { label: 'Along Score', value: '87' },
-];
+import { usePlans } from '../../hooks/usePlans';
+import { supabase } from '../../lib/supabase';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
+  
+  const [profile, setProfile] = useState<any>(user?.user_metadata || {});
+  const [stats, setStats] = useState({ hosted: 0, joined: 0 });
+  const { plans, refetch: refetchPlans } = usePlans();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchPlans();
+      if (user) {
+        supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => {
+          if (data) setProfile(data);
+        });
+      }
+    }, [user])
+  );
+
+  useEffect(() => {
+    if (user && plans) {
+      const hosted = plans.filter(p => p.host_id === user.id).length;
+      const joined = plans.filter(p => p.host_id !== user.id && p.participants_list?.some(u => u.id === user.id && u.join_status === 'approved')).length;
+      setStats({ hosted, joined });
+    }
+  }, [plans, user]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -19,50 +40,70 @@ export default function ProfileScreen() {
         {/* Header row */}
         <View style={styles.headerRow}>
           <Text style={styles.title}>Profile</Text>
-          <Pressable style={styles.settingsBtn}>
-            <Settings size={22} color={theme.colors.foreground} />
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
+            <Pressable style={styles.settingsBtn} onPress={() => router.push('/edit-profile')}>
+              <Edit2 size={18} color={theme.colors.foreground} />
+            </Pressable>
+            <Pressable style={styles.settingsBtn} onPress={() => router.push('/settings')}>
+              <Settings size={20} color={theme.colors.foreground} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Avatar & Info */}
         <View style={styles.profileCard}>
-          <View style={styles.avatarRing}>
-            <Text style={styles.avatarEmoji}>🧑</Text>
-          </View>
+          {profile?.avatar_url ? (
+            <Image source={{ uri: profile.avatar_url }} style={styles.avatarRing} />
+          ) : (
+            <View style={styles.avatarRing}>
+              <Text style={styles.avatarEmoji}>🧑</Text>
+            </View>
+          )}
           <View style={styles.nameRow}>
-            <Text style={styles.name}>Your Name</Text>
-            <CheckCircle2 size={18} color="#1D9BF0" />
+            <Text style={styles.name}>{profile?.full_name || 'Your Name'}</Text>
+            {profile?.is_verified && <CheckCircle2 size={18} color="#1D9BF0" />}
           </View>
           <Text style={styles.phone}>{user?.phone || '+91 XXXXX XXXXX'}</Text>
+          {profile?.bio && (
+            <Text style={[styles.phone, { marginTop: 8, color: theme.colors.foreground, textAlign: 'center', paddingHorizontal: 20 }]}>
+              {profile.bio}
+            </Text>
+          )}
         </View>
 
         {/* Stats */}
         <View style={styles.statsRow}>
-          {STAT_ITEMS.map((s, i) => (
-            <View key={i} style={styles.statItem}>
-              <Text style={styles.statValue}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
-            </View>
-          ))}
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{stats.joined}</Text>
+            <Text style={styles.statLabel}>Plans Joined</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{stats.hosted}</Text>
+            <Text style={styles.statLabel}>Plans Hosted</Text>
+          </View>
         </View>
 
         {/* Menu Items */}
         <View style={styles.menuSection}>
           <Text style={styles.menuTitle}>Account</Text>
+          
+          <Pressable style={styles.menuRow} onPress={() => router.push('/my-plans')}>
+            <View style={styles.menuIcon}><Star size={20} color={theme.colors.primary} /></View>
+            <View style={styles.menuText}>
+              <Text style={styles.menuLabel}>My Plans</Text>
+              <Text style={styles.menuSub}>{stats.hosted} hosted, {stats.joined} joined</Text>
+            </View>
+            <Text style={styles.menuArrow}>›</Text>
+          </Pressable>
 
-          {[
-            { icon: <Star size={20} color={theme.colors.primary} />, label: 'My Plans', sub: '4 hosted, 12 joined' },
-            { icon: <Shield size={20} color={theme.colors.primary} />, label: 'Verification', sub: 'Get your blue tick' },
-          ].map((item, i) => (
-            <Pressable key={i} style={styles.menuRow}>
-              <View style={styles.menuIcon}>{item.icon}</View>
-              <View style={styles.menuText}>
-                <Text style={styles.menuLabel}>{item.label}</Text>
-                <Text style={styles.menuSub}>{item.sub}</Text>
-              </View>
-              <Text style={styles.menuArrow}>›</Text>
-            </Pressable>
-          ))}
+          <Pressable style={styles.menuRow} onPress={() => router.push('/verification')}>
+            <View style={styles.menuIcon}><Shield size={20} color={theme.colors.primary} /></View>
+            <View style={styles.menuText}>
+              <Text style={styles.menuLabel}>Verification</Text>
+              <Text style={styles.menuSub}>{profile?.is_verified ? 'Verified ✓' : 'Get your blue tick'}</Text>
+            </View>
+            <Text style={styles.menuArrow}>›</Text>
+          </Pressable>
         </View>
 
         {/* Sign Out */}

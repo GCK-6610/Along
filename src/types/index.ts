@@ -7,19 +7,26 @@ export interface Profile {
   is_verified: boolean;
 }
 
+export interface PlanParticipant extends Profile {
+  join_status?: 'pending' | 'approved' | 'rejected';
+  intro_message?: string;
+}
+
 export interface Plan {
   id: string;
   host_id: string;
   host?: Profile;
   title: string;
-  category: string;
+  tags: string[];
   description?: string;
-  venue_name: string;
+  venue: string;
   scheduled_at: string;
-  max_capacity: number;
+  capacity: number;
   current_participants: number;
   gender_reach: 'all' | 'same';
+  latitude?: number;
+  longitude?: number;
   distance_km?: number;
-  participants_list?: Profile[];
+  participants_list?: PlanParticipant[];
   status: 'active' | 'cancelled' | 'completed';
 }

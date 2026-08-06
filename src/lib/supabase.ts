@@ -31,9 +31,7 @@ const ExpoSecureStoreAdapter = {
   },
 };
 
-import { USE_MOCK_AUTH, mockAuth, mockFrom } from './localSetup';
-
-export const supabase = USE_MOCK_AUTH ? ({ auth: mockAuth, from: mockFrom } as any) : createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: ExpoSecureStoreAdapter,
     autoRefreshToken: true,

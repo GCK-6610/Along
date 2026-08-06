@@ -10,7 +10,7 @@ interface PlanCardProps {
 }
 
 export default function PlanCard({ plan, onPress }: PlanCardProps) {
-  const { host, title, category, venue_name, max_capacity, current_participants, scheduled_at } = plan;
+  const { host, title, tags, venue, capacity, current_participants, scheduled_at } = plan;
   
   const dateObj = new Date(scheduled_at);
   const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -36,9 +36,11 @@ export default function PlanCard({ plan, onPress }: PlanCardProps) {
             <Text style={styles.hostSubtitle}>Host</Text>
           </View>
         </View>
-        <View style={styles.categoryPill}>
-          <Text style={styles.categoryText}>{category.toUpperCase()}</Text>
-        </View>
+        {tags && tags.length > 0 && (
+          <View style={styles.categoryPill}>
+            <Text style={styles.categoryText}>#{tags[0].toUpperCase()}</Text>
+          </View>
+        )}
       </View>
 
       {/* Body: Plan Details */}
@@ -47,7 +49,7 @@ export default function PlanCard({ plan, onPress }: PlanCardProps) {
         
         <View style={styles.metaRow}>
           <MapPin size={16} color={theme.colors.mutedForeground} />
-          <Text style={styles.metaText}>{venue_name}</Text>
+          <Text style={styles.metaText}>{venue}</Text>
         </View>
         
         <View style={styles.metaRow}>

@@ -30,16 +30,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       if (session) {
-        await checkProfile(session.user.id);
+        await checkProfile(session.user);
       }
       setLoading(false);
     });
 
     // Listen for auth state changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
       setSession(session);
       if (session) {
-        await checkProfile(session.user.id);
+        await checkProfile(session.user);
       } else {
         setHasProfile(false);
       }
@@ -48,12 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkProfile = async (userId: string) => {
+  const checkProfile = async (user: User) => {
     const { data } = await supabase
       .from('profiles')
       .select('id')
-      .eq('id', userId)
+      .eq('id', user.id)
       .single();
+    
     setHasProfile(!!data);
   };
 

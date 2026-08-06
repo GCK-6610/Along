@@ -1,3 +1,4 @@
+import 'react-native-url-polyfill/auto';
 import { useEffect } from 'react';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
