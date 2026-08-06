@@ -9,7 +9,8 @@ import { theme } from '../../styles/theme';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { usePlans } from '../../hooks/usePlans';
 import { useHotspots } from '../../hooks/useHotspots';
-
+import PlanCard from '../../components/features/PlanCard';
+import { Plan } from '../../types';
 const TRENDING_TAGS = [
   { id: 'all', label: 'All', emoji: '✨' },
   { id: 'coffee', label: 'Coffee', emoji: '☕' },
