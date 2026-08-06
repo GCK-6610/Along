@@ -63,7 +63,7 @@ export default function PlanCard({ plan, onPress }: PlanCardProps) {
         <View style={styles.capacityContainer}>
           <Users size={16} color={theme.colors.primary} />
           <Text style={styles.capacityText}>
-            {current_participants}/{max_capacity} joined
+            {current_participants}/{capacity} joined
           </Text>
         </View>
       </View>
