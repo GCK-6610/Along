@@ -5,6 +5,7 @@ export interface ParsedPlanResult {
   venue: string;
   tags: string[];
   capacity: string;
+  embedding?: number[];
   success: boolean;
 }
 
@@ -39,6 +40,7 @@ export async function parsePlanWithAI(prompt: string): Promise<ParsedPlanResult>
         venue: data.venue || '',
         tags: Array.isArray(data.tags) ? data.tags : [],
         capacity: data.capacity ? String(data.capacity) : '4',
+        embedding: data.embedding,
         success: true
       };
     }

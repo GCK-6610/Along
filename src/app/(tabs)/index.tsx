@@ -8,16 +8,27 @@ import { usePlans } from '../../hooks/usePlans';
 import { useHotspots } from '../../hooks/useHotspots';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import * as Location from 'expo-location';
 import PlanCard from '../../components/features/PlanCard';
 import { Plan, Hotspot } from '../../types';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState(user?.user_metadata?.full_name?.split(' ')[0] || 'Rahul');
+  const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
 
-  const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans();
+  const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans(userLocation?.lat, userLocation?.lon);
   const { hotspots, isLoading: hotspotsLoading, refetch: refetchHotspots } = useHotspots();
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
+    })();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

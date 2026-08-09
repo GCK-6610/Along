@@ -26,6 +26,7 @@ export default function CreateScreen() {
   const [tagInput, setTagInput] = useState('');
   const [capacity, setCapacity] = useState('4');
   const [genderReach, setGenderReach] = useState<'all' | 'same'>('all');
+  const [embedding, setEmbedding] = useState<number[] | null>(null);
   const [scheduledAt, setScheduledAt] = useState(new Date(Date.now() + 86400000));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isMapModalVisible, setMapModalVisible] = useState(false);
@@ -105,6 +106,7 @@ export default function CreateScreen() {
     setVenue(result.venue);
     setTags(result.tags);
     setCapacity(result.capacity);
+    if (result.embedding) setEmbedding(result.embedding);
     setParsing(false);
     setAiSuccessBadge(true);
   };
@@ -124,6 +126,7 @@ export default function CreateScreen() {
         scheduled_at: scheduledAt.toISOString(),
         capacity: parseInt(capacity),
         gender_reach: genderReach,
+        embedding: embedding,
         status: 'active'
       }).select('id').single();
 
@@ -138,6 +141,7 @@ export default function CreateScreen() {
       setTitle('');
       setVenue('');
       setCapacity('4');
+      setEmbedding(null);
       setNlpInput('');
       setAiSuccessBadge(false);
       
@@ -375,8 +379,22 @@ export default function CreateScreen() {
               <X size={20} color={theme.colors.foreground} />
             </Pressable>
             <Text style={styles.modalTitle}>Pick on Map</Text>
-            <Pressable style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16 }} onPress={() => {
-              setVenue(`Pinned: ${mapCoordinate.latitude.toFixed(4)}, ${mapCoordinate.longitude.toFixed(4)}`);
+            <Pressable style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16 }} onPress={async () => {
+              if (mapSearchQuery.trim()) {
+                setVenue(mapSearchQuery.trim());
+              } else {
+                try {
+                  const reverse = await Location.reverseGeocodeAsync(mapCoordinate);
+                  if (reverse && reverse.length > 0) {
+                    const place = reverse[0];
+                    setVenue([place.name, place.street, place.city].filter(Boolean).join(', '));
+                  } else {
+                    setVenue(`Pinned: ${mapCoordinate.latitude.toFixed(4)}, ${mapCoordinate.longitude.toFixed(4)}`);
+                  }
+                } catch (e) {
+                  setVenue(`Pinned: ${mapCoordinate.latitude.toFixed(4)}, ${mapCoordinate.longitude.toFixed(4)}`);
+                }
+              }
               setMapModalVisible(false);
             }}>
               <Text style={{ color: '#fff', fontFamily: theme.typography.fontFamily.bold, fontSize: 14 }}>Select</Text>

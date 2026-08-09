@@ -52,6 +52,11 @@ export default function PlanDetailsScreen() {
     try {
       await requestToJoin(introText);
       triggerJoinSuccessNotification(plan.title);
+      // Notify the host via Push Notification Edge Function
+      supabase.functions.invoke('notify-host', {
+        body: { plan_id: plan.id, user_id: user.id }
+      }).catch(err => console.warn('Push notification error:', err));
+      
       Alert.alert('Request Sent', 'Your request has been sent to the host.');
       setJoinModalVisible(false);
       setIntroText('');

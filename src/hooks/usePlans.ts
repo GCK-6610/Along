@@ -2,33 +2,27 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plan } from '../types';
 
-export function usePlans() {
+export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: number[]) {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPlans();
-  }, []);
+  }, [userLat, userLon, queryEmbedding]);
 
   const fetchPlans = async () => {
     try {
       setIsLoading(true);
-      
-      // In a real production app, we would join with plan_participants and profiles
-      // to get the nested structure expected by the UI.
+      // Use the new RPC function for location & AI-based sorting
       const { data, error } = await supabase
-        .from('plans')
-        .select(`
-          *,
-          host:profiles!plans_host_id_fkey(*),
-          participants_list:plan_participants(
-            join_status,
-            intro_message,
-            ...profiles(*)
-          )
-        `)
-        .order('created_at', { ascending: false });
+        .rpc('get_nearby_plans', {
+          user_lat: userLat,
+          user_lon: userLon,
+          query_embedding: queryEmbedding,
+          match_threshold: 0.5,
+          match_count: 50
+        });
 
       if (error) throw error;
       setPlans((data as any) || []);

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 interface AuthContextType {
   session: Session | null;
@@ -51,11 +52,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkProfile = async (user: User) => {
     const { data } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, push_token')
       .eq('id', user.id)
       .single();
     
-    setHasProfile(!!data);
+    if (data) {
+      setHasProfile(true);
+      // Register for Push Notifications
+      const token = await registerForPushNotificationsAsync();
+      if (token && data.push_token !== token) {
+        await supabase.from('profiles').update({ push_token: token }).eq('id', user.id);
+      }
+    } else {
+      setHasProfile(false);
+    }
   };
 
   const signOut = async () => {

@@ -11,6 +11,8 @@ import { usePlans } from '../../hooks/usePlans';
 import { useHotspots } from '../../hooks/useHotspots';
 import PlanCard from '../../components/features/PlanCard';
 import { Plan } from '../../types';
+import { useEffect } from 'react';
+import * as Location from 'expo-location';
 const TRENDING_TAGS = [
   { id: 'all', label: 'All', emoji: '✨' },
   { id: 'coffee', label: 'Coffee', emoji: '☕' },
@@ -23,7 +25,17 @@ const TRENDING_TAGS = [
 ];
 
 export default function ExploreScreen() {
-  const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans();
+  const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
+  const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans(userLocation?.lat, userLocation?.lon);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
+    })();
+  }, []);
 
   const darkMapStyle = [
     {
