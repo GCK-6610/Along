@@ -1,5 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, Alert } from 'react-native';
+
+import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Save, Edit2, X } from 'lucide-react-native';
 import { theme } from '../styles/theme';
@@ -7,51 +9,34 @@ import { useAuth } from '../context/AuthContext';
 import { updateMockProfile } from '../lib/mockData';
 import { supabase } from '../lib/supabase';
 
-const AVATARS = [
-  // Micah
-  'https://api.dicebear.com/7.x/micah/png?seed=Rahul&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/micah/png?seed=Alex&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/micah/png?seed=Sam&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/micah/png?seed=Jordan&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/micah/png?seed=Casey&backgroundColor=F4F4F5',
-  
-  // Notionists
-  'https://api.dicebear.com/7.x/notionists/png?seed=Felix&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/notionists/png?seed=Aneka&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/notionists/png?seed=Jack&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/notionists/png?seed=Lily&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/notionists/png?seed=Chloe&backgroundColor=F4F4F5',
+import Fuse from 'fuse.js';
+import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
 
-  // Adventurer
-  'https://api.dicebear.com/7.x/adventurer/png?seed=Bandit&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/adventurer/png?seed=Sasha&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/adventurer/png?seed=Max&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/adventurer/png?seed=Bella&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/adventurer/png?seed=Milo&backgroundColor=F4F4F5',
-  
-  // Lorelei
-  'https://api.dicebear.com/7.x/lorelei/png?seed=Harley&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/lorelei/png?seed=Oliver&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/lorelei/png?seed=Luna&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/lorelei/png?seed=Stella&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/lorelei/png?seed=Leo&backgroundColor=F4F4F5',
-
-  // Personas
-  'https://api.dicebear.com/7.x/personas/png?seed=Cleo&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/personas/png?seed=Jasper&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/personas/png?seed=Abby&backgroundColor=F4F4F5',
-  'https://api.dicebear.com/7.x/personas/png?seed=Toby&backgroundColor=F4F4F5',
-];
+const ALL_AVATARS = AVATAR_CATALOG.flatMap(c => c.items);
+const fuse = new Fuse(ALL_AVATARS, {
+  keys: ['tags'],
+  threshold: 0.3,
+  ignoreLocation: true
+});
 
 export default function EditProfileScreen() {
   const { user } = useAuth();
   
-  const [fullName, setFullName] = useState(user?.user_metadata?.full_name || '');
+  const [fullName, setFullName] = useState('');
   const [bio, setBio] = useState('');
-  const [avatar, setAvatar] = useState(user?.user_metadata?.avatar_url || AVATARS[0]);
+  const [gender, setGender] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState(ALL_AVATARS[0]?.url || '');
   const [isModalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('All');
+  
+  const displayedAvatars = searchQuery.trim() 
+    ? fuse.search(searchQuery).map(result => result.item)
+    : activeTab === 'All' 
+      ? ALL_AVATARS 
+      : AVATAR_CATALOG.find(c => c.category === activeTab)?.items || [];
 
   useEffect(() => {
     if (!user) return;
@@ -59,9 +44,10 @@ export default function EditProfileScreen() {
       try {
         const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
         if (data) {
-          setFullName(data.full_name || user.user_metadata?.full_name || '');
+          setFullName(data.full_name || '');
           setBio(data.bio || '');
-          setAvatar(data.avatar_url || user.user_metadata?.avatar_url || AVATARS[0]);
+          setGender(data.gender || null);
+          setAvatar(data.avatar_url || ALL_AVATARS[0]?.url || '');
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -80,6 +66,7 @@ export default function EditProfileScreen() {
         id: user.id,
         full_name: fullName,
         bio: bio,
+        gender: gender,
         avatar_url: avatar
       });
       if (error) throw error;
@@ -112,7 +99,7 @@ export default function EditProfileScreen() {
               {/* Avatar Picker */}
           <View style={styles.avatarSection}>
             <Pressable onPress={() => setModalVisible(true)} style={styles.avatarEditWrap}>
-              <Image source={{ uri: avatar }} style={styles.mainAvatar} />
+              <Image source={{ uri: avatar, headers: { 'Accept': 'image/png' } }} style={styles.mainAvatar} />
               <View style={styles.editIconBadge}>
                 <Edit2 size={16} color="#fff" />
               </View>
@@ -128,12 +115,38 @@ export default function EditProfileScreen() {
                     <X size={20} color={theme.colors.foreground} />
                   </Pressable>
                 </View>
+                <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Search all avatars (e.g. happy, glasses)"
+                    placeholderTextColor={theme.colors.mutedForeground}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                </View>
+                {!searchQuery.trim() && (
+                  <View style={{ paddingBottom: 10 }}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
+                      <Pressable onPress={() => setActiveTab('All')} style={[styles.tabBtn, activeTab === 'All' && styles.tabBtnActive]}>
+                        <Text style={[styles.tabBtnText, activeTab === 'All' && styles.tabBtnTextActive]}>All</Text>
+                      </Pressable>
+                      {AVATAR_CATALOG.map((cat, idx) => (
+                        <Pressable key={idx} onPress={() => setActiveTab(cat.category)} style={[styles.tabBtn, activeTab === cat.category && styles.tabBtnActive]}>
+                          <Text style={[styles.tabBtnText, activeTab === cat.category && styles.tabBtnTextActive]}>{cat.category}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
                 <ScrollView contentContainerStyle={styles.avatarGrid} showsVerticalScrollIndicator={false}>
-                  {AVATARS.map((url, idx) => (
-                    <Pressable key={idx} onPress={() => { setAvatar(url); setModalVisible(false); }}>
-                      <Image source={{ uri: url }} style={[styles.avatarOption, avatar === url && styles.avatarSelected]} />
+                  {displayedAvatars.map((item) => (
+                    <Pressable key={item.id} onPress={() => { setAvatar(item.url); setModalVisible(false); }}>
+                      <Image source={{ uri: item.url, headers: { 'Accept': 'image/png' } }} style={[styles.avatarOption, avatar === item.url && styles.avatarSelected]} />
                     </Pressable>
                   ))}
+                  {displayedAvatars.length === 0 && (
+                    <Text style={{ textAlign: 'center', marginTop: 40, color: theme.colors.mutedForeground, width: '100%' }}>No avatars found for "{searchQuery}"</Text>
+                  )}
                 </ScrollView>
               </View>
             </View>
@@ -160,6 +173,21 @@ export default function EditProfileScreen() {
               placeholder="Tell people about yourself..."
               placeholderTextColor={theme.colors.mutedForeground}
             />
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Gender</Text>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable style={[styles.genderBtn, gender === 'male' && styles.genderBtnActive]} onPress={() => setGender('male')}>
+                <Text style={[styles.genderText, gender === 'male' && styles.genderTextActive]}>👨 Male</Text>
+              </Pressable>
+              <Pressable style={[styles.genderBtn, gender === 'female' && styles.genderBtnActive]} onPress={() => setGender('female')}>
+                <Text style={[styles.genderText, gender === 'female' && styles.genderTextActive]}>👩 Female</Text>
+              </Pressable>
+              <Pressable style={[styles.genderBtn, gender === 'other' && styles.genderBtnActive]} onPress={() => setGender('other')}>
+                <Text style={[styles.genderText, gender === 'other' && styles.genderTextActive]}>🧑 Other</Text>
+              </Pressable>
+            </View>
           </View>
           
           <Pressable style={styles.saveBtn} onPress={handleSave}>
@@ -199,6 +227,17 @@ const styles = StyleSheet.create({
   avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: theme.spacing.md, paddingBottom: 40 },
   avatarOption: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: 'transparent', backgroundColor: theme.colors.card },
   avatarSelected: { borderColor: theme.colors.primary },
+  tabBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border },
+  tabBtnActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  tabBtnText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.sm, color: theme.colors.mutedForeground },
+  tabBtnTextActive: { color: '#fff', fontFamily: theme.typography.fontFamily.bold },
+  genderBtn: {
+    flex: 1, backgroundColor: theme.colors.card, paddingVertical: 12, borderRadius: theme.borderRadius.md,
+    borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center',
+  },
+  genderBtnActive: { backgroundColor: theme.colors.secondary, borderColor: theme.colors.primary },
+  genderText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.sm, color: theme.colors.mutedForeground },
+  genderTextActive: { color: theme.colors.primary, fontFamily: theme.typography.fontFamily.bold },
   field: { gap: 8 },
   label: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm, color: theme.colors.foreground },
   input: {

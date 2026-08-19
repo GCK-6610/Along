@@ -29,21 +29,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
       if (session) {
         await checkProfile(session.user);
       }
+      setSession(session);
       setLoading(false);
     });
 
     // Listen for auth state changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
-      setSession(session);
       if (session) {
         await checkProfile(session.user);
       } else {
         setHasProfile(false);
       }
+      setSession(session);
     });
 
     return () => subscription.unsubscribe();
@@ -52,11 +52,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkProfile = async (user: User) => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, push_token')
+      .select('id, push_token, full_name')
       .eq('id', user.id)
       .single();
     
-    if (data) {
+    if (data && data.full_name && data.full_name.trim() !== '') {
       setHasProfile(true);
       // Register for Push Notifications
       const token = await registerForPushNotificationsAsync();

@@ -1,8 +1,24 @@
 import { Tabs } from 'expo-router';
 import { theme } from '../../styles/theme';
 import { Home, Compass, PlusCircle, MessageCircle, User } from 'lucide-react-native';
+import { useEffect } from 'react';
+import { registerForPushNotificationsAsync } from '../../lib/notifications';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
 
 export default function TabLayout() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      registerForPushNotificationsAsync().then(token => {
+        if (token) {
+          supabase.from('profiles').update({ push_token: token }).eq('id', user.id).then();
+        }
+      });
+    }
+  }, [user]);
+
   return (
     <Tabs
       screenOptions={{

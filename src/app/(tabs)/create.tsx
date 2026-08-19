@@ -1,7 +1,9 @@
-import { useState, useCallback, useRef } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, ScrollView,
+  View, Text, StyleSheet, ScrollView,
   TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Modal, FlatList, Alert
+
 } from 'react-native';
 import { Zap, MapPin, Users, Calendar, X, Search, Map as MapIcon } from 'lucide-react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
@@ -11,6 +13,7 @@ import { parsePlanWithAI } from '../../lib/aiParser';
 import { supabase } from '../../lib/supabase';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as Location from 'expo-location';
 
 export default function CreateScreen() {
@@ -40,6 +43,28 @@ export default function CreateScreen() {
   const [locationQuery, setLocationQuery] = useState('');
   const [locationResults, setLocationResults] = useState<any[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
+      setMapCoordinate({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+    })();
+  }, []);
+
+  const resetForm = () => {
+    setTitle('');
+    setVenue('');
+    setCapacity('4');
+    setEmbedding(null);
+    setNlpInput('');
+    setAiSuccessBadge(false);
+    setTags([]);
+    setMapCoordinate(userLocation ? { latitude: userLocation.lat, longitude: userLocation.lon } : { latitude: 28.5921, longitude: 77.2250 });
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -52,7 +77,7 @@ export default function CreateScreen() {
     if (!locationQuery.trim()) return;
     setIsSearchingLocation(true);
     try {
-      const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
+      const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
       if (!apiKey) {
         console.log('No Google Places API Key found. Returning mock data.');
         setLocationResults([
@@ -74,26 +99,8 @@ export default function CreateScreen() {
     }
   };
 
-  const searchMapLocation = async () => {
-    if (!mapSearchQuery.trim()) return;
-    setIsSearchingMap(true);
-    try {
-      const results = await Location.geocodeAsync(mapSearchQuery);
-      if (results.length > 0) {
-        const newCoords = { latitude: results[0].latitude, longitude: results[0].longitude };
-        setMapCoordinate(newCoords);
-        mapRef.current?.animateToRegion({
-          ...newCoords,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }, 1000);
-      }
-    } catch (e) {
-      console.log('Map search error', e);
-    } finally {
-      setIsSearchingMap(false);
-    }
-  };
+  // Google Places API takes over mapSearchQuery handling. 
+  // We keep the state just in case, but rely on autocomplete onPress
 
   const handleNLPParse = async () => {
     const promptToParse = nlpInput.trim() || 'Morning run at Lodhi Gardens tomorrow 6am for 4 people';
@@ -127,6 +134,8 @@ export default function CreateScreen() {
         capacity: parseInt(capacity),
         gender_reach: genderReach,
         embedding: embedding,
+        latitude: mapCoordinate.latitude,
+        longitude: mapCoordinate.longitude,
         status: 'active'
       }).select('id').single();
 
@@ -159,39 +168,16 @@ export default function CreateScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-          <Text style={styles.title}>Create a Plan</Text>
-          <Text style={styles.subtitle}>Tell us what you have in mind</Text>
-
-          {/* NLP Input */}
-          <View style={styles.nlpCard}>
-            <View style={styles.nlpHeader}>
-              <Zap size={16} color={theme.colors.primary} />
-              <Text style={styles.nlpLabel}>AI Quick Fill</Text>
-              {aiSuccessBadge && (
-                <View style={styles.aiBadge}>
-                  <Text style={styles.aiBadgeText}>✨ Auto-filled by AI</Text>
-                </View>
-              )}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View>
+              <Text style={styles.title}>Create a Plan</Text>
+              <Text style={styles.subtitle}>Tell us what you have in mind</Text>
             </View>
-            <TextInput
-              style={styles.nlpInput}
-              placeholder='e.g. "Morning run at Lodhi Gardens tomorrow 6am for 4 people"'
-              placeholderTextColor={theme.colors.mutedForeground}
-              value={nlpInput}
-              onChangeText={setNlpInput}
-              multiline
-            />
-            <Pressable
-              style={styles.nlpBtn}
-              onPress={handleNLPParse}
-              disabled={parsing}
-            >
-              {parsing
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <Text style={styles.nlpBtnText}>✨ Auto-fill form</Text>
-              }
+            <Pressable onPress={resetForm} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.pill, borderWidth: 1, borderColor: theme.colors.border }}>
+              <Text style={{ fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground }}>Clear Form</Text>
             </Pressable>
           </View>
+
 
           {/* Form Fields */}
           <View style={styles.form}>
@@ -306,6 +292,37 @@ export default function CreateScreen() {
             </View>
           </View>
 
+          {/* NLP Input (Secondary) */}
+          <View style={styles.nlpCard}>
+            <View style={styles.nlpHeader}>
+              <Zap size={16} color={theme.colors.primary} />
+              <Text style={styles.nlpLabel}>Or use AI Auto-fill</Text>
+              {aiSuccessBadge && (
+                <View style={styles.aiBadge}>
+                  <Text style={styles.aiBadgeText}>✨ Auto-filled by AI</Text>
+                </View>
+              )}
+            </View>
+            <TextInput
+              style={styles.nlpInput}
+              placeholder='e.g. "Morning run at Lodhi Gardens tomorrow 6am for 4 people"'
+              placeholderTextColor={theme.colors.mutedForeground}
+              value={nlpInput}
+              onChangeText={setNlpInput}
+              multiline
+            />
+            <Pressable
+              style={styles.nlpBtn}
+              onPress={handleNLPParse}
+              disabled={parsing}
+            >
+              {parsing
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Text style={styles.nlpBtnText}>✨ Auto-fill form</Text>
+              }
+            </Pressable>
+          </View>
+
           <View style={styles.bottomBar}>
             <Pressable style={[styles.postBtn, (!title || !venue || tags.length === 0 || isPosting) && styles.btnDisabled]} onPress={handlePostPlan} disabled={!title || !venue || tags.length === 0 || isPosting}>
               {isPosting ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.postBtnText}>Post Plan</Text>}
@@ -316,8 +333,8 @@ export default function CreateScreen() {
 
       {/* Location Search Modal */}
       <Modal visible={isLocationModalVisible} animationType="slide" onRequestClose={() => setLocationModalVisible(false)}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.modalHeader}>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? 50 : 20 }]}>
             <Pressable style={styles.iconBtn} onPress={() => setLocationModalVisible(false)}>
               <X size={20} color={theme.colors.foreground} />
             </Pressable>
@@ -367,8 +384,9 @@ export default function CreateScreen() {
                 </View>
               </Pressable>
             )}
+            keyboardShouldPersistTaps="handled"
           />
-        </SafeAreaView>
+        </View>
       </Modal>
 
       {/* Map Picker Modal */}
@@ -400,29 +418,80 @@ export default function CreateScreen() {
               <Text style={{ color: '#fff', fontFamily: theme.typography.fontFamily.bold, fontSize: 14 }}>Select</Text>
             </Pressable>
           </View>
-          <View style={{ padding: theme.spacing.md, backgroundColor: theme.colors.background }}>
-            <View style={styles.modalSearchBox}>
-              <Search size={18} color={theme.colors.mutedForeground} />
-              <TextInput
-                style={styles.modalSearchInput}
-                placeholder="Search world..."
-                placeholderTextColor={theme.colors.mutedForeground}
-                value={mapSearchQuery}
-                onChangeText={setMapSearchQuery}
-                onSubmitEditing={searchMapLocation}
-                returnKeyType="search"
-              />
-              {isSearchingMap && <ActivityIndicator size="small" color={theme.colors.primary} />}
-            </View>
+          <View style={{ paddingHorizontal: theme.spacing.md, backgroundColor: 'transparent', position: 'absolute', top: 90, left: 0, right: 0, zIndex: 999 }}>
+            <GooglePlacesAutocomplete
+              placeholder='Search places...'
+              fetchDetails={true}
+              onPress={(data, details = null) => {
+                if (details?.geometry?.location) {
+                  const lat = details.geometry.location.lat;
+                  const lng = details.geometry.location.lng;
+                  setMapCoordinate({ latitude: lat, longitude: lng });
+                  setVenue(details.name || data.description);
+                  if (mapRef.current) {
+                    mapRef.current.animateToRegion({
+                      latitude: lat,
+                      longitude: lng,
+                      latitudeDelta: 0.05,
+                      longitudeDelta: 0.05,
+                    }, 1000);
+                  }
+                }
+              }}
+              query={{
+                key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+                language: 'en',
+                ...(userLocation ? { location: `${userLocation.lat},${userLocation.lon}`, radius: '10000' } : {})
+              }}
+              styles={{
+                textInput: {
+                  backgroundColor: theme.colors.card,
+                  borderRadius: theme.borderRadius.md,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  color: theme.colors.foreground,
+                  height: 48,
+                  fontFamily: theme.typography.fontFamily.medium,
+                },
+                listView: {
+                  backgroundColor: theme.colors.card,
+                  borderRadius: theme.borderRadius.md,
+                  marginTop: 8,
+                  elevation: 5,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                },
+                row: {
+                  backgroundColor: theme.colors.card,
+                  padding: 12,
+                },
+                description: {
+                  color: theme.colors.foreground,
+                  fontFamily: theme.typography.fontFamily.medium,
+                },
+                poweredContainer: {
+                  backgroundColor: theme.colors.card,
+                  borderBottomLeftRadius: theme.borderRadius.md,
+                  borderBottomRightRadius: theme.borderRadius.md,
+                }
+              }}
+              textInputProps={{
+                placeholderTextColor: theme.colors.mutedForeground,
+                returnKeyType: "search",
+              }}
+              keyboardShouldPersistTaps="handled"
+            />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, zIndex: 1 }}>
             <MapView
               ref={mapRef}
-              style={{ flex: 1 }}
-              provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+              style={styles.map}
+              provider={PROVIDER_GOOGLE}
               initialRegion={{
-                latitude: 28.5921,
-                longitude: 77.2250,
+                latitude: userLocation?.lat || 28.5921,
+                longitude: userLocation?.lon || 77.2250,
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
               }}
@@ -515,4 +584,5 @@ const styles = StyleSheet.create({
   locName: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: theme.colors.foreground },
   locAddress: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, marginTop: 2 },
   btnDisabled: { opacity: 0.5 },
+  map: { flex: 1, width: '100%', height: '100%' },
 });

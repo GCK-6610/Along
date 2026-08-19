@@ -1,15 +1,18 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, ScrollView,
-  Pressable, Image, Alert, Modal, TextInput
+  View, Text, StyleSheet, ScrollView,
+  Pressable, Image, Alert, Modal, TextInput, Linking, Platform, Share
 } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
-import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X } from 'lucide-react-native';
+import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
+
 import { ActivityIndicator } from 'react-native';
-import { triggerJoinSuccessNotification } from '../../lib/notifications';
+import { triggerRequestSentNotification } from '../../lib/notifications';
 import { useAuth } from '../../context/AuthContext';
 import { usePlan } from '../../hooks/usePlan';
+import { supabase } from '../../lib/supabase';
 
 export default function PlanDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -51,15 +54,14 @@ export default function PlanDetailsScreen() {
     if (!user || !plan) return;
     try {
       await requestToJoin(introText);
-      triggerJoinSuccessNotification(plan.title);
+      triggerRequestSentNotification();
       // Notify the host via Push Notification Edge Function
       supabase.functions.invoke('notify-host', {
         body: { plan_id: plan.id, user_id: user.id }
-      }).catch(err => console.warn('Push notification error:', err));
-      
-      Alert.alert('Request Sent', 'Your request has been sent to the host.');
+      });
       setJoinModalVisible(false);
       setIntroText('');
+      Alert.alert('Request Sent', 'Your request has been sent to the host.');
     } catch (e: any) {
       Alert.alert('Error', e.message);
     }
@@ -87,6 +89,10 @@ export default function PlanDetailsScreen() {
   const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const formattedDate = dateObj.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 
+  // Host is inherently a participant, plus any approved participants
+  const approvedCount = (participants_list || []).filter(p => p.join_status === 'approved').length;
+  const current_participants = Math.max(1, approvedCount);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Top Header Bar */}
@@ -95,26 +101,51 @@ export default function PlanDetailsScreen() {
           <ArrowLeft size={20} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerCategory}>{(tags?.[0] || 'OTHER').toUpperCase()}</Text>
-        <Pressable style={styles.iconBtn} onPress={() => Alert.alert('Shared', 'Plan link copied to clipboard!')}>
-          <Share2 size={18} color={theme.colors.foreground} />
-        </Pressable>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {isHost && (
+            <Pressable style={styles.iconBtn} onPress={() => router.push({ pathname: '/plan/edit', params: { id } })}>
+              <Edit2 size={18} color={theme.colors.foreground} />
+            </Pressable>
+          )}
+          {(isHost || isJoined) && (
+            <Pressable style={styles.iconBtn} onPress={() => router.push({ pathname: '/messages/[id]', params: { id } })}>
+              <MessageCircle size={18} color={theme.colors.foreground} />
+            </Pressable>
+          )}
+          <Pressable style={styles.iconBtn} onPress={async () => {
+            try {
+              const url = `along://plan/${id}`;
+              await Share.share({
+                message: `Join me for ${title} on Along!\n\n${url}`,
+                url: url, // iOS only
+                title: `Join ${title}` // Android only
+              });
+            } catch (error: any) {
+              Alert.alert('Error sharing', error.message);
+            }
+          }}>
+            <Share2 size={18} color={theme.colors.foreground} />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Host Card */}
         <View style={styles.hostCard}>
-          {host?.avatar_url ? (
-            <Image source={{ uri: host.avatar_url }} style={styles.avatar} />
-          ) : (
-            <View style={[styles.avatar, { backgroundColor: theme.colors.muted }]} />
-          )}
-          <View style={styles.hostDetails}>
-            <View style={styles.nameRow}>
-              <Text style={styles.hostName}>{host?.full_name || 'Host'}</Text>
-              {host?.is_verified && <CheckCircle2 size={15} color="#1D9BF0" />}
+          <Pressable style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: theme.spacing.sm }} onPress={() => host?.id && router.push({ pathname: '/user/[id]', params: { id: host.id } })}>
+            {host?.avatar_url ? (
+              <Image source={{ uri: host.avatar_url }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: theme.colors.muted }]} />
+            )}
+            <View style={styles.hostDetails}>
+              <View style={styles.nameRow}>
+                <Text style={styles.hostName}>{host?.full_name || 'Host'}</Text>
+                {host?.is_verified && <CheckCircle2 size={15} color="#1D9BF0" />}
+              </View>
+              <Text style={styles.hostLabel}>Host & Organizer</Text>
             </View>
-            <Text style={styles.hostLabel}>Host & Organizer</Text>
-          </View>
+          </Pressable>
           <View style={styles.reachBadge}>
             <Text style={styles.reachText}>
               {gender_reach === 'same' ? (host?.gender === 'male' ? '🔒 Men Only' : '🔒 Women Only') : '👥 Everyone'}
@@ -163,13 +194,26 @@ export default function PlanDetailsScreen() {
         </View>
 
         {/* Map Preview Widget */}
-        <View style={styles.mapCard}>
+        <Pressable 
+          style={styles.mapCard}
+          onPress={() => {
+            if (!plan?.latitude || !plan?.longitude) return;
+            const scheme = Platform.select({ ios: 'maps://0,0?q=', android: 'geo:0,0?q=' });
+            const latLng = `${plan.latitude},${plan.longitude}`;
+            const label = plan.venue;
+            const url = Platform.select({
+              ios: `${scheme}${label}@${latLng}`,
+              android: `${scheme}${latLng}(${label})`
+            });
+            if (url) Linking.openURL(url);
+          }}
+        >
           <View style={styles.mapPlaceholder}>
             <MapPin size={24} color={theme.colors.primary} />
             <Text style={styles.mapText}>Venue Location Map</Text>
             <Text style={styles.mapSub}>{venue}</Text>
           </View>
-        </View>
+        </Pressable>
 
         {/* Join Requests (Host Only) */}
         {isHost && pendingRequests.length > 0 && (
@@ -178,14 +222,14 @@ export default function PlanDetailsScreen() {
             <View style={styles.requestList}>
               {pendingRequests.map((p, idx) => (
                 <View key={idx} style={styles.requestCard}>
-                  <View style={styles.requestHeader}>
+                  <Pressable style={styles.requestHeader} onPress={() => router.push({ pathname: '/user/[id]', params: { id: p.id } })}>
                     {p.avatar_url ? (
-                      <Image source={{ uri: p.avatar_url }} style={styles.attendeeAvatar} />
+                      <Image source={{ uri: p.avatar_url, headers: { 'Accept': 'image/png' } }} style={styles.attendeeAvatar} />
                     ) : (
                       <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
                     )}
                     <Text style={styles.requestName}>{p.full_name}</Text>
-                  </View>
+                  </Pressable>
                   <Text style={styles.requestMessage}>"{p.intro_message || 'I would like to join your plan!'}"</Text>
                   <View style={styles.requestActions}>
                     <Pressable style={[styles.actionBtn, styles.approveBtn]} onPress={() => handleApprove(p.id)}>
@@ -206,20 +250,20 @@ export default function PlanDetailsScreen() {
         <View style={styles.attendeesSection}>
           <View style={styles.attendeesHeader}>
             <Text style={styles.sectionTitle}>Attendees</Text>
-            <Text style={styles.capacityTag}>{plan.current_participants} / {capacity} joined</Text>
+            <Text style={styles.capacityTag}>{current_participants} / {capacity || 0} joined</Text>
           </View>
 
           <View style={styles.attendeeList}>
             {(participants_list || []).filter(p => p.join_status === 'approved' || !p.join_status).map((p, idx) => (
-              <View key={idx} style={styles.attendeeRow}>
+              <Pressable key={idx} style={styles.attendeeRow} onPress={() => p.id && router.push({ pathname: '/user/[id]', params: { id: p.id } })}>
                 {p.avatar_url ? (
-                  <Image source={{ uri: p.avatar_url }} style={styles.attendeeAvatar} />
+                  <Image source={{ uri: p.avatar_url, headers: { 'Accept': 'image/png' } }} style={styles.attendeeAvatar} />
                 ) : (
                   <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
                 )}
                 <Text style={styles.attendeeName}>{p.full_name}{p.id === user?.id ? ' (You)' : ''}</Text>
                 {p.id === host?.id && <Text style={styles.hostBadge}>HOST</Text>}
-              </View>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -230,7 +274,7 @@ export default function PlanDetailsScreen() {
         <View style={styles.bottomBar}>
           <View style={styles.bottomInfo}>
             <Users size={16} color={theme.colors.mutedForeground} />
-            <Text style={styles.bottomCapacityText}>{capacity - plan.current_participants} spots left</Text>
+            <Text style={styles.bottomCapacityText}>{Math.max(0, (capacity || 0) - current_participants)} spots left</Text>
           </View>
           <Pressable
             style={[
@@ -318,7 +362,7 @@ const styles = StyleSheet.create({
   title: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xxl, color: theme.colors.foreground, letterSpacing: -0.3 },
   description: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.base, color: theme.colors.mutedForeground, lineHeight: 22 },
   tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  tagPill: { backgroundColor: theme.colors.secondary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: theme.borderRadius.full },
+  tagPill: { backgroundColor: theme.colors.secondary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: theme.borderRadius.pill },
   tagText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 10, color: theme.colors.primary, textTransform: 'uppercase' },
   infoGrid: { gap: theme.spacing.sm },
   infoCard: {

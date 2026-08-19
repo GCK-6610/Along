@@ -1,4 +1,6 @@
 import { Alert, Platform } from 'react-native';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 
 export interface NotificationPayload {
   title: string;
@@ -11,16 +13,35 @@ export interface NotificationPayload {
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   if (Platform.OS === 'web') {
-    console.log('[Notifications] Web push notification listener registered.');
-    return 'ExpoPushToken[mock-web-token-12345]';
+    return null;
   }
 
-  try {
-    // In native environment, expo-notifications obtains token
-    console.log('[Notifications] Push notification permissions granted.');
-    return 'ExpoPushToken[mock-native-token-67890]';
-  } catch (err) {
-    console.warn('[Notifications] Error obtaining push token:', err);
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      console.log('Failed to get push token for push notification!');
+      return null;
+    }
+    const token = (await Notifications.getExpoPushTokenAsync({
+      projectId: process.env.EXPO_PUBLIC_PROJECT_ID || 'along-project' // In a real app, from app.json/EAS
+    })).data;
+    return token;
+  } else {
+    console.log('Must use physical device for Push Notifications');
     return null;
   }
 }
@@ -40,9 +61,9 @@ export function sendPlanActivityNotification(payload: NotificationPayload) {
 /**
  * Triggers notification when a user joins a plan.
  */
-export function triggerJoinSuccessNotification(planTitle: string) {
+export function triggerRequestSentNotification() {
   sendPlanActivityNotification({
-    title: 'Plan Joined Successfully 🎉',
-    body: `You're on the attendee list for "${planTitle}". Open chat to coordinate!`,
+    title: 'Request Sent ✉️',
+    body: `Your request to join the plan has been sent to the host.`,
   });
 }

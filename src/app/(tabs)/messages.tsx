@@ -1,5 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, Pressable } from 'react-native';
+
+import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { MessageCircle } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router, useFocusEffect } from 'expo-router';
@@ -20,7 +22,7 @@ export default function MessagesScreen() {
   useEffect(() => {
     if (!user) return;
     const userChats = plans
-      .filter(p => p.host_id === user.id || p.participants_list?.some(u => u.id === user.id && u.join_status === 'approved'))
+      .filter(p => p.host_id === user.id || p.participants_list?.some((u: any) => u.id === user.id && u.join_status === 'approved'))
       .map(p => {
         // We aren't fetching real messages yet for the chat list for MVP to save time. 
         // A real impl would fetch the latest message from chat_messages table.

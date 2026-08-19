@@ -1,27 +1,33 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Pressable, ScrollView, Alert, ActivityIndicator } from 'react-native';
+
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, CheckCircle2, Shield, Camera, Upload } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
-import { updateMockProfile } from '../lib/mockData';
+import { supabase } from '../lib/supabase';
 
 export default function VerificationScreen() {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
       if (user) {
-        updateMockProfile(user.id, { is_verified: true });
+        const { error } = await supabase.from('profiles').update({ is_verified: true }).eq('id', user.id);
+        if (error) throw error;
       }
+      setSubmitting(false);
       Alert.alert('Verification Submitted', 'Your profile is now verified!', [
         { text: 'Awesome', onPress: () => router.back() }
       ]);
-    }, 1500);
+    } catch (error: any) {
+      setSubmitting(false);
+      Alert.alert('Error', error.message);
+    }
   };
 
   return (

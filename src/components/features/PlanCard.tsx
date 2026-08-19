@@ -10,7 +10,9 @@ interface PlanCardProps {
 }
 
 export default function PlanCard({ plan, onPress }: PlanCardProps) {
-  const { host, title, tags, venue, capacity, current_participants, scheduled_at } = plan;
+  const { host, title, tags, venue, capacity, scheduled_at, participants_list } = plan;
+  const approvedCount = (participants_list || []).filter((p: any) => p.join_status === 'approved').length;
+  const current_participants = plan.current_participants ?? Math.max(1, approvedCount);
   
   const dateObj = new Date(scheduled_at);
   const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -22,7 +24,7 @@ export default function PlanCard({ plan, onPress }: PlanCardProps) {
       <View style={styles.header}>
         <View style={styles.hostInfo}>
           {host?.avatar_url ? (
-            <Image source={{ uri: host.avatar_url }} style={styles.avatar} />
+            <Image source={{ uri: host.avatar_url, headers: { 'Accept': 'image/png' } }} style={styles.avatar} />
           ) : (
             <View style={[styles.avatar, { backgroundColor: theme.colors.muted }]} />
           )}

@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import { useEffect } from 'react';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
@@ -9,24 +9,39 @@ import {
   Outfit_700Bold
 } from '@expo-google-fonts/outfit';
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs([
+  "Can't perform a React state update on a component that hasn't mounted yet",
+]);
 
 SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
   const { session, loading, hasProfile } = useAuth();
+  const segments = useSegments();
 
   useEffect(() => {
     if (!loading) {
       SplashScreen.hideAsync();
+      
+      const inAuthGroup = segments[0] === '(auth)';
+      const isRoot = segments.length === 0;
+
       if (!session) {
-        router.replace('/(auth)/login');
+        // If not logged in and not already in auth group, go to login
+        if (!inAuthGroup) router.replace('/(auth)/login');
       } else if (!hasProfile) {
-        router.replace('/onboarding');
+        // If logged in but no profile, go to onboarding
+        if (segments[0] !== 'onboarding') router.replace('/onboarding');
       } else {
-        router.replace('/(tabs)');
+        // If logged in and has profile, and we are at the root or stuck in auth screen, send to tabs
+        if (isRoot || inAuthGroup) {
+          router.replace('/(tabs)');
+        }
       }
     }
-  }, [session, loading, hasProfile]);
+  }, [session, loading, hasProfile, segments]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

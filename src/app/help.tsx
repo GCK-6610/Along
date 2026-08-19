@@ -1,4 +1,6 @@
-import { View, Text, StyleSheet, SafeAreaView, Pressable, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, HelpCircle, ChevronRight, MessageCircle } from 'lucide-react-native';
 import { theme } from '../styles/theme';

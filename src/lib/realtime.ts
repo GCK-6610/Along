@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
-import { USE_MOCK_AUTH, addPlanMessage, ChatMessageItem } from './localSetup';
+import { USE_MOCK_AUTH } from './localSetup';
+import { ChatMessageItem } from '../types';
 
 /**
  * Subscribes to Realtime Chat Message changes for a specific Plan ID.
@@ -26,14 +27,14 @@ export function subscribeToPlanChat(
       {
         event: 'INSERT',
         schema: 'public',
-        table: 'messages',
+        table: 'chat_messages',
         filter: `plan_id=eq.${planId}`,
       },
       (payload: any) => {
         if (payload.new) {
           const newMsg: ChatMessageItem = {
             id: payload.new.id,
-            sender_id: payload.new.sender_id,
+            sender_id: payload.new.user_id,
             sender_name: payload.new.sender_name || 'Member',
             text: payload.new.content || payload.new.text,
             timestamp: new Date(payload.new.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),

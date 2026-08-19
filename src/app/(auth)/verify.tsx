@@ -1,7 +1,9 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, StyleSheet, Pressable,
-  SafeAreaView, ActivityIndicator, Alert
+  ActivityIndicator, Alert
+
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../lib/supabase';

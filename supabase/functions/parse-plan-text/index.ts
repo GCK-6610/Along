@@ -1,3 +1,4 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -5,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve(async (req: any) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -21,6 +22,7 @@ serve(async (req) => {
       );
     }
 
+    // @ts-ignore
     const apiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!apiKey) {
@@ -102,7 +104,7 @@ You MUST respond ONLY with a valid JSON object matching this schema:
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Edge function error:', error.message);
     return new Response(
       JSON.stringify({ error: error.message, success: false }),

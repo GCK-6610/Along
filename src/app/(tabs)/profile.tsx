@@ -1,16 +1,19 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Pressable, Image } from 'react-native';
+
+import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { CheckCircle2, LogOut, Settings, Star, Shield, Edit2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { useAuth } from '../../context/AuthContext';
 import { usePlans } from '../../hooks/usePlans';
 import { supabase } from '../../lib/supabase';
+import PlanCard from '../../components/features/PlanCard';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   
-  const [profile, setProfile] = useState<any>(user?.user_metadata || {});
+  const [profile, setProfile] = useState<any>({});
   const [stats, setStats] = useState({ hosted: 0, joined: 0 });
   const { plans, refetch: refetchPlans } = usePlans();
 
@@ -19,17 +22,22 @@ export default function ProfileScreen() {
       refetchPlans();
       if (user) {
         supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => {
-          if (data) setProfile(data);
+          if (data) {
+            setProfile(data);
+          } else {
+            setProfile({});
+          }
         });
       }
     }, [user])
   );
 
+  const hostedPlans = plans.filter(p => p.host_id === user?.id);
+  const joinedPlans = plans.filter(p => p.host_id !== user?.id && p.participants_list?.some(u => u.id === user?.id && u.join_status === 'approved'));
+
   useEffect(() => {
     if (user && plans) {
-      const hosted = plans.filter(p => p.host_id === user.id).length;
-      const joined = plans.filter(p => p.host_id !== user.id && p.participants_list?.some(u => u.id === user.id && u.join_status === 'approved')).length;
-      setStats({ hosted, joined });
+      setStats({ hosted: hostedPlans.length, joined: joinedPlans.length });
     }
   }, [plans, user]);
 
@@ -82,6 +90,34 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>Plans Hosted</Text>
           </View>
         </View>
+
+        {/* Hosted Plans */}
+        {hostedPlans.length > 0 && (
+          <View style={{ marginTop: theme.spacing.sm }}>
+            <Text style={[styles.menuTitle, { marginBottom: 8 }]}>My Hosted Plans</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 10 }}>
+              {hostedPlans.map(p => (
+                <View key={p.id} style={{ width: 280 }}>
+                  <PlanCard plan={p as any} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: p.id } })} />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Joined Plans */}
+        {joinedPlans.length > 0 && (
+          <View style={{ marginTop: theme.spacing.sm }}>
+            <Text style={[styles.menuTitle, { marginBottom: 8 }]}>Plans I'm Attending</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 10 }}>
+              {joinedPlans.map(p => (
+                <View key={p.id} style={{ width: 280 }}>
+                  <PlanCard plan={p as any} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: p.id } })} />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Menu Items */}
         <View style={styles.menuSection}>

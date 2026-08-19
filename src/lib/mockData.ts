@@ -88,12 +88,17 @@ export interface Hotspot {
   tags: string[];
   distance_km: number;
   image_url: string;
+  latitude: number;
+  longitude: number;
+  description?: string;
+  rating?: number;
 }
 
 export const HOTSPOTS: Hotspot[] = [
-  { id: 'hs-1', name: 'Blue Bottle Coffee', tags: ['cafe', 'coffee'], distance_km: 1.2, image_url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=500&q=60' },
-  { id: 'hs-2', name: 'Central Park Lawn', tags: ['park', 'outdoors'], distance_km: 0.8, image_url: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=500&q=60' },
-  { id: 'hs-3', name: 'Equinox Gym', tags: ['fitness', 'gym'], distance_km: 2.1, image_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=500&q=60' },
+  { id: 'hs-1', name: 'Blue Bottle Coffee', tags: ['cafe', 'coffee'], distance_km: 1.2, image_url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=500&q=60', latitude: 17.40, longitude: 78.33 },
+  { id: 'hs-2', name: 'Central Park Lawn', tags: ['park', 'outdoors'], distance_km: 0.8, image_url: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=500&q=60', latitude: 17.41, longitude: 78.34 },
+  { id: 'hs-3', name: 'Equinox Gym', tags: ['fitness', 'gym'], distance_km: 2.1, image_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=500&q=60', latitude: 17.42, longitude: 78.35 },
+  { id: 'hs-4', name: 'Zero Latency VR', tags: ['gaming', 'fun'], distance_km: 3.5, image_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=500&q=60', latitude: 17.43, longitude: 78.36 }
 ];
 
 export interface ChatMessageItem {

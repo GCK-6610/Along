@@ -1,5 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Pressable, FlatList } from 'react-native';
+
+import { View, Text, StyleSheet, ScrollView, Pressable, FlatList } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Calendar } from 'lucide-react-native';
 import { theme } from '../styles/theme';

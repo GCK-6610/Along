@@ -30,3 +30,39 @@ export interface Plan {
   participants_list?: PlanParticipant[];
   status: 'active' | 'cancelled' | 'completed';
 }
+
+export interface Hotspot {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  address?: string;
+  rating?: number;
+  description?: string;
+  distance_km?: number;
+  tags?: string[];
+  image_url?: string;
+  isSearched?: boolean;
+}
+
+export interface GooglePlaceDetail {
+  name: string;
+  geometry: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
+  formatted_address?: string;
+  rating?: number;
+}
+
+export interface ChatMessageItem {
+  id: string;
+  sender_id: string;
+  sender_name: string;
+  text: string;
+  timestamp: string;
+  is_me: boolean;
+  is_host: boolean;
+}

@@ -1,8 +1,11 @@
-import { View, Text, StyleSheet, FlatList, SafeAreaView, StatusBar, Image, ScrollView, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { View, Text, StyleSheet, FlatList, StatusBar, Image, ScrollView, Pressable } from 'react-native';
 import { useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { Compass, Flame } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
+
 import { ActivityIndicator } from 'react-native';
 import { usePlans } from '../../hooks/usePlans';
 import { useHotspots } from '../../hooks/useHotspots';
@@ -49,7 +52,7 @@ export default function HomeScreen() {
   );
 
   const renderHotspot = (item: Hotspot) => (
-    <Pressable key={item.id} style={styles.hotspotCard} onPress={() => router.push({ pathname: '/create', params: { venue: item.name, tags: item.tags.join(',') } })}>
+    <Pressable key={item.id} style={styles.hotspotCard} onPress={() => router.push({ pathname: '/create', params: { venue: item.name, tags: item.tags?.join(',') } })}>
       <Image source={{ uri: item.image_url }} style={styles.hotspotImage} />
       <View style={styles.hotspotOverlay}>
         {item.tags && item.tags.length > 0 && <Text style={styles.hotspotCategory}>#{item.tags[0]}</Text>}
