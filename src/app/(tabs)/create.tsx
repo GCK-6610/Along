@@ -2,17 +2,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Modal, FlatList, Alert
-
+  TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Modal, Alert
 } from 'react-native';
-import { Zap, MapPin, Users, Calendar, X, Search, Map as MapIcon } from 'lucide-react-native';
+import { Zap, MapPin, Users, Calendar, X, Map as MapIcon, ChevronRight } from 'lucide-react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { theme } from '../../styles/theme';
 import { useAuth } from '../../context/AuthContext';
 import { parsePlanWithAI } from '../../lib/aiParser';
 import { supabase } from '../../lib/supabase';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as Location from 'expo-location';
 
@@ -27,6 +26,7 @@ export default function CreateScreen() {
   const [venue, setVenue] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [secretLocationDetails, setSecretLocationDetails] = useState('');
   const [capacity, setCapacity] = useState('4');
   const [genderReach, setGenderReach] = useState<'all' | 'same'>('all');
   const [embedding, setEmbedding] = useState<number[] | null>(null);
@@ -35,15 +35,11 @@ export default function CreateScreen() {
   const [isMapModalVisible, setMapModalVisible] = useState(false);
   const [mapCoordinate, setMapCoordinate] = useState({ latitude: 28.5921, longitude: 77.2250 });
   const [mapSearchQuery, setMapSearchQuery] = useState('');
-  const [isSearchingMap, setIsSearchingMap] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const mapRef = useRef<MapView>(null);
 
-  const [isLocationModalVisible, setLocationModalVisible] = useState(false);
-  const [locationQuery, setLocationQuery] = useState('');
-  const [locationResults, setLocationResults] = useState<any[]>([]);
-  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
+  const [isAiModalVisible, setAiModalVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -58,6 +54,7 @@ export default function CreateScreen() {
   const resetForm = () => {
     setTitle('');
     setVenue('');
+    setSecretLocationDetails('');
     setCapacity('4');
     setEmbedding(null);
     setNlpInput('');
@@ -73,35 +70,6 @@ export default function CreateScreen() {
     }, [params.venue, params.tags])
   );
 
-  const searchLocation = async () => {
-    if (!locationQuery.trim()) return;
-    setIsSearchingLocation(true);
-    try {
-      const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-      if (!apiKey) {
-        console.log('No Google Places API Key found. Returning mock data.');
-        setLocationResults([
-          { place_id: '1', structured_formatting: { main_text: locationQuery, secondary_text: 'Bandra West, Mumbai, Maharashtra' } },
-          { place_id: '2', structured_formatting: { main_text: locationQuery + ' Cafe', secondary_text: 'Koramangala, Bengaluru, Karnataka' } },
-        ]);
-        return;
-      }
-
-      const res = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(locationQuery)}&key=${apiKey}&components=country:in`);
-      const data = await res.json();
-      if (data.predictions) {
-        setLocationResults(data.predictions);
-      }
-    } catch (e) {
-      console.log('Location search error', e);
-    } finally {
-      setIsSearchingLocation(false);
-    }
-  };
-
-  // Google Places API takes over mapSearchQuery handling. 
-  // We keep the state just in case, but rely on autocomplete onPress
-
   const handleNLPParse = async () => {
     const promptToParse = nlpInput.trim() || 'Morning run at Lodhi Gardens tomorrow 6am for 4 people';
     setParsing(true);
@@ -116,6 +84,7 @@ export default function CreateScreen() {
     if (result.embedding) setEmbedding(result.embedding);
     setParsing(false);
     setAiSuccessBadge(true);
+    setAiModalVisible(false);
   };
 
   const handlePostPlan = async () => {
@@ -136,6 +105,7 @@ export default function CreateScreen() {
         embedding: embedding,
         latitude: mapCoordinate.latitude,
         longitude: mapCoordinate.longitude,
+        secret_location_details: secretLocationDetails.trim() || null,
         status: 'active'
       }).select('id').single();
 
@@ -147,12 +117,7 @@ export default function CreateScreen() {
         join_status: 'approved'
       });
       
-      setTitle('');
-      setVenue('');
-      setCapacity('4');
-      setEmbedding(null);
-      setNlpInput('');
-      setAiSuccessBadge(false);
+      resetForm();
       
       router.push({ pathname: '/plan/[id]', params: { id: newPlan.id } });
     } catch (err: any) {
@@ -168,48 +133,72 @@ export default function CreateScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Header */}
+          <View style={styles.headerRow}>
             <View>
-              <Text style={styles.title}>Create a Plan</Text>
-              <Text style={styles.subtitle}>Tell us what you have in mind</Text>
+              <Text style={styles.title}>Create Plan</Text>
+              <Text style={styles.subtitle}>What are we doing today?</Text>
             </View>
-            <Pressable onPress={resetForm} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.pill, borderWidth: 1, borderColor: theme.colors.border }}>
-              <Text style={{ fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground }}>Clear Form</Text>
+            <Pressable onPress={resetForm} style={styles.clearBtn}>
+              <Text style={styles.clearBtnText}>Clear</Text>
             </Pressable>
           </View>
 
+          {aiSuccessBadge && (
+            <View style={styles.successBadge}>
+              <Zap size={14} color={theme.colors.primary} />
+              <Text style={styles.successBadgeText}>Magically auto-filled by AI</Text>
+            </View>
+          )}
 
-          {/* Form Fields */}
-          <View style={styles.form}>
+          {/* Main Card */}
+          <View style={styles.card}>
             {/* Title */}
             <View style={styles.field}>
               <Text style={styles.label}>Plan Title</Text>
-              <TextInput style={styles.input} placeholder="e.g. Morning Run" placeholderTextColor={theme.colors.mutedForeground} value={title} onChangeText={setTitle} />
+              <TextInput 
+                style={styles.input} 
+                placeholder="e.g. Morning Coffee Run" 
+                placeholderTextColor={theme.colors.mutedForeground} 
+                value={title} 
+                onChangeText={setTitle} 
+              />
             </View>
 
-            {/* Venue */}
+            {/* Venue (Map Picker) */}
             <View style={styles.field}>
-              <Text style={styles.label}>Venue</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <Pressable style={[styles.inputRow, { flex: 1 }]} onPress={() => setLocationModalVisible(true)}>
-                  <MapPin size={16} color={theme.colors.mutedForeground} />
-                  <Text style={[styles.input, styles.inputFlex, !venue && { color: theme.colors.mutedForeground }]}>
-                    {venue || 'Search location or Secret Spot'}
+              <Text style={styles.label}>Where are we meeting?</Text>
+              <Pressable style={styles.venuePickerBtn} onPress={() => setMapModalVisible(true)}>
+                <View style={styles.venuePickerIcon}>
+                  <MapIcon size={20} color="#fff" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={[styles.venuePickerText, !venue && { color: theme.colors.mutedForeground }]}>
+                    {venue || 'Tap to select location on Map'}
                   </Text>
-                </Pressable>
-                <Pressable style={{ backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.md, borderWidth: 1, borderColor: theme.colors.border, width: 48, alignItems: 'center', justifyContent: 'center' }} onPress={() => setMapModalVisible(true)}>
-                  <MapIcon size={20} color={theme.colors.primary} />
-                </Pressable>
-              </View>
+                </View>
+                <ChevronRight size={20} color={theme.colors.mutedForeground} />
+              </Pressable>
+              
+              <TextInput
+                style={[styles.input, { marginTop: 12, backgroundColor: theme.colors.background }]}
+                placeholder="Secret details (e.g. Gate 4, wearing red cap)"
+                placeholderTextColor={theme.colors.mutedForeground}
+                value={secretLocationDetails}
+                onChangeText={setSecretLocationDetails}
+              />
             </View>
+          </View>
 
+          {/* Details Card */}
+          <View style={styles.card}>
             {/* Date & Time */}
             <View style={styles.field}>
-              <Text style={styles.label}>Date & Time</Text>
-              <Pressable style={styles.inputRow} onPress={() => setShowDatePicker(true)}>
-                <Calendar size={16} color={theme.colors.mutedForeground} />
-                <Text style={[styles.input, styles.inputFlex]}>
-                  {scheduledAt.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+              <Text style={styles.label}>When?</Text>
+              <Pressable style={styles.datePickerBtn} onPress={() => setShowDatePicker(true)}>
+                <Calendar size={18} color={theme.colors.primary} />
+                <Text style={styles.datePickerText}>
+                  {scheduledAt.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                 </Text>
               </Pressable>
               
@@ -218,181 +207,106 @@ export default function CreateScreen() {
                   value={scheduledAt}
                   mode="datetime"
                   display="default"
-                  onChange={(event, date) => { setShowDatePicker(false); if(date) setScheduledAt(date); }}
+                  onChange={undefined}
+                  onValueChange={(event, date) => { setShowDatePicker(false); if(date) setScheduledAt(date); }}
                 />
               )}
             </View>
 
             {/* Tags */}
             <View style={styles.field}>
-              <Text style={styles.label}>Tags (Max 5) *</Text>
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={[styles.input, styles.inputFlex]}
-                  placeholder="e.g. coffee (press return to add)"
-                  placeholderTextColor={theme.colors.mutedForeground}
-                  value={tagInput}
-                  onChangeText={setTagInput}
-                  onSubmitEditing={() => {
-                    const newTag = tagInput.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-                    if (newTag && !tags.includes(newTag) && tags.length < 5) {
-                      setTags([...tags, newTag]);
-                    }
-                    setTagInput('');
-                  }}
-                  returnKeyType="done"
-                />
-              </View>
+              <Text style={styles.label}>Tags (Max 5)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. coffee (press return)"
+                placeholderTextColor={theme.colors.mutedForeground}
+                value={tagInput}
+                onChangeText={setTagInput}
+                onSubmitEditing={() => {
+                  const newTag = tagInput.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                  if (newTag && !tags.includes(newTag) && tags.length < 5) {
+                    setTags([...tags, newTag]);
+                  }
+                  setTagInput('');
+                }}
+                returnKeyType="done"
+              />
               {tags.length > 0 && (
                 <View style={styles.chipGrid}>
                   {tags.map(t => (
-                    <Pressable
-                      key={t}
-                      style={[styles.chip, styles.chipActive]}
-                      onPress={() => setTags(tags.filter(tag => tag !== t))}
-                    >
-                      <Text style={[styles.chipText, styles.chipTextActive]}>#{t} ✕</Text>
+                    <Pressable key={t} style={styles.chip} onPress={() => setTags(tags.filter(tag => tag !== t))}>
+                      <Text style={styles.chipText}>#{t}</Text>
+                      <X size={12} color={theme.colors.primary} />
                     </Pressable>
                   ))}
                 </View>
               )}
             </View>
+          </View>
 
-            {/* Capacity */}
-            <View style={styles.field}>
-              <Text style={styles.label}>Max Participants</Text>
-              <View style={styles.counterCard}>
-                <View style={styles.counterRow}>
-                  <Users size={16} color={theme.colors.mutedForeground} />
-                  <Text style={styles.counterHint}>Participants</Text>
-                </View>
-                <View style={styles.counterControls}>
-                  <Pressable style={styles.counterBtn} onPress={() => setCapacity(c => String(Math.max(2, Number(c) - 1)))}>
-                    <Text style={styles.counterBtnText}>−</Text>
-                  </Pressable>
-                  <Text style={styles.counterValue}>{capacity}</Text>
-                  <Pressable style={styles.counterBtn} onPress={() => setCapacity(c => String(Math.min(20, Number(c) + 1)))}>
-                    <Text style={styles.counterBtnText}>+</Text>
-                  </Pressable>
-                </View>
+          {/* Audience Card */}
+          <View style={styles.card}>
+            <View style={styles.rowBetween}>
+              <View>
+                <Text style={styles.label}>Max Participants</Text>
+                <Text style={styles.hintText}>Including you</Text>
+              </View>
+              <View style={styles.stepper}>
+                <Pressable style={styles.stepperBtn} onPress={() => setCapacity(c => String(Math.max(2, Number(c) - 1)))}>
+                  <Text style={styles.stepperBtnText}>−</Text>
+                </Pressable>
+                <Text style={styles.stepperValue}>{capacity}</Text>
+                <Pressable style={styles.stepperBtn} onPress={() => setCapacity(c => String(Math.min(20, Number(c) + 1)))}>
+                  <Text style={styles.stepperBtnText}>+</Text>
+                </Pressable>
               </View>
             </View>
 
-            {/* Gender Reach */}
+            <View style={styles.divider} />
+
             <View style={styles.field}>
               <Text style={styles.label}>Open to</Text>
-              <View style={styles.toggleRow}>
-                <Pressable style={[styles.toggle, genderReach === 'all' && styles.toggleActive]} onPress={() => setGenderReach('all')}>
-                  <Text style={[styles.toggleText, genderReach === 'all' && styles.toggleTextActive]}>👥 Everyone</Text>
+              <View style={styles.segmentedControl}>
+                <Pressable style={[styles.segment, genderReach === 'all' && styles.segmentActive]} onPress={() => setGenderReach('all')}>
+                  <Text style={[styles.segmentText, genderReach === 'all' && styles.segmentTextActive]}>Everyone</Text>
                 </Pressable>
-                <Pressable style={[styles.toggle, genderReach === 'same' && styles.toggleActive]} onPress={() => setGenderReach('same')}>
-                  <Text style={[styles.toggleText, genderReach === 'same' && styles.toggleTextActive]}>🔒 Women Only</Text>
+                <Pressable style={[styles.segment, genderReach === 'same' && styles.segmentActive]} onPress={() => setGenderReach('same')}>
+                  <Text style={[styles.segmentText, genderReach === 'same' && styles.segmentTextActive]}>Same Gender</Text>
                 </Pressable>
               </View>
             </View>
           </View>
 
-          {/* NLP Input (Secondary) */}
-          <View style={styles.nlpCard}>
-            <View style={styles.nlpHeader}>
+          {/* AI Auto-fill Button - Secondary */}
+          <Pressable style={styles.aiSecondaryBtn} onPress={() => setAiModalVisible(true)}>
+            <View style={styles.aiSecondaryIcon}>
               <Zap size={16} color={theme.colors.primary} />
-              <Text style={styles.nlpLabel}>Or use AI Auto-fill</Text>
-              {aiSuccessBadge && (
-                <View style={styles.aiBadge}>
-                  <Text style={styles.aiBadgeText}>✨ Auto-filled by AI</Text>
-                </View>
-              )}
             </View>
-            <TextInput
-              style={styles.nlpInput}
-              placeholder='e.g. "Morning run at Lodhi Gardens tomorrow 6am for 4 people"'
-              placeholderTextColor={theme.colors.mutedForeground}
-              value={nlpInput}
-              onChangeText={setNlpInput}
-              multiline
-            />
-            <Pressable
-              style={styles.nlpBtn}
-              onPress={handleNLPParse}
-              disabled={parsing}
-            >
-              {parsing
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <Text style={styles.nlpBtnText}>✨ Auto-fill form</Text>
-              }
-            </Pressable>
-          </View>
+            <View>
+              <Text style={styles.aiSecondaryTitle}>Too much typing?</Text>
+              <Text style={styles.aiSecondarySub}>Let AI fill this out for you</Text>
+            </View>
+          </Pressable>
 
-          <View style={styles.bottomBar}>
-            <Pressable style={[styles.postBtn, (!title || !venue || tags.length === 0 || isPosting) && styles.btnDisabled]} onPress={handlePostPlan} disabled={!title || !venue || tags.length === 0 || isPosting}>
-              {isPosting ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.postBtnText}>Post Plan</Text>}
-            </Pressable>
-          </View>
+          <View style={{ height: 40 }} />
         </ScrollView>
-      </KeyboardAvoidingView>
 
-      {/* Location Search Modal */}
-      <Modal visible={isLocationModalVisible} animationType="slide" onRequestClose={() => setLocationModalVisible(false)}>
-        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? 50 : 20 }]}>
-            <Pressable style={styles.iconBtn} onPress={() => setLocationModalVisible(false)}>
-              <X size={20} color={theme.colors.foreground} />
-            </Pressable>
-            <Text style={styles.modalTitle}>Search Location</Text>
-            <View style={{ width: 36 }} />
-          </View>
-          
-          <View style={styles.modalSearchArea}>
-            <View style={styles.modalSearchBox}>
-              <Search size={18} color={theme.colors.mutedForeground} />
-              <TextInput
-                style={styles.modalSearchInput}
-                placeholder="Search for a venue or address..."
-                placeholderTextColor={theme.colors.mutedForeground}
-                value={locationQuery}
-                onChangeText={setLocationQuery}
-                onSubmitEditing={searchLocation}
-                returnKeyType="search"
-                autoFocus
-              />
-              {isSearchingLocation && <ActivityIndicator size="small" color={theme.colors.primary} />}
-            </View>
-            <Pressable style={styles.modalCustomBtn} onPress={() => {
-              if(locationQuery.trim()) {
-                setVenue(locationQuery.trim());
-                setLocationModalVisible(false);
-              }
-            }}>
-              <Text style={styles.modalCustomText}>Use as Custom Secret Spot</Text>
-            </Pressable>
-          </View>
-
-          <FlatList
-            data={locationResults}
-            keyExtractor={(item, index) => item.place_id ? item.place_id.toString() : index.toString()}
-            contentContainerStyle={{ padding: theme.spacing.md }}
-            ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: theme.colors.border }} />}
-            renderItem={({ item }) => (
-              <Pressable style={styles.locationResult} onPress={() => {
-                setVenue(item.structured_formatting?.main_text || item.display_name?.split(',')[0] || locationQuery);
-                setLocationModalVisible(false);
-              }}>
-                <MapPin size={18} color={theme.colors.mutedForeground} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.locName}>{item.structured_formatting?.main_text || item.display_name?.split(',')[0] || 'Location'}</Text>
-                  <Text style={styles.locAddress} numberOfLines={2}>{item.structured_formatting?.secondary_text || item.display_name || 'Address Details'}</Text>
-                </View>
-              </Pressable>
-            )}
-            keyboardShouldPersistTaps="handled"
-          />
+        {/* Sticky Bottom Bar */}
+        <View style={styles.stickyBottom}>
+          <Pressable 
+            style={[styles.postBtn, (!title || !venue || tags.length === 0 || isPosting) && styles.postBtnDisabled]} 
+            onPress={handlePostPlan} 
+            disabled={!title || !venue || tags.length === 0 || isPosting}
+          >
+            {isPosting ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.postBtnText}>Post Plan</Text>}
+          </Pressable>
         </View>
-      </Modal>
+      </KeyboardAvoidingView>
 
       {/* Map Picker Modal */}
       <Modal visible={isMapModalVisible} animationType="slide" onRequestClose={() => setMapModalVisible(false)}>
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? 50 : 20, backgroundColor: theme.colors.background, zIndex: 1 }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? 60 : 20, backgroundColor: theme.colors.background, zIndex: 1 }]}>
             <Pressable style={styles.iconBtn} onPress={() => setMapModalVisible(false)}>
               <X size={20} color={theme.colors.foreground} />
             </Pressable>
@@ -418,77 +332,74 @@ export default function CreateScreen() {
               <Text style={{ color: '#fff', fontFamily: theme.typography.fontFamily.bold, fontSize: 14 }}>Select</Text>
             </Pressable>
           </View>
-          <View style={{ paddingHorizontal: theme.spacing.md, backgroundColor: 'transparent', position: 'absolute', top: 90, left: 0, right: 0, zIndex: 999 }}>
-            <GooglePlacesAutocomplete
-              placeholder='Search places...'
-              fetchDetails={true}
-              onPress={(data, details = null) => {
-                if (details?.geometry?.location) {
-                  const lat = details.geometry.location.lat;
-                  const lng = details.geometry.location.lng;
-                  setMapCoordinate({ latitude: lat, longitude: lng });
-                  setVenue(details.name || data.description);
-                  if (mapRef.current) {
-                    mapRef.current.animateToRegion({
-                      latitude: lat,
-                      longitude: lng,
-                      latitudeDelta: 0.05,
-                      longitudeDelta: 0.05,
-                    }, 1000);
+          <View style={{ flex: 1, zIndex: 1 }}>
+            <View style={{ position: 'absolute', top: 16, left: 0, right: 0, paddingHorizontal: theme.spacing.md, zIndex: 999 }}>
+              <GooglePlacesAutocomplete
+                placeholder='Search places...'
+                fetchDetails={true}
+                onPress={(data, details = null) => {
+                  if (details?.geometry?.location) {
+                    const lat = details.geometry.location.lat;
+                    const lng = details.geometry.location.lng;
+                    setMapCoordinate({ latitude: lat, longitude: lng });
+                    setVenue(details.name || data.description);
+                    if (mapRef.current) {
+                      mapRef.current.animateToRegion({
+                        latitude: lat,
+                        longitude: lng,
+                        latitudeDelta: 0.05,
+                        longitudeDelta: 0.05,
+                      }, 1000);
+                    }
                   }
-                }
-              }}
-              query={{
-                key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
-                language: 'en',
-                ...(userLocation ? { location: `${userLocation.lat},${userLocation.lon}`, radius: '10000' } : {})
-              }}
-              styles={{
-                textInput: {
-                  backgroundColor: theme.colors.card,
-                  borderRadius: theme.borderRadius.md,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  color: theme.colors.foreground,
-                  height: 48,
-                  fontFamily: theme.typography.fontFamily.medium,
-                },
-                listView: {
-                  backgroundColor: theme.colors.card,
-                  borderRadius: theme.borderRadius.md,
-                  marginTop: 8,
-                  elevation: 5,
+                }}
+                query={{
+                  key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+                  language: 'en',
+                  ...(userLocation ? { location: `${userLocation.lat},${userLocation.lon}`, radius: '10000' } : {})
+                }}
+                styles={{
+                  container: { flex: 0 },
+                  textInput: {
+                    backgroundColor: theme.colors.card,
+                    borderRadius: theme.borderRadius.md,
+                    borderWidth: 1,
+                    borderColor: theme.colors.border,
+                    color: theme.colors.foreground,
+                    height: 48,
+                    fontFamily: theme.typography.fontFamily.medium,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 3,
+                  },
+                  listView: {
+                    position: 'absolute',
+                    top: 54,
+                    left: 0,
+                    right: 0,
+                    backgroundColor: theme.colors.card,
+                    borderRadius: theme.borderRadius.md,
+                    elevation: 5,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.1,
                   shadowRadius: 8,
                 },
-                row: {
-                  backgroundColor: theme.colors.card,
-                  padding: 12,
-                },
-                description: {
-                  color: theme.colors.foreground,
-                  fontFamily: theme.typography.fontFamily.medium,
-                },
-                poweredContainer: {
-                  backgroundColor: theme.colors.card,
-                  borderBottomLeftRadius: theme.borderRadius.md,
-                  borderBottomRightRadius: theme.borderRadius.md,
-                }
+                row: { backgroundColor: theme.colors.card, padding: 12 },
+                description: { color: theme.colors.foreground, fontFamily: theme.typography.fontFamily.medium },
+                poweredContainer: { backgroundColor: theme.colors.card, borderBottomLeftRadius: theme.borderRadius.md, borderBottomRightRadius: theme.borderRadius.md }
               }}
-              textInputProps={{
-                placeholderTextColor: theme.colors.mutedForeground,
-                returnKeyType: "search",
-              }}
+              textInputProps={{ placeholderTextColor: theme.colors.mutedForeground, returnKeyType: "search" }}
               keyboardShouldPersistTaps="handled"
             />
-          </View>
-          <View style={{ flex: 1, zIndex: 1 }}>
+            </View>
             <MapView
               ref={mapRef}
-              style={styles.map}
-              provider={PROVIDER_GOOGLE}
+              style={{ flex: 1, width: '100%', height: '100%' }}
+              provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+              showsUserLocation={true}
               initialRegion={{
                 latitude: userLocation?.lat || 28.5921,
                 longitude: userLocation?.lon || 77.2250,
@@ -506,6 +417,46 @@ export default function CreateScreen() {
         </View>
       </Modal>
 
+      {/* AI Auto-fill Modal */}
+      <Modal visible={isAiModalVisible} transparent animationType="slide" onRequestClose={() => setAiModalVisible(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setAiModalVisible(false)} />
+          <View style={{ backgroundColor: theme.colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: theme.spacing.lg, paddingBottom: 40, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Zap size={20} color={theme.colors.primary} />
+                <Text style={{ fontFamily: theme.typography.fontFamily.bold, fontSize: 18, color: theme.colors.foreground }}>AI Auto-fill</Text>
+              </View>
+              <Pressable style={styles.iconBtn} onPress={() => setAiModalVisible(false)}>
+                <X size={20} color={theme.colors.foreground} />
+              </Pressable>
+            </View>
+            <Text style={{ fontFamily: theme.typography.fontFamily.medium, fontSize: 14, color: theme.colors.mutedForeground, marginBottom: 16 }}>
+              Describe your plan naturally and we'll fill out the details for you.
+            </Text>
+            <TextInput
+              style={{ backgroundColor: theme.colors.background, padding: 16, borderRadius: theme.borderRadius.md, minHeight: 120, borderColor: theme.colors.border, borderWidth: 1, fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.base, color: theme.colors.foreground, textAlignVertical: 'top' }}
+              placeholder='e.g. "Morning run at Lodhi Gardens tomorrow 6am for 4 people"'
+              placeholderTextColor={theme.colors.mutedForeground}
+              value={nlpInput}
+              onChangeText={setNlpInput}
+              multiline
+              autoFocus
+            />
+            <Pressable
+              style={{ backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md, paddingVertical: 14, alignItems: 'center', marginTop: 16 }}
+              onPress={handleNLPParse}
+              disabled={parsing}
+            >
+              {parsing
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Text style={{ fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: '#fff' }}>✨ Parse & Fill Form</Text>
+              }
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* iOS Date Picker Modal */}
       {Platform.OS === 'ios' && (
         <Modal visible={showDatePicker} transparent animationType="fade">
@@ -521,7 +472,8 @@ export default function CreateScreen() {
                 value={scheduledAt}
                 mode="datetime"
                 display="spinner"
-                onChange={(event, date) => { if(date) setScheduledAt(date) }}
+                onChange={undefined}
+                onValueChange={(event, date) => { if(date) setScheduledAt(date) }}
                 themeVariant="dark"
                 textColor={theme.colors.foreground}
               />
@@ -535,54 +487,61 @@ export default function CreateScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.background },
-  scroll: { padding: theme.spacing.lg, gap: theme.spacing.lg, paddingBottom: 80 },
-  title: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xxxl, color: theme.colors.foreground, letterSpacing: -0.4 },
-  subtitle: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, marginTop: -6 },
-  nlpCard: { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.lg, padding: theme.spacing.sm, gap: 6, borderWidth: 1, borderColor: theme.colors.border },
-  nlpHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  nlpLabel: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xs, color: theme.colors.primary },
-  aiBadge: { marginLeft: 'auto', backgroundColor: theme.colors.secondary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: theme.borderRadius.pill },
-  aiBadgeText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 10, color: theme.colors.primary },
-  nlpInput: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.base, color: theme.colors.foreground, minHeight: 50, textAlignVertical: 'top' },
-  nlpBtn: { backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md, paddingVertical: 10, alignItems: 'center' },
-  nlpBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xs, color: '#fff' },
-  form: { gap: theme.spacing.sm },
-  field: { gap: 4 },
-  label: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xs, color: theme.colors.foreground },
-  input: { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.md, padding: 12, fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.base, color: theme.colors.foreground, borderWidth: 1, borderColor: theme.colors.border, width: '100%', maxWidth: '100%', minWidth: 0, flexShrink: 1 },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.md, paddingLeft: 12, borderWidth: 1, borderColor: theme.colors.border, width: '100%', maxWidth: '100%' },
-  inputFlex: { flex: 1, minWidth: 0, flexShrink: 1, borderWidth: 0 },
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flexShrink: 1 },
-  chip: { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.pill, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: theme.colors.border },
-  chipActive: { backgroundColor: theme.colors.secondary, borderColor: theme.colors.primary },
-  chipText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
-  chipTextActive: { color: theme.colors.primary, fontFamily: theme.typography.fontFamily.bold },
-  counterCard: { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.md, padding: theme.spacing.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: theme.colors.border, flexShrink: 1, maxWidth: '100%' },
-  counterRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  counterHint: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
-  counterControls: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-  counterBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.muted, alignItems: 'center', justifyContent: 'center' },
-  counterBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 18, color: theme.colors.foreground, lineHeight: 22 },
-  counterValue: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.lg, color: theme.colors.foreground, minWidth: 28, textAlign: 'center' },
-  toggleRow: { flexDirection: 'row', gap: theme.spacing.sm },
-  toggle: { flex: 1, backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.md, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, borderColor: theme.colors.border },
-  toggleActive: { backgroundColor: theme.colors.secondary, borderColor: theme.colors.primary },
-  toggleText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
-  toggleTextActive: { color: theme.colors.primary, fontFamily: theme.typography.fontFamily.bold },
-  bottomBar: { padding: theme.spacing.md },
-  postBtn: { backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md, paddingVertical: 14, alignItems: 'center' },
-  postBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: '#fff' },
+  scroll: { padding: theme.spacing.lg, gap: theme.spacing.lg },
+  
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  title: { fontFamily: theme.typography.fontFamily.bold, fontSize: 24, color: theme.colors.foreground, letterSpacing: -0.5 },
+  subtitle: { fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground, marginTop: 2 },
+  clearBtn: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: theme.colors.card, borderRadius: 20 },
+  clearBtnText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 12, color: theme.colors.mutedForeground },
+  
+  successBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: theme.colors.secondary, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  successBadgeText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 12, color: theme.colors.primary },
+
+  card: { backgroundColor: theme.colors.card, borderRadius: 16, padding: 14, gap: 16 },
+  field: { gap: 6 },
+  label: { fontFamily: theme.typography.fontFamily.bold, fontSize: 14, color: theme.colors.foreground },
+  
+  input: { backgroundColor: theme.colors.background, borderRadius: 10, padding: 12, fontFamily: theme.typography.fontFamily.regular, fontSize: 15, color: theme.colors.foreground },
+  
+  venuePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.background, borderRadius: 12, padding: 10, paddingRight: 14 },
+  venuePickerIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#FF5C00', alignItems: 'center', justifyContent: 'center' },
+  venuePickerText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 15, color: theme.colors.foreground },
+
+  datePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.secondary, borderRadius: 10, padding: 12, gap: 10 },
+  datePickerText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 15, color: theme.colors.primary },
+
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: theme.colors.secondary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  chipText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 13, color: theme.colors.primary },
+
+  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  hintText: { fontFamily: theme.typography.fontFamily.regular, fontSize: 12, color: theme.colors.mutedForeground, marginTop: 2 },
+  
+  stepper: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.background, borderRadius: 16, padding: 4 },
+  stepperBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center' },
+  stepperBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 18, color: theme.colors.foreground, lineHeight: 22 },
+  stepperValue: { fontFamily: theme.typography.fontFamily.bold, fontSize: 16, color: theme.colors.foreground, minWidth: 36, textAlign: 'center' },
+
+  divider: { height: 1, backgroundColor: theme.colors.background, marginVertical: 4 },
+
+  segmentedControl: { flexDirection: 'row', backgroundColor: theme.colors.background, borderRadius: 10, padding: 4 },
+  segment: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
+  segmentActive: { backgroundColor: theme.colors.card },
+  segmentText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 14, color: theme.colors.mutedForeground },
+  segmentTextActive: { color: theme.colors.foreground, fontFamily: theme.typography.fontFamily.bold },
+
+  aiSecondaryBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.card, borderRadius: 16, padding: 14, gap: 12, marginTop: 8 },
+  aiSecondaryIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.secondary, alignItems: 'center', justifyContent: 'center' },
+  aiSecondaryTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 14, color: theme.colors.foreground },
+  aiSecondarySub: { fontFamily: theme.typography.fontFamily.regular, fontSize: 12, color: theme.colors.mutedForeground, marginTop: 2 },
+
+  stickyBottom: { padding: 16, paddingTop: 12, backgroundColor: theme.colors.background, borderTopWidth: 1, borderTopColor: theme.colors.border },
+  postBtn: { backgroundColor: theme.colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  postBtnDisabled: { opacity: 0.5 },
+  postBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 15, color: '#fff' },
+
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: theme.spacing.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
   iconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center' },
   modalTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: theme.colors.foreground },
-  modalSearchArea: { padding: theme.spacing.md, borderBottomWidth: 1, borderBottomColor: theme.colors.border, gap: theme.spacing.sm },
-  modalSearchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.md, borderWidth: 1, borderColor: theme.colors.border, paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
-  modalSearchInput: { flex: 1, fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.base, color: theme.colors.foreground, height: 24 },
-  modalCustomBtn: { backgroundColor: theme.colors.secondary, paddingVertical: 8, borderRadius: theme.borderRadius.sm, alignItems: 'center' },
-  modalCustomText: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm, color: theme.colors.primary },
-  locationResult: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, paddingVertical: 16 },
-  locName: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: theme.colors.foreground },
-  locAddress: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, marginTop: 2 },
-  btnDisabled: { opacity: 0.5 },
-  map: { flex: 1, width: '100%', height: '100%' },
 });

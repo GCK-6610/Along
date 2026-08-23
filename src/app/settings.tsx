@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Pressable, Switch, Alert
+  Pressable, Switch, Alert, Linking
 
 } from 'react-native';
 import { router } from 'expo-router';
@@ -149,6 +149,25 @@ export default function SettingsScreen() {
         {/* Section 4: Support & About */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>SUPPORT & ABOUT</Text>
+
+          <Pressable style={styles.row} onPress={async () => {
+            const url = 'mailto:tag-along@org.com';
+            const supported = await Linking.canOpenURL(url);
+            if (supported) {
+              await Linking.openURL(url);
+            } else {
+              Alert.alert('No Mail App', 'It looks like you do not have a mail app configured on this device (common on Simulators). Please email tag-along@org.com directly.');
+            }
+          }}>
+            <View style={styles.iconWrap}>
+              <HelpCircle size={16} color={theme.colors.primary} />
+            </View>
+            <View style={styles.rowBody}>
+              <Text style={styles.rowTitle}>Email Support</Text>
+              <Text style={styles.rowSub}>tag-along@org.com</Text>
+            </View>
+            <ChevronRight size={16} color={theme.colors.mutedForeground} />
+          </Pressable>
 
           <Pressable style={styles.row} onPress={() => router.push('/help')}>
             <View style={styles.iconWrap}>

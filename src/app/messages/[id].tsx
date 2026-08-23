@@ -85,6 +85,9 @@ export default function PlanChatRoomScreen() {
               <ActivityIndicator color={theme.colors.foreground} />
             )}
           </View>
+          <Pressable style={styles.viewPlanBtn} onPress={() => router.push({ pathname: '/plan/[id]', params: { id } })}>
+            <Text style={styles.viewPlanText}>View Plan</Text>
+          </Pressable>
         </View>
 
         {/* Messages List */}
@@ -130,9 +133,11 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.background,
     borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center',
   },
-  headerTitleGroup: { flex: 1 },
+  headerTitleGroup: { flex: 1, marginRight: 8 },
   planTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: theme.colors.foreground },
   planSub: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
+  viewPlanBtn: { backgroundColor: theme.colors.secondary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: theme.borderRadius.pill },
+  viewPlanText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 10, color: theme.colors.primary, textTransform: 'uppercase' },
   list: { padding: theme.spacing.md, gap: theme.spacing.md },
   msgRow: { flexDirection: 'row', gap: theme.spacing.sm, maxWidth: '85%' },
   msgRowMe: { alignSelf: 'flex-end', justifyContent: 'flex-end' },

@@ -83,7 +83,7 @@ export default function PlanDetailsScreen() {
     }
   };
 
-  const { host, title, tags, description, venue, scheduled_at, capacity, gender_reach, distance_km, participants_list } = plan;
+  const { host, title, tags, description, venue, scheduled_at, capacity, gender_reach, distance_km, participants_list, secret_location_details, status } = plan;
 
   const dateObj = new Date(scheduled_at);
   const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -92,6 +92,48 @@ export default function PlanDetailsScreen() {
   // Host is inherently a participant, plus any approved participants
   const approvedCount = (participants_list || []).filter(p => p.join_status === 'approved').length;
   const current_participants = Math.max(1, approvedCount);
+
+  const isPast = dateObj.getTime() < Date.now();
+  const isCompleted = status === 'completed';
+  const canMarkCompleted = isHost && isPast && !isCompleted;
+
+  const handleMarkCompleted = async () => {
+    if (current_participants <= 1) {
+      // Just the host, no one else joined. Archive it silently.
+      try {
+        const { error } = await supabase.rpc('mark_plan_completed_and_attendance', {
+          p_plan_id: id,
+          p_host_id: user?.id,
+          p_attendees: [],
+          p_absentees: []
+        });
+        if (error) throw error;
+        Alert.alert('Event Archived', 'No attendees were present, so this event was archived.');
+        router.back();
+      } catch (err: any) {
+        Alert.alert('Error', err.message);
+      }
+    } else {
+      // TODO: Open attendance modal. For now, mark everyone as attended for MVP.
+      try {
+        const attendeeIds = (participants_list || [])
+          .filter(p => p.join_status === 'approved' && p.id !== user?.id)
+          .map(p => p.id);
+          
+        const { error } = await supabase.rpc('mark_plan_completed_and_attendance', {
+          p_plan_id: id,
+          p_host_id: user?.id,
+          p_attendees: attendeeIds,
+          p_absentees: []
+        });
+        if (error) throw error;
+        Alert.alert('Plan Completed!', 'The plan has been marked as completed. You can now rate attendees.');
+        router.back();
+      } catch (err: any) {
+        Alert.alert('Error', err.message);
+      }
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -181,6 +223,19 @@ export default function PlanDetailsScreen() {
             </View>
           </View>
 
+          {/* Secret Location */}
+          {secret_location_details && (isHost || isJoined) && (
+            <View style={styles.infoCard}>
+              <View style={styles.infoIconWrap}>
+                <Shield size={18} color={theme.colors.primary} />
+              </View>
+              <View style={styles.infoTextGroup}>
+                <Text style={styles.infoTitle}>Secret Location Details</Text>
+                <Text style={styles.infoSub}>{secret_location_details}</Text>
+              </View>
+            </View>
+          )}
+
           {/* Schedule */}
           <View style={styles.infoCard}>
             <View style={styles.infoIconWrap}>
@@ -202,15 +257,17 @@ export default function PlanDetailsScreen() {
             const latLng = `${plan.latitude},${plan.longitude}`;
             const label = plan.venue;
             const url = Platform.select({
-              ios: `${scheme}${label}@${latLng}`,
+              ios: `http://maps.apple.com/?q=${label}&ll=${latLng}`,
               android: `${scheme}${latLng}(${label})`
             });
             if (url) Linking.openURL(url);
           }}
         >
           <View style={styles.mapPlaceholder}>
-            <MapPin size={24} color={theme.colors.primary} />
-            <Text style={styles.mapText}>Venue Location Map</Text>
+            <View style={{ backgroundColor: theme.colors.primary, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 8, shadowColor: theme.colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 }}>
+              <MapPin size={24} color="#fff" />
+            </View>
+            <Text style={styles.mapText}>Open in Maps</Text>
             <Text style={styles.mapSub}>{venue}</Text>
           </View>
         </Pressable>
@@ -255,22 +312,39 @@ export default function PlanDetailsScreen() {
 
           <View style={styles.attendeeList}>
             {(participants_list || []).filter(p => p.join_status === 'approved' || !p.join_status).map((p, idx) => (
-              <Pressable key={idx} style={styles.attendeeRow} onPress={() => p.id && router.push({ pathname: '/user/[id]', params: { id: p.id } })}>
-                {p.avatar_url ? (
-                  <Image source={{ uri: p.avatar_url, headers: { 'Accept': 'image/png' } }} style={styles.attendeeAvatar} />
-                ) : (
-                  <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
+              <View key={idx} style={styles.attendeeRow}>
+                <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, flex: 1 }} onPress={() => p.id && router.push({ pathname: '/user/[id]', params: { id: p.id } })}>
+                  {p.avatar_url ? (
+                    <Image source={{ uri: p.avatar_url, headers: { 'Accept': 'image/png' } }} style={styles.attendeeAvatar} />
+                  ) : (
+                    <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
+                  )}
+                  <Text style={styles.attendeeName}>{p.full_name}{p.id === user?.id ? ' (You)' : ''}</Text>
+                  {p.id === host?.id && <Text style={styles.hostBadge}>HOST</Text>}
+                </Pressable>
+                
+                {/* Host can remove non-host participants */}
+                {isHost && p.id !== user?.id && (
+                  <Pressable 
+                    style={{ padding: 6, backgroundColor: theme.colors.background, borderRadius: 20, borderWidth: 1, borderColor: theme.colors.border }}
+                    onPress={() => {
+                      Alert.alert('Remove User', `Are you sure you want to remove ${p.full_name}?`, [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Remove', style: 'destructive', onPress: () => handleReject(p.id) }
+                      ]);
+                    }}
+                  >
+                    <X size={14} color={theme.colors.mutedForeground} />
+                  </Pressable>
                 )}
-                <Text style={styles.attendeeName}>{p.full_name}{p.id === user?.id ? ' (You)' : ''}</Text>
-                {p.id === host?.id && <Text style={styles.hostBadge}>HOST</Text>}
-              </Pressable>
+              </View>
             ))}
           </View>
         </View>
       </ScrollView>
 
       {/* Sticky Bottom Join CTA Bar */}
-      {!isHost && (
+      {!isHost && !isCompleted && !isPast && (
         <View style={styles.bottomBar}>
           <View style={styles.bottomInfo}>
             <Users size={16} color={theme.colors.mutedForeground} />
@@ -291,6 +365,15 @@ export default function PlanDetailsScreen() {
             ]}>
               {isJoined ? 'Joined ✓ (Leave)' : isPending ? 'Requested (Pending)' : 'Request to Join →'}
             </Text>
+          </Pressable>
+        </View>
+      )}
+
+      {canMarkCompleted && (
+        <View style={styles.bottomBar}>
+          <Pressable style={styles.markCompleteBtn} onPress={handleMarkCompleted}>
+            <CheckCircle2 size={20} color="#fff" />
+            <Text style={styles.joinBtnText}>Mark Event Completed</Text>
           </Pressable>
         </View>
       )}
@@ -358,29 +441,31 @@ const styles = StyleSheet.create({
   hostLabel: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
   reachBadge: { backgroundColor: theme.colors.secondary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: theme.borderRadius.pill },
   reachText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.primary },
-  mainSection: { gap: 6 },
-  title: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xxl, color: theme.colors.foreground, letterSpacing: -0.3 },
-  description: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.base, color: theme.colors.mutedForeground, lineHeight: 22 },
-  tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  tagPill: { backgroundColor: theme.colors.secondary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: theme.borderRadius.pill },
-  tagText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 10, color: theme.colors.primary, textTransform: 'uppercase' },
-  infoGrid: { gap: theme.spacing.sm },
+  mainSection: { gap: 12, marginBottom: 8 },
+  title: { fontFamily: theme.typography.fontFamily.bold, fontSize: 28, color: theme.colors.foreground, letterSpacing: -0.5 },
+  description: { fontFamily: theme.typography.fontFamily.regular, fontSize: 15, color: theme.colors.mutedForeground, lineHeight: 24 },
+  tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  tagPill: { backgroundColor: theme.colors.secondary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  tagText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 11, color: theme.colors.primary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  infoGrid: { gap: 12 },
   infoCard: {
     flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md,
-    backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md, borderWidth: 1, borderColor: theme.colors.border,
+    backgroundColor: theme.colors.card, borderRadius: 16,
+    padding: 16, borderWidth: 1, borderColor: theme.colors.border,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
-  infoIconWrap: { width: 38, height: 38, borderRadius: 19, backgroundColor: theme.colors.secondary, alignItems: 'center', justifyContent: 'center' },
+  infoIconWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.secondary, alignItems: 'center', justifyContent: 'center' },
   infoTextGroup: { flex: 1 },
-  infoTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: theme.colors.foreground },
-  infoSub: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, marginTop: 2 },
+  infoTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 16, color: theme.colors.foreground },
+  infoSub: { fontFamily: theme.typography.fontFamily.regular, fontSize: 13, color: theme.colors.mutedForeground, marginTop: 4 },
   mapCard: {
-    borderRadius: theme.borderRadius.lg, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card, height: 120,
+    borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: theme.colors.border,
+    backgroundColor: theme.colors.card, height: 160,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
-  mapPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#EDECE8', gap: 4 },
-  mapText: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm, color: theme.colors.foreground },
-  mapSub: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
+  mapPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3F4F6', gap: 4 },
+  mapText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 15, color: theme.colors.foreground },
+  mapSub: { fontFamily: theme.typography.fontFamily.regular, fontSize: 13, color: theme.colors.mutedForeground, textAlign: 'center', paddingHorizontal: 20 },
   attendeesSection: { gap: theme.spacing.sm },
   attendeesHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.lg, color: theme.colors.foreground },
@@ -428,6 +513,7 @@ const styles = StyleSheet.create({
   joinBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: '#fff' },
   joinBtnTextActive: { color: theme.colors.primary },
   joinBtnTextPending: { color: theme.colors.mutedForeground },
+  markCompleteBtn: { flex: 1, backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: theme.colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },

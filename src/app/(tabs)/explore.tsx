@@ -301,7 +301,7 @@ export default function ExploreScreen() {
           <MapView
             ref={mapRef}
             style={styles.mapGraphic}
-            provider={PROVIDER_GOOGLE}
+            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
             showsUserLocation={true}
             showsMyLocationButton={true}
             zoomEnabled={true}
@@ -312,6 +312,9 @@ export default function ExploreScreen() {
               latitudeDelta: 0.0922,
               longitudeDelta: 0.0421,
             }}
+            // Apple Maps (iOS default) dark mode
+            userInterfaceStyle="dark"
+            // Google Maps (Android) dark mode
             customMapStyle={darkMapStyle}
           >
             {showVenues ? (
@@ -366,23 +369,6 @@ export default function ExploreScreen() {
               })
             )}
           </MapView>
-
-          {/* Custom My Location Button for iOS */}
-          {userLocation && (
-            <Pressable 
-              style={styles.myLocationBtn} 
-              onPress={() => {
-                mapRef.current?.animateToRegion({
-                  latitude: userLocation.lat,
-                  longitude: userLocation.lon,
-                  latitudeDelta: 0.0922,
-                  longitudeDelta: 0.0421,
-                }, 1000);
-              }}
-            >
-              <Navigation size={20} color={theme.colors.primary} />
-            </Pressable>
-          )}
 
           {/* Floating Cards and CTAs */}
            {showVenues ? (
@@ -553,13 +539,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card, paddingHorizontal: 16, paddingVertical: 10,
     borderRadius: theme.borderRadius.pill, borderWidth: 1, borderColor: theme.colors.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4
-  },
-  myLocationBtn: {
-    position: 'absolute', top: 16, right: 16, width: 44, height: 44,
-    backgroundColor: theme.colors.card, borderRadius: 22,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: theme.colors.border,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 4
   },
   floatingVibeText: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm, color: theme.colors.primary },
   noVibeContainer: {

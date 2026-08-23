@@ -72,6 +72,9 @@ export default function ProfileScreen() {
             {profile?.is_verified && <CheckCircle2 size={18} color="#1D9BF0" />}
           </View>
           <Text style={styles.phone}>{user?.phone || '+91 XXXXX XXXXX'}</Text>
+          {profile?.base_location_name && (
+            <Text style={[styles.phone, { marginTop: 4 }]}>📍 {profile.base_location_name}</Text>
+          )}
           {profile?.bio && (
             <Text style={[styles.phone, { marginTop: 8, color: theme.colors.foreground, textAlign: 'center', paddingHorizontal: 20 }]}>
               {profile.bio}
@@ -81,6 +84,10 @@ export default function ProfileScreen() {
 
         {/* Stats */}
         <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{profile?.completed_plans || 0}</Text>
+            <Text style={styles.statLabel}>Plans Completed</Text>
+          </View>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{stats.joined}</Text>
             <Text style={styles.statLabel}>Plans Joined</Text>

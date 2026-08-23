@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect } from 'react';
 
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
-import { MessageCircle } from 'lucide-react-native';
+import { MessageCircle, Users } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
@@ -29,9 +29,10 @@ export default function MessagesScreen() {
         return {
           id: p.id,
           planTitle: p.title,
-          lastMessage: 'Tap to view chat...',
-          time: '',
-          unread: 0
+          lastMessage: `📍 ${p.venue || 'No location set'}`,
+          time: new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+          unread: 0,
+          members: (p.participants_list?.filter((u: any) => u.join_status === 'approved').length || 0) + 1
         };
       });
     setChats(userChats);
@@ -55,7 +56,13 @@ export default function MessagesScreen() {
             </View>
             <View style={styles.chatBody}>
               <View style={styles.chatTopRow}>
-                <Text style={styles.chatTitle} numberOfLines={1}>{item.planTitle}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.chatTitle} numberOfLines={1}>{item.planTitle}</Text>
+                  <View style={styles.membersBadge}>
+                    <Users size={10} color={theme.colors.primary} />
+                    <Text style={styles.membersCount}>{item.members}</Text>
+                  </View>
+                </View>
                 <Text style={styles.chatTime}>{item.time}</Text>
               </View>
               <View style={styles.chatBottomRow}>
@@ -89,18 +96,21 @@ const styles = StyleSheet.create({
   separator: { height: 1, backgroundColor: theme.colors.border },
   chatRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: theme.spacing.sm },
   iconWrap: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 48, height: 48, borderRadius: 24,
     backgroundColor: theme.colors.secondary,
     alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: theme.colors.primary + '30'
   },
   chatBody: { flex: 1 },
-  chatTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 },
-  chatTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: theme.colors.foreground, flex: 1, marginRight: 8, letterSpacing: -0.2 },
-  chatTime: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
+  chatTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  chatTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 16, color: theme.colors.foreground, flexShrink: 1, letterSpacing: -0.2 },
+  membersBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: theme.colors.card, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border },
+  membersCount: { fontFamily: theme.typography.fontFamily.bold, fontSize: 10, color: theme.colors.primary },
+  chatTime: { fontFamily: theme.typography.fontFamily.medium, fontSize: 12, color: theme.colors.mutedForeground },
   chatBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  chatPreview: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, flex: 1 },
-  badge: { backgroundColor: theme.colors.primary, borderRadius: 10, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
-  badgeText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 10, color: '#fff' },
+  chatPreview: { fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground, flex: 1 },
+  badge: { backgroundColor: theme.colors.primary, borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  badgeText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 11, color: '#fff' },
   empty: { alignItems: 'center', paddingTop: 80, gap: theme.spacing.sm },
   emptyEmoji: { fontSize: 44 },
   emptyTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: theme.colors.foreground },

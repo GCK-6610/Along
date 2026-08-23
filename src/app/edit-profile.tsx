@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Save, Edit2, X } from 'lucide-react-native';
+import { ArrowLeft, Save, Edit2, X, MapPin } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { updateMockProfile } from '../lib/mockData';
@@ -37,6 +37,58 @@ export default function EditProfileScreen() {
     : activeTab === 'All' 
       ? ALL_AVATARS 
       : AVATAR_CATALOG.find(c => c.category === activeTab)?.items || [];
+      
+  const [baseLocationName, setBaseLocationName] = useState('');
+  const [baseLatitude, setBaseLatitude] = useState<number | null>(null);
+  const [baseLongitude, setBaseLongitude] = useState<number | null>(null);
+
+  const [isLocationModalVisible, setLocationModalVisible] = useState(false);
+  const [locationQuery, setLocationQuery] = useState('');
+  const [locationResults, setLocationResults] = useState<any[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+
+  const searchLocation = async () => {
+    if (!locationQuery.trim()) return;
+    setIsSearchingLocation(true);
+    try {
+      const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        setLocationResults([
+          { place_id: '1', structured_formatting: { main_text: locationQuery, secondary_text: 'Bandra West, Mumbai' } },
+          { place_id: '2', structured_formatting: { main_text: 'Kondapur', secondary_text: 'Hyderabad' } },
+        ]);
+        return;
+      }
+      const res = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(locationQuery)}&key=${apiKey}&components=country:in`);
+      const data = await res.json();
+      if (data.predictions) setLocationResults(data.predictions);
+    } catch (e) {
+      console.log('Location search error', e);
+    } finally {
+      setIsSearchingLocation(false);
+    }
+  };
+
+  const handleSelectLocation = async (placeId: string, description: string) => {
+    setBaseLocationName(description);
+    setLocationModalVisible(false);
+    setLocationQuery('');
+    
+    if (placeId === '1') { setBaseLatitude(19.0596); setBaseLongitude(72.8295); return; }
+    if (placeId === '2') { setBaseLatitude(17.4614); setBaseLongitude(78.3639); return; }
+
+    try {
+      const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+      const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${apiKey}`);
+      const data = await res.json();
+      if (data.result?.geometry?.location) {
+        setBaseLatitude(data.result.geometry.location.lat);
+        setBaseLongitude(data.result.geometry.location.lng);
+      }
+    } catch (e) {
+      console.log('Details fetch error', e);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -48,6 +100,9 @@ export default function EditProfileScreen() {
           setBio(data.bio || '');
           setGender(data.gender || null);
           setAvatar(data.avatar_url || ALL_AVATARS[0]?.url || '');
+          setBaseLocationName(data.base_location_name || '');
+          setBaseLatitude(data.base_latitude || null);
+          setBaseLongitude(data.base_longitude || null);
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -67,7 +122,10 @@ export default function EditProfileScreen() {
         full_name: fullName,
         bio: bio,
         gender: gender,
-        avatar_url: avatar
+        avatar_url: avatar,
+        base_location_name: baseLocationName,
+        base_latitude: baseLatitude,
+        base_longitude: baseLongitude
       });
       if (error) throw error;
       router.back();
@@ -190,6 +248,16 @@ export default function EditProfileScreen() {
             </View>
           </View>
           
+          <View style={styles.field}>
+            <Text style={styles.label}>Base Location</Text>
+            <Pressable style={styles.inputRow} onPress={() => setLocationModalVisible(true)}>
+              <MapPin size={18} color={theme.colors.mutedForeground} />
+              <Text style={[styles.inputFlex, !baseLocationName && { color: theme.colors.mutedForeground }]}>
+                {baseLocationName || 'e.g. Kondapur, Hyderabad'}
+              </Text>
+            </Pressable>
+          </View>
+          
           <Pressable style={styles.saveBtn} onPress={handleSave}>
             <Text style={styles.saveBtnText}>Save Changes</Text>
           </Pressable>
@@ -197,6 +265,48 @@ export default function EditProfileScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Location Modal */}
+      <Modal visible={isLocationModalVisible} animationType="slide" transparent={false}>
+        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingHorizontal: 20 }]}>
+            <Text style={styles.modalTitle}>Search Location</Text>
+            <Pressable onPress={() => setLocationModalVisible(false)} style={styles.closeBtn}>
+              <X size={20} color={theme.colors.foreground} />
+            </Pressable>
+          </View>
+          <View style={{ paddingHorizontal: 20 }}>
+            <View style={[styles.inputRow, { marginBottom: 16 }]}>
+              <MapPin size={18} color={theme.colors.mutedForeground} />
+              <TextInput
+                style={styles.inputFlex}
+                placeholder="Search neighborhood or city..."
+                placeholderTextColor={theme.colors.mutedForeground}
+                value={locationQuery}
+                onChangeText={(text) => {
+                  setLocationQuery(text);
+                  searchLocation();
+                }}
+                autoFocus
+              />
+            </View>
+
+            {isSearchingLocation ? (
+              <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 20 }} />
+            ) : (
+              <ScrollView keyboardShouldPersistTaps="handled">
+                {locationResults.map((item, idx) => (
+                  <Pressable key={idx} style={styles.locationResult} onPress={() => handleSelectLocation(item.place_id, item.structured_formatting.main_text + ', ' + item.structured_formatting.secondary_text)}>
+                    <Text style={styles.locationMainText}>{item.structured_formatting.main_text}</Text>
+                    <Text style={styles.locationSubText}>{item.structured_formatting.secondary_text}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -226,7 +336,31 @@ const styles = StyleSheet.create({
   closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center' },
   avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: theme.spacing.md, paddingBottom: 40 },
   avatarOption: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: 'transparent', backgroundColor: theme.colors.card },
-  avatarSelected: { borderColor: theme.colors.primary },
+  avatarSelected: { borderWidth: 3, borderColor: theme.colors.primary },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: theme.colors.card,
+  },
+  inputFlex: {
+    flex: 1,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.base,
+    color: theme.colors.foreground,
+  },
+  locationResult: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  locationMainText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 15, color: theme.colors.foreground },
+  locationSubText: { fontFamily: theme.typography.fontFamily.regular, fontSize: 13, color: theme.colors.mutedForeground },
   tabBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border },
   tabBtnActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   tabBtnText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.sm, color: theme.colors.mutedForeground },

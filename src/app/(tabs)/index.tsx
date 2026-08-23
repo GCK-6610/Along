@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, FlatList, StatusBar, Image, ScrollView, Pressable } from 'react-native';
 import { useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
-import { Compass, Flame } from 'lucide-react-native';
+import { Compass, Flame, Bell } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 
 import { ActivityIndicator } from 'react-native';
@@ -12,7 +12,7 @@ import { useHotspots } from '../../hooks/useHotspots';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { useState, useEffect } from 'react';
-import * as Location from 'expo-location';
+import { calculateHaversineDistance } from '../../lib/geoUtils';
 import PlanCard from '../../components/features/PlanCard';
 import { Plan, Hotspot } from '../../types';
 
@@ -20,18 +20,29 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState(user?.user_metadata?.full_name?.split(' ')[0] || 'Rahul');
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans(userLocation?.lat, userLocation?.lon);
   const { hotspots, isLoading: hotspotsLoading, refetch: refetchHotspots } = useHotspots();
 
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      let location = await Location.getCurrentPositionAsync({});
-      setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
-    })();
-  }, []);
+    if (user) {
+      supabase.from('profiles').select('base_latitude, base_longitude').eq('id', user.id).single().then(({ data }) => {
+        if (data && data.base_latitude && data.base_longitude) {
+          setUserLocation({ lat: data.base_latitude, lon: data.base_longitude });
+        }
+      });
+      
+      // Fetch unread notifications count
+      supabase.from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false)
+        .then(({ count }) => {
+          if (count !== null) setUnreadCount(count);
+        });
+    }
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
@@ -57,7 +68,9 @@ export default function HomeScreen() {
       <View style={styles.hotspotOverlay}>
         {item.tags && item.tags.length > 0 && <Text style={styles.hotspotCategory}>#{item.tags[0]}</Text>}
         <Text style={styles.hotspotName} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.hotspotDistance}>{item.distance_km} km away</Text>
+        <Text style={styles.hotspotDistance}>
+          {userLocation ? calculateHaversineDistance(userLocation.lat, userLocation.lon, item.latitude, item.longitude) : '?'} km away
+        </Text>
       </View>
     </Pressable>
   );
@@ -70,10 +83,16 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerGreeting}>Good Morning, {firstName} 👋</Text>
-          <Text style={styles.headerTitle}>Along</Text>
         </View>
         <View style={styles.headerIcon}>
-          <Compass size={24} color={theme.colors.primary} />
+          <Pressable style={styles.notificationBtn} onPress={() => router.push('/notifications')}>
+            <Bell size={24} color={theme.colors.foreground} />
+            {unreadCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+              </View>
+            )}
+          </Pressable>
         </View>
       </View>
 
@@ -129,25 +148,12 @@ const styles = StyleSheet.create({
     paddingTop: theme.spacing.md,
     paddingBottom: theme.spacing.sm,
   },
-  headerGreeting: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.sizes.xs,
-    color: theme.colors.mutedForeground,
-  },
-  headerTitle: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.sizes.xxxl,
-    color: theme.colors.foreground,
-    letterSpacing: -0.4,
-  },
-  headerIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: theme.borderRadius.pill,
-    backgroundColor: theme.colors.secondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  headerGreeting: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm, color: theme.colors.mutedForeground, textTransform: 'uppercase', letterSpacing: 1 },
+  headerTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 28, color: theme.colors.foreground, letterSpacing: -0.5, marginTop: 4 },
+  headerIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border },
+  notificationBtn: { position: 'relative' },
+  notificationBadge: { position: 'absolute', top: -4, right: -4, backgroundColor: theme.colors.primary, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: theme.colors.card },
+  notificationBadgeText: { color: '#fff', fontSize: 10, fontFamily: theme.typography.fontFamily.bold },
   sectionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

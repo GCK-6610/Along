@@ -14,17 +14,11 @@ export function useHotspots() {
   const fetchHotspots = async () => {
     try {
       setIsLoading(true);
-      const fetchPromise = supabase
+      const { data, error } = await supabase
         .from('sponsored_hotspots')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
-
-      const timeoutPromise = new Promise<{data: null, error: Error}>((_, reject) => 
-        setTimeout(() => reject(new Error('Hotspots request timed out after 10s')), 10000)
-      );
-
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
       if (error) throw error;
       setHotspots(data || []);
