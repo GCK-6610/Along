@@ -77,10 +77,14 @@ export default function CreateScreen() {
     
     const result = await parsePlanWithAI(promptToParse);
     
-    setTitle(result.title);
-    setVenue(result.venue);
-    setTags(result.tags);
-    setCapacity(result.capacity);
+    if (result.title) setTitle(result.title);
+    if (result.venue) setVenue(result.venue);
+    if (result.tags && result.tags.length > 0) setTags(result.tags);
+    if (result.capacity) setCapacity(result.capacity);
+    if (result.scheduledAt) setScheduledAt(result.scheduledAt);
+    if (result.latitude && result.longitude) {
+      setMapCoordinate({ latitude: result.latitude, longitude: result.longitude });
+    }
     if (result.embedding) setEmbedding(result.embedding);
     setParsing(false);
     setAiSuccessBadge(true);

@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo } from 'react';
 
 import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
-import { MessageCircle, Users } from 'lucide-react-native';
+import { MessageCircle, Users, Lock } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
@@ -32,14 +32,20 @@ export default function MessagesScreen() {
     const uniquePlans = Array.from(uniquePlansMap.values());
 
     return uniquePlans
-      .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime())
+      .sort((a, b) => {
+        const aCompleted = a.status === 'completed';
+        const bCompleted = b.status === 'completed';
+        if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+        return new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime();
+      })
       .map(p => ({
         id: p.id,
         planTitle: p.title,
         lastMessage: `📍 ${p.venue || 'No location set'}`,
         time: new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
         unread: 0,
-        members: 1 + (p.participants_list || []).filter((u: any) => u.join_status === 'approved' && u.id !== p.host_id).length
+        members: 1 + (p.participants_list || []).filter((u: any) => u.join_status === 'approved' && u.id !== p.host_id).length,
+        isArchived: p.status === 'completed',
       }));
   }, [user, hostedPlans, joinedPlans]);
 
@@ -57,17 +63,24 @@ export default function MessagesScreen() {
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           renderItem={({ item }) => (
             <Pressable style={styles.chatRow} onPress={() => router.push({ pathname: '/messages/[id]', params: { id: item.id } })}>
-              <View style={styles.iconWrap}>
-                <MessageCircle size={22} color={theme.colors.primary} />
+              <View style={[styles.iconWrap, item.isArchived && styles.iconWrapArchived]}>
+                <MessageCircle size={22} color={item.isArchived ? theme.colors.mutedForeground : theme.colors.primary} />
               </View>
               <View style={styles.chatBody}>
                 <View style={styles.chatTopRow}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={styles.chatTitle} numberOfLines={1}>{item.planTitle}</Text>
-                    <View style={styles.membersBadge}>
-                      <Users size={10} color={theme.colors.primary} />
-                      <Text style={styles.membersCount}>{item.members}</Text>
-                    </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                    <Text style={[styles.chatTitle, item.isArchived && styles.chatTitleArchived]} numberOfLines={1}>{item.planTitle}</Text>
+                    {item.isArchived ? (
+                      <View style={styles.archivedBadge}>
+                        <Lock size={9} color={theme.colors.mutedForeground} />
+                        <Text style={styles.archivedText}>ARCHIVED</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.membersBadge}>
+                        <Users size={10} color={theme.colors.primary} />
+                        <Text style={styles.membersCount}>{item.members}</Text>
+                      </View>
+                    )}
                   </View>
                   <Text style={styles.chatTime}>{item.time}</Text>
                 </View>
@@ -111,8 +124,12 @@ const styles = StyleSheet.create({
   chatBody: { flex: 1 },
   chatTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   chatTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 16, color: theme.colors.foreground, flexShrink: 1, letterSpacing: -0.2 },
+  chatTitleArchived: { color: theme.colors.mutedForeground },
   membersBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: theme.colors.card, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border },
   membersCount: { fontFamily: theme.typography.fontFamily.bold, fontSize: 10, color: theme.colors.primary },
+  archivedBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: theme.colors.card, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.border },
+  archivedText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 9, color: theme.colors.mutedForeground, letterSpacing: 0.4 },
+  iconWrapArchived: { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
   chatTime: { fontFamily: theme.typography.fontFamily.medium, fontSize: 12, color: theme.colors.mutedForeground },
   chatBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   chatPreview: { fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground, flex: 1 },

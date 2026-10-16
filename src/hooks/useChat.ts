@@ -85,7 +85,7 @@ export function useChat(planId: string) {
             let authorProfile = profileCache.current.get(payload.new.user_id);
 
             const serverMsg: ChatMessage = {
-              ...payload.new,
+              ...(payload.new as any),
               user: authorProfile,
             };
 

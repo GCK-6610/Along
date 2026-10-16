@@ -41,12 +41,14 @@ serve(async (req: any) => {
           {
             role: 'system',
             content: `You are a helpful assistant that extracts event plan details from natural language text.
+Current server time is ${new Date().toISOString()}.
 You MUST respond ONLY with a valid JSON object matching this schema:
 {
   "title": "string (A catchy title for the event, e.g. 'Morning Run in the Park', max 30 chars)",
   "venue": "string (The location extracted, e.g. 'Lodhi Gardens')",
   "tags": ["string"] (Array of 1 to 3 relevant tags, e.g. ["fitness", "outdoors", "running"]),
   "capacity": "string (Number between '2' and '20', default to '4' if unspecified)",
+  "scheduled_at": "string (ISO 8601 timestamp calculated relative to current time, e.g. '2026-10-18T18:00:00.000Z', or null if unspecified)",
   "latitude": "number (Approximate latitude of venue, default to 28.5921 if unknown)",
   "longitude": "number (Approximate longitude of venue, default to 77.2250 if unknown)"
 }`
@@ -98,6 +100,7 @@ You MUST respond ONLY with a valid JSON object matching this schema:
         capacity: parsed.capacity || '4',
         latitude: parsed.latitude || 28.5921,
         longitude: parsed.longitude || 77.2250,
+        scheduled_at: parsed.scheduled_at || null,
         embedding: embedding,
         success: true
       }),

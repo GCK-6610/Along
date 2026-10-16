@@ -6,7 +6,7 @@ import {
 
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Send } from 'lucide-react-native';
+import { ArrowLeft, Send, Lock } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { useChat, ChatMessage } from '../../hooks/useChat';
 import { useAuth } from '../../context/AuthContext';
@@ -21,8 +21,10 @@ export default function PlanChatRoomScreen() {
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
+  const isArchived = plan?.status === 'completed';
+
   const handleSend = () => {
-    if (!inputText.trim()) return;
+    if (isArchived || !inputText.trim()) return;
     sendMessage(inputText);
     setInputText('');
     setTimeout(() => {
@@ -124,24 +126,33 @@ export default function PlanChatRoomScreen() {
           }
         />
 
-        {/* Input Bar */}
-        <View style={styles.inputBar}>
-          <TextInput
-            style={styles.input}
-            placeholder="Type a message..."
-            placeholderTextColor={theme.colors.mutedForeground}
-            value={inputText}
-            onChangeText={setInputText}
-            onSubmitEditing={handleSend}
-          />
-          <Pressable
-            style={[styles.sendBtn, !inputText.trim() && styles.sendBtnDisabled]}
-            onPress={handleSend}
-            disabled={!inputText.trim()}
-          >
-            <Send size={18} color="#fff" />
-          </Pressable>
-        </View>
+        {/* Input Bar or Archived Banner */}
+        {isArchived ? (
+          <View style={styles.archivedBar}>
+            <Lock size={15} color={theme.colors.mutedForeground} />
+            <Text style={styles.archivedBarText}>
+              This hangout has concluded. Chat is archived & read-only.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.inputBar}>
+            <TextInput
+              style={styles.input}
+              placeholder="Type a message..."
+              placeholderTextColor={theme.colors.mutedForeground}
+              value={inputText}
+              onChangeText={setInputText}
+              onSubmitEditing={handleSend}
+            />
+            <Pressable
+              style={[styles.sendBtn, !inputText.trim() && styles.sendBtnDisabled]}
+              onPress={handleSend}
+              disabled={!inputText.trim()}
+            >
+              <Send size={18} color="#fff" />
+            </Pressable>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -219,5 +230,21 @@ const styles = StyleSheet.create({
     color: theme.colors.mutedForeground,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  archivedBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.colors.card,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  archivedBarText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.mutedForeground,
   },
 });
