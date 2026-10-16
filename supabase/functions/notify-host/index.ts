@@ -22,11 +22,33 @@ serve(async (req: any) => {
       return new Response('Missing plan_id or user_id', { headers: corsHeaders, status: 400 });
     }
 
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response('Unauthorized', { headers: corsHeaders, status: 401 });
+    }
+
     // Initialize Supabase Client with Service Role Key
     // @ts-ignore
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     // @ts-ignore
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    // @ts-ignore
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    // Client for auth verification
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return new Response('Unauthorized token', { headers: corsHeaders, status: 401 });
+    }
+
+    if (user.id !== user_id) {
+      return new Response('Forbidden: user_id mismatch', { headers: corsHeaders, status: 403 });
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get the Plan and Host details

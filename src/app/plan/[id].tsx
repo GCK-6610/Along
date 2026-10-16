@@ -13,6 +13,9 @@ import { triggerRequestSentNotification } from '../../lib/notifications';
 import { useAuth } from '../../context/AuthContext';
 import { usePlan } from '../../hooks/usePlan';
 import { supabase } from '../../lib/supabase';
+import AttendanceModal from '../../components/features/AttendanceModal';
+import RatingsModal from '../../components/features/RatingsModal';
+import { PlanParticipant } from '../../types';
 
 export default function PlanDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,6 +24,10 @@ export default function PlanDetailsScreen() {
   const { plan, isLoading, requestToJoin, leavePlan, updateJoinRequest } = usePlan(id as string);
   const [isJoinModalVisible, setJoinModalVisible] = useState(false);
   const [introText, setIntroText] = useState('');
+  
+  const [isAttendanceVisible, setAttendanceVisible] = useState(false);
+  const [isRatingsVisible, setRatingsVisible] = useState(false);
+  const [ratees, setRatees] = useState<PlanParticipant[]>([]);
 
   if (isLoading || !plan) {
     return (
@@ -61,7 +68,6 @@ export default function PlanDetailsScreen() {
       });
       setJoinModalVisible(false);
       setIntroText('');
-      Alert.alert('Request Sent', 'Your request has been sent to the host.');
     } catch (e: any) {
       Alert.alert('Error', e.message);
     }
@@ -114,24 +120,23 @@ export default function PlanDetailsScreen() {
         Alert.alert('Error', err.message);
       }
     } else {
-      // TODO: Open attendance modal. For now, mark everyone as attended for MVP.
-      try {
-        const attendeeIds = (participants_list || [])
-          .filter(p => p.join_status === 'approved' && p.id !== user?.id)
-          .map(p => p.id);
-          
-        const { error } = await supabase.rpc('mark_plan_completed_and_attendance', {
-          p_plan_id: id,
-          p_host_id: user?.id,
-          p_attendees: attendeeIds,
-          p_absentees: []
-        });
-        if (error) throw error;
-        Alert.alert('Plan Completed!', 'The plan has been marked as completed. You can now rate attendees.');
-        router.back();
-      } catch (err: any) {
-        Alert.alert('Error', err.message);
-      }
+      setAttendanceVisible(true);
+    }
+  };
+
+  const onAttendanceCompleted = (presentIds: string[]) => {
+    setAttendanceVisible(false);
+    // Find all participant objects that were marked present
+    const presentUsers = (participants_list || []).filter(p => presentIds.includes(p.id) && p.id !== user?.id);
+    
+    if (presentUsers.length > 0) {
+      setRatees(presentUsers);
+      setTimeout(() => {
+        setRatingsVisible(true);
+      }, 500); // Wait for first modal to close
+    } else {
+      Alert.alert('Plan Completed', 'Plan has been successfully marked as completed.');
+      router.back();
     }
   };
 
@@ -408,6 +413,32 @@ export default function PlanDetailsScreen() {
           </View>
         </View>
       </Modal>
+      
+      {/* Attendance & Ratings Modals */}
+      {plan && user && (
+        <>
+          <AttendanceModal 
+            visible={isAttendanceVisible} 
+            onClose={() => setAttendanceVisible(false)} 
+            planId={plan.id}
+            hostId={user.id}
+            attendees={(participants_list || []).filter(p => p.join_status === 'approved' && p.id !== user.id)}
+            onComplete={onAttendanceCompleted}
+          />
+          
+          <RatingsModal 
+            visible={isRatingsVisible}
+            onClose={() => {
+              setRatingsVisible(false);
+              router.back();
+            }}
+            planId={plan.id}
+            hostId={user.id}
+            ratees={ratees}
+          />
+        </>
+      )}
+
     </SafeAreaView>
   );
 }

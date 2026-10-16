@@ -5,7 +5,7 @@ import {
   TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator, Modal, FlatList, Alert
 
 } from 'react-native';
-import { Zap, MapPin, Users, Calendar, X, Search, Map as MapIcon } from 'lucide-react-native';
+import { Zap, MapPin, Users, Calendar, X, Search, Map as MapIcon, ArrowLeft } from 'lucide-react-native';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { theme } from '../../styles/theme';
 import { useAuth } from '../../context/AuthContext';
@@ -106,8 +106,6 @@ export default function EditPlanScreen() {
     }
   };
 
-  // Google Places API takes over mapSearchQuery handling.
-
   const handleNLPParse = async () => {
     const promptToParse = nlpInput.trim() || 'Morning run at Lodhi Gardens tomorrow 6am for 4 people';
     setParsing(true);
@@ -184,9 +182,16 @@ export default function EditPlanScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-          <Text style={styles.title}>Edit Plan</Text>
-          <Text style={styles.subtitle}>Update the details of your plan</Text>
-
+          <View style={styles.headerRow}>
+            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+              <ArrowLeft size={24} color={theme.colors.foreground} />
+            </Pressable>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.title}>Edit Plan</Text>
+              <Text style={styles.subtitle}>Update the details of your plan</Text>
+            </View>
+            <View style={{ width: 40 }} />
+          </View>
 
           {/* Form Fields */}
           <View style={styles.form}>
@@ -547,6 +552,9 @@ export default function EditPlanScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.background },
   scroll: { padding: theme.spacing.lg, gap: theme.spacing.lg, paddingBottom: 80 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.sm },
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border },
+  headerTextContainer: { alignItems: 'center' },
   title: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xxxl, color: theme.colors.foreground, letterSpacing: -0.4 },
   subtitle: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, marginTop: -6 },
   nlpCard: { backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.lg, padding: theme.spacing.sm, gap: 6, borderWidth: 1, borderColor: theme.colors.border },

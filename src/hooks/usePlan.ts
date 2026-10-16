@@ -1,21 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Plan } from '../types';
 import { useAuth } from '../context/AuthContext';
 
 export function usePlan(planId: string) {
   const { user } = useAuth();
-  const [plan, setPlan] = useState<Plan | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (planId) fetchPlan();
-  }, [planId]);
-
-  const fetchPlan = async () => {
-    try {
-      setIsLoading(true);
+  const queryResult = useQuery({
+    queryKey: ['plan', planId],
+    queryFn: async () => {
+      if (!planId) throw new Error('No plan ID');
       const { data, error } = await supabase
         .from('plans')
         .select(`
@@ -31,13 +26,13 @@ export function usePlan(planId: string) {
         .single();
 
       if (error) throw error;
-      setPlan(data as any);
-    } catch (err: any) {
-      console.error('Error fetching plan:', err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
+      return data as any as Plan;
+    },
+    enabled: !!planId
+  });
+
+  const refetchPlan = async () => {
+    await queryResult.refetch();
   };
 
   const requestToJoin = async (introMessage: string) => {
@@ -50,7 +45,7 @@ export function usePlan(planId: string) {
         intro_message: introMessage
       });
       if (error) throw error;
-      await fetchPlan();
+      await refetchPlan();
     } catch (err: any) {
       console.error('Error requesting to join:', err);
       throw err;
@@ -63,7 +58,7 @@ export function usePlan(planId: string) {
       const { error } = await supabase.from('plan_participants').delete()
         .eq('plan_id', planId).eq('user_id', user.id);
       if (error) throw error;
-      await fetchPlan();
+      await refetchPlan();
     } catch (err: any) {
       console.error('Error leaving plan:', err);
       throw err;
@@ -77,12 +72,20 @@ export function usePlan(planId: string) {
         .eq('plan_id', planId)
         .eq('user_id', participantId);
       if (error) throw error;
-      await fetchPlan();
+      await refetchPlan();
     } catch (err: any) {
       console.error('Error updating join request:', err);
       throw err;
     }
   };
 
-  return { plan, isLoading, error, refetch: fetchPlan, requestToJoin, leavePlan, updateJoinRequest };
+  return { 
+    plan: queryResult.data || null, 
+    isLoading: queryResult.isLoading, 
+    error: queryResult.error?.message || null, 
+    refetch: refetchPlan, 
+    requestToJoin, 
+    leavePlan, 
+    updateJoinRequest 
+  };
 }

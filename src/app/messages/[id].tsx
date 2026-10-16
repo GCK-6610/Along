@@ -67,6 +67,11 @@ export default function PlanChatRoomScreen() {
     );
   };
 
+  const approvedAttendees = (plan?.participants_list || []).filter(
+    (p: any) => p.join_status === 'approved' && p.id !== plan?.host_id
+  );
+  const memberCount = 1 + approvedAttendees.length;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
@@ -79,7 +84,7 @@ export default function PlanChatRoomScreen() {
             {plan ? (
               <>
                 <Text style={styles.planTitle} numberOfLines={1}>{plan.title}</Text>
-                <Text style={styles.planSub}>{plan.current_participants} members • {plan.venue}</Text>
+                <Text style={styles.planSub}>{memberCount} members • {plan.venue}</Text>
               </>
             ) : (
               <ActivityIndicator color={theme.colors.foreground} />

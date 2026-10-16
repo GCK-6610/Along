@@ -1,4 +1,4 @@
-import { calculateDistance } from '../src/lib/geoUtils';
+import { calculateDistance } from '../src/utils/distance';
 
 describe('geoUtils', () => {
   it('calculates the correct distance between two points', () => {

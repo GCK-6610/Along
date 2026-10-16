@@ -1,17 +1,18 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect } from 'react';
 
-import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { MessageCircle, Users } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { usePlans } from '../../hooks/usePlans';
+import { useMyPlans } from '../../hooks/useMyPlans';
 
 export default function MessagesScreen() {
   const { user } = useAuth();
   const [chats, setChats] = useState<any[]>([]);
-  const { plans, refetch: refetchPlans } = usePlans();
+  const { hostedPlans, joinedPlans, refetch: refetchPlans } = useMyPlans();
 
   useFocusEffect(
     useCallback(() => {
@@ -21,8 +22,16 @@ export default function MessagesScreen() {
 
   useEffect(() => {
     if (!user) return;
-    const userChats = plans
-      .filter(p => p.host_id === user.id || p.participants_list?.some((u: any) => u.id === user.id && u.join_status === 'approved'))
+    
+    const allUserPlans = [...hostedPlans, ...joinedPlans];
+    
+    // De-duplicate just in case
+    const uniquePlansMap = new Map();
+    allUserPlans.forEach(p => uniquePlansMap.set(p.id, p));
+    const uniquePlans = Array.from(uniquePlansMap.values());
+
+    const userChats = uniquePlans
+      .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime())
       .map(p => {
         // We aren't fetching real messages yet for the chat list for MVP to save time. 
         // A real impl would fetch the latest message from chat_messages table.
@@ -32,11 +41,11 @@ export default function MessagesScreen() {
           lastMessage: `📍 ${p.venue || 'No location set'}`,
           time: new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
           unread: 0,
-          members: (p.participants_list?.filter((u: any) => u.join_status === 'approved').length || 0) + 1
+          members: 1 + (p.participants_list || []).filter((u: any) => u.join_status === 'approved' && u.id !== p.host_id).length
         };
       });
     setChats(userChats);
-  }, [user, plans]);
+  }, [user, hostedPlans, joinedPlans]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -44,46 +53,48 @@ export default function MessagesScreen() {
         <Text style={styles.title}>Messages</Text>
       </View>
 
-      <FlatList
-        data={chats}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.list}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        renderItem={({ item }) => (
-          <Pressable style={styles.chatRow} onPress={() => router.push({ pathname: '/messages/[id]', params: { id: item.id } })}>
-            <View style={styles.iconWrap}>
-              <MessageCircle size={22} color={theme.colors.primary} />
-            </View>
-            <View style={styles.chatBody}>
-              <View style={styles.chatTopRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={styles.chatTitle} numberOfLines={1}>{item.planTitle}</Text>
-                  <View style={styles.membersBadge}>
-                    <Users size={10} color={theme.colors.primary} />
-                    <Text style={styles.membersCount}>{item.members}</Text>
+      <View style={{ flex: 1, minHeight: 2 }}>
+        <FlashList
+          data={chats}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.list}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          renderItem={({ item }) => (
+            <Pressable style={styles.chatRow} onPress={() => router.push({ pathname: '/messages/[id]', params: { id: item.id } })}>
+              <View style={styles.iconWrap}>
+                <MessageCircle size={22} color={theme.colors.primary} />
+              </View>
+              <View style={styles.chatBody}>
+                <View style={styles.chatTopRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.chatTitle} numberOfLines={1}>{item.planTitle}</Text>
+                    <View style={styles.membersBadge}>
+                      <Users size={10} color={theme.colors.primary} />
+                      <Text style={styles.membersCount}>{item.members}</Text>
+                    </View>
                   </View>
+                  <Text style={styles.chatTime}>{item.time}</Text>
                 </View>
-                <Text style={styles.chatTime}>{item.time}</Text>
+                <View style={styles.chatBottomRow}>
+                  <Text style={styles.chatPreview} numberOfLines={1}>{item.lastMessage}</Text>
+                  {item.unread > 0 && (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{item.unread}</Text>
+                    </View>
+                  )}
+                </View>
               </View>
-              <View style={styles.chatBottomRow}>
-                <Text style={styles.chatPreview} numberOfLines={1}>{item.lastMessage}</Text>
-                {item.unread > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{item.unread}</Text>
-                  </View>
-                )}
-              </View>
+            </Pressable>
+          )}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>💬</Text>
+              <Text style={styles.emptyTitle}>No conversations yet</Text>
+              <Text style={styles.emptySubtitle}>Join a plan to start chatting with others</Text>
             </View>
-          </Pressable>
-        )}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>💬</Text>
-            <Text style={styles.emptyTitle}>No conversations yet</Text>
-            <Text style={styles.emptySubtitle}>Join a plan to start chatting with others</Text>
-          </View>
-        }
-      />
+          }
+        />
+      </View>
     </SafeAreaView>
   );
 }

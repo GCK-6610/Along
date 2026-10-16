@@ -139,9 +139,15 @@ export default function CreateScreen() {
               <Text style={styles.title}>Create Plan</Text>
               <Text style={styles.subtitle}>What are we doing today?</Text>
             </View>
-            <Pressable onPress={resetForm} style={styles.clearBtn}>
-              <Text style={styles.clearBtnText}>Clear</Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Pressable onPress={() => setAiModalVisible(true)} style={styles.aiHeaderBtn}>
+                <Zap size={14} color={theme.colors.primary} />
+                <Text style={styles.aiHeaderBtnText}>Auto-fill</Text>
+              </Pressable>
+              <Pressable onPress={resetForm} style={styles.clearBtn}>
+                <Text style={styles.clearBtnText}>Clear</Text>
+              </Pressable>
+            </View>
           </View>
 
           {aiSuccessBadge && (
@@ -277,18 +283,7 @@ export default function CreateScreen() {
             </View>
           </View>
 
-          {/* AI Auto-fill Button - Secondary */}
-          <Pressable style={styles.aiSecondaryBtn} onPress={() => setAiModalVisible(true)}>
-            <View style={styles.aiSecondaryIcon}>
-              <Zap size={16} color={theme.colors.primary} />
-            </View>
-            <View>
-              <Text style={styles.aiSecondaryTitle}>Too much typing?</Text>
-              <Text style={styles.aiSecondarySub}>Let AI fill this out for you</Text>
-            </View>
-          </Pressable>
 
-          <View style={{ height: 40 }} />
         </ScrollView>
 
         {/* Sticky Bottom Bar */}
@@ -487,59 +482,58 @@ export default function CreateScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.background },
-  scroll: { padding: theme.spacing.lg, gap: theme.spacing.lg },
+  scroll: { padding: theme.spacing.lg, gap: theme.spacing.md },
   
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontFamily: theme.typography.fontFamily.bold, fontSize: 24, color: theme.colors.foreground, letterSpacing: -0.5 },
-  subtitle: { fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground, marginTop: 2 },
-  clearBtn: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: theme.colors.card, borderRadius: 20 },
+  title: { fontFamily: theme.typography.fontFamily.bold, fontSize: 22, color: theme.colors.foreground, letterSpacing: -0.5 },
+  subtitle: { fontFamily: theme.typography.fontFamily.regular, fontSize: 13, color: theme.colors.mutedForeground, marginTop: 2 },
+  
+  aiHeaderBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: theme.colors.secondary, borderRadius: 20 },
+  aiHeaderBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 12, color: theme.colors.primary },
+  
+  clearBtn: { paddingHorizontal: 10, paddingVertical: 6, backgroundColor: theme.colors.card, borderRadius: 20 },
   clearBtnText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 12, color: theme.colors.mutedForeground },
   
-  successBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: theme.colors.secondary, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  successBadgeText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 12, color: theme.colors.primary },
+  successBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: theme.colors.secondary, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  successBadgeText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 11, color: theme.colors.primary },
 
-  card: { backgroundColor: theme.colors.card, borderRadius: 16, padding: 14, gap: 16 },
-  field: { gap: 6 },
-  label: { fontFamily: theme.typography.fontFamily.bold, fontSize: 14, color: theme.colors.foreground },
+  card: { backgroundColor: theme.colors.card, borderRadius: 12, padding: 12, gap: 12 },
+  field: { gap: 4 },
+  label: { fontFamily: theme.typography.fontFamily.bold, fontSize: 13, color: theme.colors.foreground },
   
-  input: { backgroundColor: theme.colors.background, borderRadius: 10, padding: 12, fontFamily: theme.typography.fontFamily.regular, fontSize: 15, color: theme.colors.foreground },
+  input: { backgroundColor: theme.colors.background, borderRadius: 8, padding: 10, fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.foreground },
   
-  venuePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.background, borderRadius: 12, padding: 10, paddingRight: 14 },
-  venuePickerIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#FF5C00', alignItems: 'center', justifyContent: 'center' },
-  venuePickerText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 15, color: theme.colors.foreground },
+  venuePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.background, borderRadius: 8, padding: 8, paddingRight: 10 },
+  venuePickerIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#FF5C00', alignItems: 'center', justifyContent: 'center' },
+  venuePickerText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 14, color: theme.colors.foreground },
 
-  datePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.secondary, borderRadius: 10, padding: 12, gap: 10 },
-  datePickerText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 15, color: theme.colors.primary },
+  datePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.secondary, borderRadius: 8, padding: 10, gap: 8 },
+  datePickerText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 14, color: theme.colors.primary },
 
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: theme.colors.secondary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
-  chipText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 13, color: theme.colors.primary },
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: theme.colors.secondary, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  chipText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 12, color: theme.colors.primary },
 
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  hintText: { fontFamily: theme.typography.fontFamily.regular, fontSize: 12, color: theme.colors.mutedForeground, marginTop: 2 },
+  hintText: { fontFamily: theme.typography.fontFamily.regular, fontSize: 11, color: theme.colors.mutedForeground, marginTop: 2 },
   
-  stepper: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.background, borderRadius: 16, padding: 4 },
-  stepperBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center' },
-  stepperBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 18, color: theme.colors.foreground, lineHeight: 22 },
-  stepperValue: { fontFamily: theme.typography.fontFamily.bold, fontSize: 16, color: theme.colors.foreground, minWidth: 36, textAlign: 'center' },
+  stepper: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.background, borderRadius: 12, padding: 2 },
+  stepperBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center' },
+  stepperBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 16, color: theme.colors.foreground, lineHeight: 20 },
+  stepperValue: { fontFamily: theme.typography.fontFamily.bold, fontSize: 14, color: theme.colors.foreground, minWidth: 32, textAlign: 'center' },
 
-  divider: { height: 1, backgroundColor: theme.colors.background, marginVertical: 4 },
+  divider: { height: 1, backgroundColor: theme.colors.background, marginVertical: 2 },
 
-  segmentedControl: { flexDirection: 'row', backgroundColor: theme.colors.background, borderRadius: 10, padding: 4 },
-  segment: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
+  segmentedControl: { flexDirection: 'row', backgroundColor: theme.colors.background, borderRadius: 8, padding: 2 },
+  segment: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 6 },
   segmentActive: { backgroundColor: theme.colors.card },
-  segmentText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 14, color: theme.colors.mutedForeground },
+  segmentText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 13, color: theme.colors.mutedForeground },
   segmentTextActive: { color: theme.colors.foreground, fontFamily: theme.typography.fontFamily.bold },
 
-  aiSecondaryBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.card, borderRadius: 16, padding: 14, gap: 12, marginTop: 8 },
-  aiSecondaryIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.secondary, alignItems: 'center', justifyContent: 'center' },
-  aiSecondaryTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 14, color: theme.colors.foreground },
-  aiSecondarySub: { fontFamily: theme.typography.fontFamily.regular, fontSize: 12, color: theme.colors.mutedForeground, marginTop: 2 },
-
   stickyBottom: { padding: 16, paddingTop: 12, backgroundColor: theme.colors.background, borderTopWidth: 1, borderTopColor: theme.colors.border },
-  postBtn: { backgroundColor: theme.colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  postBtn: { backgroundColor: theme.colors.primary, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
   postBtnDisabled: { opacity: 0.5 },
-  postBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 15, color: '#fff' },
+  postBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 14, color: '#fff' },
 
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: theme.spacing.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
   iconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center' },

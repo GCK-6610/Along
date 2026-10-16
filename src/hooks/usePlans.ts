@@ -1,19 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Plan } from '../types';
 
 export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: number[]) {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchPlans();
-  }, [userLat, userLon, queryEmbedding]);
-
-  const fetchPlans = async () => {
-    try {
-      setIsLoading(true);
+  const queryResult = useQuery({
+    queryKey: ['nearby_plans', userLat, userLon, queryEmbedding],
+    queryFn: async () => {
       console.log('Fetching plans for location:', userLat, userLon);
       // Fetch user gender and base location
       const { data: { session } } = await supabase.auth.getSession();
@@ -50,14 +42,14 @@ export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: nu
       const now = new Date().toISOString();
       const activePlans = ((data as any) || []).filter((p: any) => p.scheduled_at > now);
       
-      setPlans(activePlans);
-    } catch (err: any) {
-      console.error('Error fetching plans:', err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+      return activePlans as Plan[];
     }
-  };
+  });
 
-  return { plans, isLoading, error, refetch: fetchPlans };
+  return { 
+    plans: queryResult.data || [], 
+    isLoading: queryResult.isLoading, 
+    error: queryResult.error?.message || null, 
+    refetch: queryResult.refetch 
+  };
 }

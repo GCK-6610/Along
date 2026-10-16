@@ -1,10 +1,11 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useRef } from 'react';
 import {
-  View, Text, StyleSheet, FlatList,
+  View, Text, StyleSheet,
   ScrollView, Pressable, TextInput, Platform, ActivityIndicator, Modal
 
 } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { router, useFocusEffect } from 'expo-router';
 import { Search, MapPin, Map, List, Navigation, ArrowLeft, Image as ImageIcon, X } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
@@ -315,7 +316,11 @@ export default function ExploreScreen() {
             // Apple Maps (iOS default) dark mode
             userInterfaceStyle="dark"
             // Google Maps (Android) dark mode
-            customMapStyle={darkMapStyle}
+            customMapStyle={Platform.OS === 'android' ? darkMapStyle : undefined}
+            onPress={() => {
+              setSelectedPinId(null);
+              setSelectedHotspotId(null);
+            }}
           >
             {showVenues ? (
               <>
@@ -428,7 +433,7 @@ export default function ExploreScreen() {
             ))}
           </ScrollView>
         ) : (
-          <FlatList
+          <FlashList
             data={filtered}
             keyExtractor={(item: Plan) => item.id}
             renderItem={({ item }) => (

@@ -14,7 +14,6 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   
   const [profile, setProfile] = useState<any>({});
-  const [stats, setStats] = useState({ hosted: 0, joined: 0 });
   const { plans, refetch: refetchPlans } = usePlans();
 
   useFocusEffect(
@@ -34,12 +33,6 @@ export default function ProfileScreen() {
 
   const hostedPlans = plans.filter(p => p.host_id === user?.id);
   const joinedPlans = plans.filter(p => p.host_id !== user?.id && p.participants_list?.some(u => u.id === user?.id && u.join_status === 'approved'));
-
-  useEffect(() => {
-    if (user && plans) {
-      setStats({ hosted: hostedPlans.length, joined: joinedPlans.length });
-    }
-  }, [plans, user]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -85,15 +78,11 @@ export default function ProfileScreen() {
         {/* Stats */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{profile?.completed_plans || 0}</Text>
-            <Text style={styles.statLabel}>Plans Completed</Text>
+            <Text style={styles.statValue}>{profile?.events_attended || 0}</Text>
+            <Text style={styles.statLabel}>Plans Attended</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{stats.joined}</Text>
-            <Text style={styles.statLabel}>Plans Joined</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{stats.hosted}</Text>
+            <Text style={styles.statValue}>{profile?.events_hosted || 0}</Text>
             <Text style={styles.statLabel}>Plans Hosted</Text>
           </View>
         </View>
@@ -134,7 +123,7 @@ export default function ProfileScreen() {
             <View style={styles.menuIcon}><Star size={20} color={theme.colors.primary} /></View>
             <View style={styles.menuText}>
               <Text style={styles.menuLabel}>My Plans</Text>
-              <Text style={styles.menuSub}>{stats.hosted} hosted, {stats.joined} joined</Text>
+              <Text style={styles.menuSub}>{profile?.events_hosted || 0} hosted, {profile?.events_attended || 0} attended</Text>
             </View>
             <Text style={styles.menuArrow}>›</Text>
           </Pressable>

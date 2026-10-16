@@ -10,6 +10,9 @@ import {
 } from '@expo-google-fonts/outfit';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { LogBox } from 'react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
 
 LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
@@ -26,7 +29,7 @@ function RootNavigator() {
       SplashScreen.hideAsync();
       
       const inAuthGroup = segments[0] === '(auth)';
-      const isRoot = segments.length === 0;
+      const isRoot = (segments as string[]).length === 0;
 
       if (!session) {
         // If not logged in and not already in auth group, go to login
@@ -63,8 +66,10 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
-    <AuthProvider>
-      <RootNavigator />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RootNavigator />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

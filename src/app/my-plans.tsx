@@ -6,29 +6,20 @@ import { router, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Calendar } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
-import { usePlans } from '../hooks/usePlans';
+import { useMyPlans } from '../hooks/useMyPlans';
 import PlanCard from '../components/features/PlanCard';
 
 export default function MyPlansScreen() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'hosted' | 'joined'>('hosted');
   
-  const { plans, refetch } = usePlans();
-  const [hostedPlans, setHostedPlans] = useState<any[]>([]);
-  const [joinedPlans, setJoinedPlans] = useState<any[]>([]);
+  const { hostedPlans, joinedPlans, refetch } = useMyPlans();
 
   useFocusEffect(
     useCallback(() => {
       refetch();
     }, [])
   );
-
-  useEffect(() => {
-    if (user && plans) {
-      setHostedPlans(plans.filter(p => p.host_id === user.id));
-      setJoinedPlans(plans.filter(p => p.host_id !== user.id && p.participants_list?.some(u => u.id === user.id && u.join_status === 'approved')));
-    }
-  }, [user, plans]);
 
   const displayPlans = activeTab === 'hosted' ? hostedPlans : joinedPlans;
 

@@ -14,8 +14,8 @@ async function testRPC() {
   console.log('Testing RPC...');
   const { data, error } = await supabase
     .rpc('get_nearby_plans', {
-      user_lat: undefined,
-      user_lon: undefined,
+      user_lat: 17.4485835,
+      user_lon: 78.3908035,
       query_embedding: undefined,
       match_threshold: 0.5,
       match_count: 50

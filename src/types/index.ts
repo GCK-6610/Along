@@ -5,11 +5,17 @@ export interface Profile {
   bio?: string;
   avatar_url?: string;
   is_verified: boolean;
+  events_hosted?: number;
+  events_attended?: number;
+  rating_avg?: number;
+  rating_count?: number;
+  completed_plans?: number; // legacy column
 }
 
 export interface PlanParticipant extends Profile {
   join_status?: 'pending' | 'approved' | 'rejected';
   intro_message?: string;
+  attendance_status?: 'pending' | 'attended' | 'absent';
 }
 
 export interface Plan {
@@ -27,6 +33,7 @@ export interface Plan {
   latitude?: number;
   longitude?: number;
   distance_km?: number;
+  secret_location_details?: string;
   participants_list?: PlanParticipant[];
   status: 'active' | 'cancelled' | 'completed';
 }
