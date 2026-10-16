@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Plan } from '../types';
 
+const EMPTY_PLANS: Plan[] = [];
+
 export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: number[]) {
   const queryResult = useQuery({
     queryKey: ['nearby_plans', userLat, userLon, queryEmbedding],
@@ -42,12 +44,12 @@ export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: nu
       const now = new Date().toISOString();
       const activePlans = ((data as any) || []).filter((p: any) => p.scheduled_at > now);
       
-      return activePlans as Plan[];
+      return (activePlans.length > 0 ? activePlans : EMPTY_PLANS) as Plan[];
     }
   });
 
   return { 
-    plans: queryResult.data || [], 
+    plans: queryResult.data ?? EMPTY_PLANS, 
     isLoading: queryResult.isLoading, 
     error: queryResult.error?.message || null, 
     refetch: queryResult.refetch 

@@ -120,6 +120,15 @@ export default function HomeScreen() {
         {/* Feed */}
         {plansLoading ? (
           <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
+        ) : plans.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyEmoji}>📍</Text>
+            <Text style={styles.emptyTitle}>No plans nearby yet</Text>
+            <Text style={styles.emptySubtitle}>Be the first to create a hangout or explore trending hotspots!</Text>
+            <Pressable style={styles.emptyBtn} onPress={() => router.push('/create')}>
+              <Text style={styles.emptyBtnText}>Create a Plan</Text>
+            </Pressable>
+          </View>
         ) : (
           <View style={styles.list}>
             {plans.map(plan => (
@@ -238,5 +247,40 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.sizes.xs,
     color: 'rgba(255,255,255,0.8)',
-  }
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: theme.spacing.xl,
+    gap: theme.spacing.sm,
+  },
+  emptyEmoji: {
+    fontSize: 40,
+    marginBottom: 4,
+  },
+  emptyTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.lg,
+    color: theme.colors.foreground,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.sm,
+    color: theme.colors.mutedForeground,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  emptyBtn: {
+    marginTop: theme.spacing.sm,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: theme.borderRadius.pill,
+  },
+  emptyBtnText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.sm,
+    color: '#FFF',
+  },
 });

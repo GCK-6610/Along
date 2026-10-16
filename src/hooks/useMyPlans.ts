@@ -2,12 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Plan } from '../types';
 
+const EMPTY_PLANS: Plan[] = [];
+
 export function useMyPlans() {
   const queryResult = useQuery({
     queryKey: ['my_plans'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return { hostedPlans: [], joinedPlans: [] };
+      if (!session?.user) return { hostedPlans: EMPTY_PLANS, joinedPlans: EMPTY_PLANS };
 
       const userId = session.user.id;
 
@@ -67,15 +69,15 @@ export function useMyPlans() {
         .sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
       return {
-        hostedPlans: formattedHosted as any as Plan[],
-        joinedPlans: formattedJoined as any as Plan[]
+        hostedPlans: (formattedHosted.length > 0 ? formattedHosted : EMPTY_PLANS) as Plan[],
+        joinedPlans: (formattedJoined.length > 0 ? formattedJoined : EMPTY_PLANS) as Plan[]
       };
     }
   });
 
   return { 
-    hostedPlans: queryResult.data?.hostedPlans || [], 
-    joinedPlans: queryResult.data?.joinedPlans || [], 
+    hostedPlans: queryResult.data?.hostedPlans ?? EMPTY_PLANS, 
+    joinedPlans: queryResult.data?.joinedPlans ?? EMPTY_PLANS, 
     isLoading: queryResult.isLoading, 
     error: queryResult.error?.message || null, 
     refetch: queryResult.refetch 

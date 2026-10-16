@@ -1,17 +1,17 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
 import { MessageCircle, Users } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useMyPlans } from '../../hooks/useMyPlans';
 
+const EMPTY_CHATS: any[] = [];
+
 export default function MessagesScreen() {
   const { user } = useAuth();
-  const [chats, setChats] = useState<any[]>([]);
   const { hostedPlans, joinedPlans, refetch: refetchPlans } = useMyPlans();
 
   useFocusEffect(
@@ -20,31 +20,27 @@ export default function MessagesScreen() {
     }, [])
   );
 
-  useEffect(() => {
-    if (!user) return;
+  const chats = useMemo(() => {
+    if (!user) return EMPTY_CHATS;
     
     const allUserPlans = [...hostedPlans, ...joinedPlans];
+    if (allUserPlans.length === 0) return EMPTY_CHATS;
     
     // De-duplicate just in case
     const uniquePlansMap = new Map();
     allUserPlans.forEach(p => uniquePlansMap.set(p.id, p));
     const uniquePlans = Array.from(uniquePlansMap.values());
 
-    const userChats = uniquePlans
+    return uniquePlans
       .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime())
-      .map(p => {
-        // We aren't fetching real messages yet for the chat list for MVP to save time. 
-        // A real impl would fetch the latest message from chat_messages table.
-        return {
-          id: p.id,
-          planTitle: p.title,
-          lastMessage: `📍 ${p.venue || 'No location set'}`,
-          time: new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
-          unread: 0,
-          members: 1 + (p.participants_list || []).filter((u: any) => u.join_status === 'approved' && u.id !== p.host_id).length
-        };
-      });
-    setChats(userChats);
+      .map(p => ({
+        id: p.id,
+        planTitle: p.title,
+        lastMessage: `📍 ${p.venue || 'No location set'}`,
+        time: new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+        unread: 0,
+        members: 1 + (p.participants_list || []).filter((u: any) => u.join_status === 'approved' && u.id !== p.host_id).length
+      }));
   }, [user, hostedPlans, joinedPlans]);
 
   return (
@@ -54,7 +50,7 @@ export default function MessagesScreen() {
       </View>
 
       <View style={{ flex: 1, minHeight: 2 }}>
-        <FlashList
+        <FlatList
           data={chats}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.list}

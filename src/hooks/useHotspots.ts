@@ -1,19 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Hotspot } from '../lib/mockData';
 
+const EMPTY_HOTSPOTS: Hotspot[] = [];
+
 export function useHotspots() {
-  const [hotspots, setHotspots] = useState<Hotspot[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchHotspots();
-  }, []);
-
-  const fetchHotspots = async () => {
-    try {
-      setIsLoading(true);
+  const queryResult = useQuery({
+    queryKey: ['sponsored_hotspots'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('sponsored_hotspots')
         .select('*')
@@ -21,14 +15,18 @@ export function useHotspots() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setHotspots(data || []);
-    } catch (err: any) {
-      console.error('Error fetching hotspots:', err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return (data && data.length > 0 ? data : EMPTY_HOTSPOTS) as Hotspot[];
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutes cache
+    retry: 2, // Auto-retry on transient errors like PGRST303 clock skew
+    retryDelay: 1000,
+  });
 
-  return { hotspots, isLoading, error, refetch: fetchHotspots };
+  return {
+    hotspots: queryResult.data ?? EMPTY_HOTSPOTS,
+    isLoading: queryResult.isLoading,
+    error: queryResult.error?.message || null,
+    refetch: queryResult.refetch,
+  };
 }
+

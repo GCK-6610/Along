@@ -102,6 +102,19 @@ export default function PlanChatRoomScreen() {
           renderItem={renderMessage}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            !chatLoading ? (
+              <View style={styles.emptyChat}>
+                <Text style={styles.emptyChatEmoji}>💬</Text>
+                <Text style={styles.emptyChatTitle}>Say Hello!</Text>
+                <Text style={styles.emptyChatSub}>
+                  Break the ice and coordinate details with the group.
+                </Text>
+              </View>
+            ) : (
+              <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 40 }} />
+            )
+          }
         />
 
         {/* Input Bar */}
@@ -178,4 +191,26 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   sendBtnDisabled: { opacity: 0.5 },
+  emptyChat: {
+    alignItems: 'center',
+    paddingTop: 80,
+    paddingHorizontal: theme.spacing.xl,
+    gap: theme.spacing.xs,
+  },
+  emptyChatEmoji: {
+    fontSize: 40,
+    marginBottom: 4,
+  },
+  emptyChatTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.base,
+    color: theme.colors.foreground,
+  },
+  emptyChatSub: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.mutedForeground,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });

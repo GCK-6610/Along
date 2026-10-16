@@ -2,10 +2,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet,
-  ScrollView, Pressable, TextInput, Platform, ActivityIndicator, Modal
-
+  ScrollView, Pressable, TextInput, Platform, ActivityIndicator, Modal, FlatList
 } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
 import { router, useFocusEffect } from 'expo-router';
 import { Search, MapPin, Map, List, Navigation, ArrowLeft, Image as ImageIcon, X } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
@@ -86,7 +84,7 @@ export default function ExploreScreen() {
   ];
   const { hotspots: HOTSPOTS, isLoading: hotspotsLoading, refetch: refetchHotspots } = useHotspots();
   
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null);
@@ -433,7 +431,7 @@ export default function ExploreScreen() {
             ))}
           </ScrollView>
         ) : (
-          <FlashList
+          <FlatList
             data={filtered}
             keyExtractor={(item: Plan) => item.id}
             renderItem={({ item }) => (
