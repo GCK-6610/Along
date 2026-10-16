@@ -14,6 +14,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { usePlans } from '../../hooks/usePlans';
 import { useHotspots } from '../../hooks/useHotspots';
 import PlanCard from '../../components/features/PlanCard';
+import { PlanCardSkeleton } from '../../components/features/Skeletons';
 import VenueModal from '../../components/features/VenueModal';
 import { Plan } from '../../types';
 import { useEffect } from 'react';
@@ -291,11 +292,7 @@ export default function ExploreScreen() {
       )}
 
       {/* Main Content: Map or List */}
-      {(plansLoading || hotspotsLoading) ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      ) : viewMode === 'map' ? (
+      {viewMode === 'map' ? (
         <View style={styles.mapContainer}>
           <MapView
             ref={mapRef}
@@ -430,6 +427,12 @@ export default function ExploreScreen() {
               </Pressable>
             ))}
           </ScrollView>
+        ) : plansLoading ? (
+          <View style={styles.list}>
+            <PlanCardSkeleton />
+            <PlanCardSkeleton />
+            <PlanCardSkeleton />
+          </View>
         ) : (
           <FlatList
             data={filtered}

@@ -25,6 +25,9 @@ export default function PlanChatRoomScreen() {
     if (!inputText.trim()) return;
     sendMessage(inputText);
     setInputText('');
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 60);
   };
 
   const renderMessage = ({ item }: { item: ChatMessage }) => {
@@ -34,10 +37,12 @@ export default function PlanChatRoomScreen() {
     if (isMe) {
       return (
         <View style={[styles.msgRow, styles.msgRowMe]}>
-          <View style={styles.bubbleMe}>
+          <View style={[styles.bubbleMe, item.isOptimistic && { opacity: 0.85 }]}>
             <Text style={styles.bubbleTextMe}>{item.content}</Text>
             <Text style={styles.timeMe}>
-              {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {item.isOptimistic
+                ? 'Sending...'
+                : new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </View>
         </View>
@@ -97,11 +102,13 @@ export default function PlanChatRoomScreen() {
 
         {/* Messages List */}
         <FlatList
+          ref={flatListRef}
           data={messages}
           keyExtractor={item => item.id}
           renderItem={renderMessage}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             !chatLoading ? (
               <View style={styles.emptyChat}>

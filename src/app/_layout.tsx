@@ -12,7 +12,16 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import { LogBox } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes fresh cache
+      gcTime: 1000 * 60 * 15, // 15 minutes garbage collection
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",

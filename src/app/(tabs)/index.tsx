@@ -14,6 +14,7 @@ import { supabase } from '../../lib/supabase';
 import { useState, useEffect } from 'react';
 import { calculateHaversineDistance } from '../../lib/geoUtils';
 import PlanCard from '../../components/features/PlanCard';
+import { PlanCardSkeleton, HotspotCardSkeleton } from '../../components/features/Skeletons';
 import { Plan, Hotspot } from '../../types';
 
 export default function HomeScreen() {
@@ -63,10 +64,19 @@ export default function HomeScreen() {
   );
 
   const renderHotspot = (item: Hotspot) => (
-    <Pressable key={item.id} style={styles.hotspotCard} onPress={() => router.push({ pathname: '/create', params: { venue: item.name, tags: item.tags?.join(',') } })}>
+    <Pressable
+      key={item.id}
+      style={({ pressed }) => [styles.hotspotCard, pressed && { transform: [{ scale: 0.97 }], opacity: 0.94 }]}
+      onPress={() => router.push({ pathname: '/create', params: { venue: item.name, tags: item.tags?.join(',') } })}
+    >
       <Image source={{ uri: item.image_url }} style={styles.hotspotImage} />
       <View style={styles.hotspotOverlay}>
-        {item.tags && item.tags.length > 0 && <Text style={styles.hotspotCategory}>#{item.tags[0]}</Text>}
+        <View style={styles.hotspotBadgeRow}>
+          {item.tags && item.tags.length > 0 && <Text style={styles.hotspotCategory}>#{item.tags[0]}</Text>}
+          <View style={styles.featuredBadge}>
+            <Text style={styles.featuredBadgeText}>FEATURED</Text>
+          </View>
+        </View>
         <Text style={styles.hotspotName} numberOfLines={1}>{item.name}</Text>
         <Text style={styles.hotspotDistance}>
           {userLocation ? calculateHaversineDistance(userLocation.lat, userLocation.lon, item.latitude, item.longitude) : '?'} km away
@@ -103,7 +113,11 @@ export default function HomeScreen() {
             <Text style={styles.hotspotsTitle}>Trending Hotspots</Text>
           </View>
           {hotspotsLoading ? (
-            <ActivityIndicator size="small" color={theme.colors.primary} style={{ margin: 20 }} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hotspotsList}>
+              <HotspotCardSkeleton />
+              <HotspotCardSkeleton />
+              <HotspotCardSkeleton />
+            </ScrollView>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hotspotsList}>
               {hotspots.map(renderHotspot)}
@@ -119,7 +133,11 @@ export default function HomeScreen() {
 
         {/* Feed */}
         {plansLoading ? (
-          <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
+          <View style={styles.list}>
+            <PlanCardSkeleton />
+            <PlanCardSkeleton />
+            <PlanCardSkeleton />
+          </View>
         ) : plans.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyEmoji}>📍</Text>
@@ -227,16 +245,32 @@ const styles = StyleSheet.create({
     padding: theme.spacing.sm,
     justifyContent: 'flex-end',
   },
+  hotspotBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
   hotspotCategory: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: theme.typography.sizes.xs,
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 10,
     color: theme.colors.primary,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    marginBottom: 4,
+  },
+  featuredBadge: {
+    backgroundColor: '#FFD32A',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  featuredBadgeText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 9,
+    color: '#1C1B2E',
+    letterSpacing: 0.5,
   },
   hotspotName: {
     fontFamily: theme.typography.fontFamily.bold,
