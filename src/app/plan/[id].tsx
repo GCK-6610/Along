@@ -16,6 +16,7 @@ import { supabase } from '../../lib/supabase';
 import AttendanceModal from '../../components/features/AttendanceModal';
 import RatingsModal from '../../components/features/RatingsModal';
 import { PlanParticipant } from '../../types';
+import { safeBack } from '../../utils/navigation';
 
 export default function PlanDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -115,7 +116,7 @@ export default function PlanDetailsScreen() {
         });
         if (error) throw error;
         Alert.alert('Event Archived', 'No attendees were present, so this event was archived.');
-        router.back();
+        safeBack('/(tabs)');
       } catch (err: any) {
         Alert.alert('Error', err.message);
       }
@@ -136,7 +137,7 @@ export default function PlanDetailsScreen() {
       }, 500); // Wait for first modal to close
     } else {
       Alert.alert('Plan Completed', 'Plan has been successfully marked as completed.');
-      router.back();
+      safeBack('/(tabs)');
     }
   };
 
@@ -144,7 +145,7 @@ export default function PlanDetailsScreen() {
     <SafeAreaView style={styles.safeArea}>
       {/* Top Header Bar */}
       <View style={styles.topBar}>
-        <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+        <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)')}>
           <ArrowLeft size={20} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerCategory}>{(tags?.[0] || 'OTHER').toUpperCase()}</Text>
@@ -430,7 +431,7 @@ export default function PlanDetailsScreen() {
             visible={isRatingsVisible}
             onClose={() => {
               setRatingsVisible(false);
-              router.back();
+              safeBack('/(tabs)');
             }}
             planId={plan.id}
             hostId={user.id}

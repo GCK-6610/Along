@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle2, Shield, Camera, Upload } from 'lucide-react-na
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { safeBack } from '../utils/navigation';
 
 export default function VerificationScreen() {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ export default function VerificationScreen() {
       }
       setSubmitting(false);
       Alert.alert('Verification Submitted', 'Your profile is now verified!', [
-        { text: 'Awesome', onPress: () => router.back() }
+        { text: 'Awesome', onPress: () => safeBack('/(tabs)/profile') }
       ]);
     } catch (error: any) {
       setSubmitting(false);
@@ -33,7 +34,7 @@ export default function VerificationScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.topBar}>
-        <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+        <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)/profile')}>
           <ArrowLeft size={20} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerTitle}>Get Verified</Text>

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
+import { safeBack } from '../utils/navigation';
 
 export default function SettingsScreen() {
   const { signOut, user } = useAuth();
@@ -42,7 +43,7 @@ export default function SettingsScreen() {
     <SafeAreaView style={styles.safeArea}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+        <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)/profile')}>
           <ArrowLeft size={20} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerTitle}>Settings</Text>

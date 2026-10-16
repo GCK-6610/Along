@@ -8,6 +8,7 @@ import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { useMyPlans } from '../hooks/useMyPlans';
 import PlanCard from '../components/features/PlanCard';
+import { safeBack } from '../utils/navigation';
 
 export default function MyPlansScreen() {
   const { user } = useAuth();
@@ -26,7 +27,7 @@ export default function MyPlansScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.topBar}>
-        <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+        <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)/profile')}>
           <ArrowLeft size={20} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerTitle}>My Plans</Text>

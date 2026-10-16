@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, HelpCircle, ChevronRight, MessageCircle } from 'lucide-react-native';
 import { theme } from '../styles/theme';
+import { safeBack } from '../utils/navigation';
 
 const FAQS = [
   { q: 'How do I join a plan?', a: 'You can join a plan by tapping "Join Plan" on any active plan in your feed. If it requires approval, the host will be notified.' },
@@ -16,7 +17,7 @@ export default function HelpScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.topBar}>
-        <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+        <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)/profile')}>
           <ArrowLeft size={20} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerTitle}>Help & FAQ</Text>

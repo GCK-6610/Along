@@ -8,6 +8,7 @@ import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { updateMockProfile } from '../lib/mockData';
 import { supabase } from '../lib/supabase';
+import { safeBack } from '../utils/navigation';
 
 import Fuse from 'fuse.js';
 import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
@@ -128,7 +129,7 @@ export default function EditProfileScreen() {
         base_longitude: baseLongitude
       });
       if (error) throw error;
-      router.back();
+      safeBack('/(tabs)/profile');
     } catch (err: any) {
       Alert.alert('Error saving profile', err.message);
     } finally {
@@ -140,7 +141,7 @@ export default function EditProfileScreen() {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <View style={styles.topBar}>
-          <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+          <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)/profile')}>
             <ArrowLeft size={20} color={theme.colors.foreground} />
           </Pressable>
           <Text style={styles.headerTitle}>Edit Profile</Text>

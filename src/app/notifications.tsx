@@ -6,6 +6,7 @@ import { ArrowLeft, Bell, Users, MapPin, Info } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { safeBack } from '../utils/navigation';
 
 type Notification = {
   id: string;
@@ -78,7 +79,7 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.topBar}>
-        <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+        <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)')}>
           <ArrowLeft size={20} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerTitle}>Notifications</Text>

@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { ArrowLeft, ShieldAlert } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useState } from 'react';
+import { safeBack } from '../utils/navigation';
 
 export default function PrivacyScreen() {
   const [womenOnly, setWomenOnly] = useState(false);
@@ -13,7 +14,7 @@ export default function PrivacyScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.topBar}>
-        <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+        <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)/profile')}>
           <ArrowLeft size={20} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerTitle}>Privacy & Reach</Text>

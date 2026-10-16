@@ -11,6 +11,7 @@ import { theme } from '../../styles/theme';
 import { useChat, ChatMessage } from '../../hooks/useChat';
 import { useAuth } from '../../context/AuthContext';
 import { usePlan } from '../../hooks/usePlan';
+import { safeBack } from '../../utils/navigation';
 
 export default function PlanChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -84,7 +85,7 @@ export default function PlanChatRoomScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         {/* Top Chat Bar */}
         <View style={styles.topBar}>
-          <Pressable style={styles.iconBtn} onPress={() => router.back()}>
+          <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)/messages')}>
             <ArrowLeft size={20} color={theme.colors.foreground} />
           </Pressable>
           <View style={styles.headerTitleGroup}>

@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { safeBack } from '../../utils/navigation';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,7 +38,7 @@ export default function UserProfileScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Pressable onPress={() => safeBack('/(tabs)')} style={styles.backBtn}>
             <ArrowLeft size={24} color={theme.colors.foreground} />
           </Pressable>
         </View>
@@ -51,7 +52,7 @@ export default function UserProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+        <Pressable onPress={() => safeBack('/(tabs)')} style={styles.backBtn}>
           <ArrowLeft size={24} color={theme.colors.foreground} />
         </Pressable>
       </View>

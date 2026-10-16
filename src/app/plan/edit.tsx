@@ -15,6 +15,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as Location from 'expo-location';
+import { safeBack } from '../../utils/navigation';
 
 export default function EditPlanScreen() {
   const { user } = useAuth();
@@ -145,7 +146,7 @@ export default function EditPlanScreen() {
 
       if (error) throw error;
 
-      router.back();
+      safeBack({ pathname: '/plan/[id]', params: { id } });
     } catch (err: any) {
       console.error('Error updating plan:', err);
       Alert.alert('Error', err.message);
@@ -183,7 +184,7 @@ export default function EditPlanScreen() {
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
           <View style={styles.headerRow}>
-            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Pressable onPress={() => safeBack({ pathname: '/plan/[id]', params: { id } })} style={styles.backBtn}>
               <ArrowLeft size={24} color={theme.colors.foreground} />
             </Pressable>
             <View style={styles.headerTextContainer}>
