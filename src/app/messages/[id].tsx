@@ -98,7 +98,7 @@ export default function PlanChatRoomScreen() {
               <ActivityIndicator color={theme.colors.foreground} />
             )}
           </View>
-          <Pressable style={styles.viewPlanBtn} onPress={() => router.push({ pathname: '/plan/[id]', params: { id } })}>
+          <Pressable style={styles.viewPlanBtn} onPress={() => router.navigate({ pathname: '/plan/[id]', params: { id } })}>
             <Text style={styles.viewPlanText}>View Plan</Text>
           </Pressable>
         </View>
@@ -130,10 +130,18 @@ export default function PlanChatRoomScreen() {
         {/* Input Bar or Archived Banner */}
         {isArchived ? (
           <View style={styles.archivedBar}>
-            <Lock size={15} color={theme.colors.mutedForeground} />
-            <Text style={styles.archivedBarText}>
-              This hangout has concluded. Chat is archived & read-only.
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+              <Lock size={15} color={theme.colors.mutedForeground} />
+              <Text style={styles.archivedBarText} numberOfLines={1}>
+                Hangout concluded. Chat is archived.
+              </Text>
+            </View>
+            <Pressable 
+              style={styles.rateHostChatBtn} 
+              onPress={() => router.navigate({ pathname: '/plan/[id]', params: { id } })}
+            >
+              <Text style={styles.rateHostChatText}>Rate Host ⭐</Text>
+            </Pressable>
           </View>
         ) : (
           <View style={styles.inputBar}>
@@ -247,5 +255,18 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.typography.sizes.xs,
     color: theme.colors.mutedForeground,
+  },
+  rateHostChatBtn: {
+    backgroundColor: theme.colors.secondary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: theme.borderRadius.pill,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  rateHostChatText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 11,
+    color: theme.colors.primary,
   },
 });

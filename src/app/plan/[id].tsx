@@ -5,7 +5,7 @@ import {
   Pressable, Image, Alert, Modal, TextInput, Linking, Platform, Share
 } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
-import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle } from 'lucide-react-native';
+import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle, Star } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 
 import { ActivityIndicator } from 'react-native';
@@ -29,6 +29,9 @@ export default function PlanDetailsScreen() {
   const [isAttendanceVisible, setAttendanceVisible] = useState(false);
   const [isRatingsVisible, setRatingsVisible] = useState(false);
   const [ratees, setRatees] = useState<PlanParticipant[]>([]);
+
+  const [myRating, setMyRating] = useState<number | null>(null);
+  const [isAttendeeRatingVisible, setAttendeeRatingVisible] = useState(false);
 
   if (isLoading || !plan) {
     return (
@@ -104,6 +107,28 @@ export default function PlanDetailsScreen() {
   const isCompleted = status === 'completed';
   const canMarkCompleted = isHost && isPast && !isCompleted;
 
+  const fetchMyRating = useCallback(async () => {
+    if (!user?.id || !id) return;
+    const { data } = await supabase
+      .from('ratings')
+      .select('score')
+      .eq('plan_id', id)
+      .eq('rater_id', user.id)
+      .maybeSingle();
+
+    if (data?.score) {
+      setMyRating(data.score);
+    }
+  }, [user?.id, id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isCompleted) {
+        fetchMyRating();
+      }
+    }, [isCompleted, fetchMyRating])
+  );
+
   const handleMarkCompleted = async () => {
     if (current_participants <= 1) {
       // Just the host, no one else joined. Archive it silently.
@@ -156,7 +181,7 @@ export default function PlanDetailsScreen() {
             </Pressable>
           )}
           {(isHost || isJoined) && (
-            <Pressable style={styles.iconBtn} onPress={() => router.push({ pathname: '/messages/[id]', params: { id } })}>
+            <Pressable style={styles.iconBtn} onPress={() => router.navigate({ pathname: '/messages/[id]', params: { id } })}>
               <MessageCircle size={18} color={theme.colors.foreground} />
             </Pressable>
           )}
@@ -215,6 +240,48 @@ export default function PlanDetailsScreen() {
           )}
           {description && <Text style={styles.description}>{description}</Text>}
         </View>
+
+        {/* Concluded Status & Two-way Rating Section */}
+        {isCompleted && (
+          <View style={styles.completedBanner}>
+            <View style={styles.completedHeaderRow}>
+              <View style={styles.concludedTag}>
+                <CheckCircle2 size={14} color="#10B981" />
+                <Text style={styles.concludedText}>Hangout Concluded</Text>
+              </View>
+            </View>
+
+            {/* Attendee Rating Prompt */}
+            {!isHost && isJoined && (
+              myRating ? (
+                <View style={styles.ratingSummaryBox}>
+                  <Text style={styles.ratingSummaryLabel}>Your rating for {host?.full_name || 'the host'}:</Text>
+                  <View style={styles.starsRow}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={22}
+                        color={star <= myRating ? theme.colors.primary : theme.colors.border}
+                        fill={star <= myRating ? theme.colors.primary : 'transparent'}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.ratePromptCard}>
+                  <View style={styles.ratePromptInfo}>
+                    <Text style={styles.ratePromptTitle}>Rate {host?.full_name || 'the Host'}</Text>
+                    <Text style={styles.ratePromptSub}>How was your hangout? Rate the host to help keep Along safe & trusted.</Text>
+                  </View>
+                  <Pressable style={styles.rateHostBtn} onPress={() => setAttendeeRatingVisible(true)}>
+                    <Star size={16} color="#fff" fill="#fff" />
+                    <Text style={styles.rateHostBtnText}>Rate Host</Text>
+                  </Pressable>
+                </View>
+              )
+            )}
+          </View>
+        )}
 
         {/* Info Grid */}
         <View style={styles.infoGrid}>
@@ -384,6 +451,16 @@ export default function PlanDetailsScreen() {
         </View>
       )}
 
+      {/* Sticky Bottom Bar for Rating Host */}
+      {!isHost && isCompleted && isJoined && !myRating && (
+        <View style={styles.bottomBar}>
+          <Pressable style={styles.rateHostStickyBtn} onPress={() => setAttendeeRatingVisible(true)}>
+            <Star size={18} color="#fff" fill="#fff" />
+            <Text style={styles.joinBtnText}>Rate {host?.full_name || 'the Host'}</Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* Intro Message Modal */}
       <Modal visible={isJoinModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -427,6 +504,7 @@ export default function PlanDetailsScreen() {
             onComplete={onAttendanceCompleted}
           />
           
+          {/* Host Rating Attendees */}
           <RatingsModal 
             visible={isRatingsVisible}
             onClose={() => {
@@ -434,9 +512,25 @@ export default function PlanDetailsScreen() {
               safeBack('/(tabs)');
             }}
             planId={plan.id}
+            raterId={user.id}
             hostId={user.id}
             ratees={ratees}
           />
+
+          {/* Attendee Rating Host */}
+          {host && (
+            <RatingsModal
+              visible={isAttendeeRatingVisible}
+              onClose={() => setAttendeeRatingVisible(false)}
+              planId={plan.id}
+              raterId={user.id}
+              hostId={user.id}
+              ratees={[host as PlanParticipant]}
+              title={`Rate ${host.full_name || 'the Host'}`}
+              subtitle={`How was your hangout experience with ${host.full_name || 'the host'}?`}
+              onSuccess={fetchMyRating}
+            />
+          )}
         </>
       )}
 
@@ -557,4 +651,93 @@ const styles = StyleSheet.create({
   submitRequestBtn: { backgroundColor: theme.colors.primary, paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   submitRequestBtnDisabled: { backgroundColor: theme.colors.muted },
   submitRequestBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 16, color: '#fff' },
+  
+  completedBanner: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    gap: 12,
+  },
+  completedHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  concludedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: theme.borderRadius.pill,
+  },
+  concludedText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.xs,
+    color: '#059669',
+  },
+  ratingSummaryBox: {
+    gap: 6,
+    paddingTop: 4,
+  },
+  ratingSummaryLabel: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.mutedForeground,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  ratePromptCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.secondary,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    gap: 12,
+  },
+  ratePromptInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  ratePromptTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.sm,
+    color: theme.colors.foreground,
+  },
+  ratePromptSub: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.mutedForeground,
+    lineHeight: 16,
+  },
+  rateHostBtn: {
+    backgroundColor: theme.colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: theme.borderRadius.pill,
+  },
+  rateHostBtnText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.xs,
+    color: '#fff',
+  },
+  rateHostStickyBtn: {
+    flex: 1,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
 });

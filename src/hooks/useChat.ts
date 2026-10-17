@@ -59,9 +59,10 @@ export function useChat(planId: string) {
 
     fetchMessages();
 
-    // Subscribe to new real-time messages
+    // Subscribe to new real-time messages with a unique channel name per component instance
+    const channelId = `chat_${planId}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const channel = supabase
-      .channel(`chat_messages:${planId}`)
+      .channel(channelId)
       .on(
         'postgres_changes',
         {

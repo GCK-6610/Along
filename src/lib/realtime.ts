@@ -21,7 +21,7 @@ export function subscribeToPlanChat(
   }
 
   const channel = supabase
-    .channel(`public:messages:${planId}`)
+    .channel(`public:messages:${planId}:${Date.now()}_${Math.random().toString(36).slice(2, 6)}`)
     .on(
       'postgres_changes',
       {

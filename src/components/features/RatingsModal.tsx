@@ -9,11 +9,25 @@ interface RatingsModalProps {
   visible: boolean;
   onClose: () => void;
   planId: string;
-  hostId: string;
+  hostId?: string;
+  raterId?: string;
   ratees: PlanParticipant[];
+  title?: string;
+  subtitle?: string;
+  onSuccess?: () => void;
 }
 
-export default function RatingsModal({ visible, onClose, planId, hostId, ratees }: RatingsModalProps) {
+export default function RatingsModal({ 
+  visible, 
+  onClose, 
+  planId, 
+  hostId, 
+  raterId, 
+  ratees,
+  title,
+  subtitle,
+  onSuccess 
+}: RatingsModalProps) {
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -24,9 +38,14 @@ export default function RatingsModal({ visible, onClose, planId, hostId, ratees 
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
+      const activeRaterId = raterId || hostId;
+      if (!activeRaterId) {
+        throw new Error('Rater identification missing.');
+      }
+
       const ratingEntries = Object.entries(ratings).map(([rateeId, score]) => ({
         plan_id: planId,
-        rater_id: hostId,
+        rater_id: activeRaterId,
         ratee_id: rateeId,
         score
       }));
@@ -39,7 +58,8 @@ export default function RatingsModal({ visible, onClose, planId, hostId, ratees 
       const { error } = await supabase.from('ratings').insert(ratingEntries);
       if (error) throw error;
       
-      Alert.alert('Thanks!', 'Your ratings have been submitted successfully.');
+      Alert.alert('Thanks!', 'Your rating has been submitted successfully.');
+      onSuccess?.();
       onClose();
     } catch (err: any) {
       Alert.alert('Error', err.message);
@@ -48,14 +68,16 @@ export default function RatingsModal({ visible, onClose, planId, hostId, ratees 
     }
   };
 
+  const isSingle = ratees.length === 1;
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.content}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Rate Attendees</Text>
-              <Text style={styles.subtitle}>How was your experience with them?</Text>
+              <Text style={styles.title}>{title || (isSingle ? 'Rate Host' : 'Rate Attendees')}</Text>
+              <Text style={styles.subtitle}>{subtitle || (isSingle ? 'How was your experience with the host?' : 'How was your experience with them?')}</Text>
             </View>
             <Pressable onPress={onClose} style={styles.closeBtn}>
               <X size={20} color={theme.colors.mutedForeground} />
