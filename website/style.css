@@ -1,0 +1,1404 @@
+/* ==========================================================================
+   Along — Executive Pitch Deck Design System
+   Minimalist, Ultra-Clean Light Mode, High-Impact Keywords & Grounded INR ₹ Economics
+   ========================================================================== */
+
+:root {
+  --bg-page: #FAFBFD;
+  --bg-card: #FFFFFF;
+  --bg-card-subtle: #F8FAFC;
+  --bg-card-hover: #F1F5F9;
+
+  --border-light: #E2E8F0;
+  --border-card: #E5E7EB;
+  --border-hover: rgba(255, 71, 87, 0.4);
+
+  --primary: #FF4757;
+  --primary-hover: #E84118;
+  --primary-light: #FFF1F2;
+  --primary-border: #FECDD3;
+
+  --trust-green: #10B981;
+  --trust-green-light: #ECFDF5;
+  --trust-green-border: #A7F3D0;
+
+  --verified-blue: #1D9BF0;
+  --verified-blue-light: #EFF6FF;
+  --verified-blue-border: #BFDBFE;
+
+  --amber-gold: #F59E0B;
+  --amber-gold-light: #FEF3C7;
+  --amber-gold-border: #FDE68A;
+
+  --purple-scale: #8B5CF6;
+  --purple-scale-light: #EDE9FE;
+
+  --text-dark: #0F172A;
+  --text-main: #1E293B;
+  --text-body: #475569;
+  --text-muted: #64748B;
+  --text-dim: #94A3B8;
+
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+  --shadow-float: 0 20px 40px -10px rgba(15, 23, 42, 0.08);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   Top Header Bar
+   ========================================================================== */
+.top-header {
+  height: 60px;
+  padding: 0 32px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary) 0%, #FF6B81 100%);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(255, 71, 87, 0.25);
+}
+
+.brand-name-text {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-dark);
+  letter-spacing: -0.5px;
+}
+
+.brand-name-text span {
+  color: var(--primary);
+}
+
+.badge-tag-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slide-counter-chip {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-action-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 13px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-action-pill:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-card);
+}
+
+.btn-action-pill.primary-red {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 3px 10px rgba(255, 71, 87, 0.25);
+}
+
+.btn-action-pill.primary-red:hover {
+  background: var(--primary-hover);
+}
+
+/* ==========================================================================
+   Deck Viewport & Slides
+   ========================================================================== */
+.deck-stage {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: calc(100vh - 60px - 54px);
+}
+
+.deck-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 24px 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px) scale(0.99);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+
+.deck-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  z-index: 10;
+}
+
+.slide-content-wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Slide Typography */
+.kicker-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kicker-label::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.slide-title-lg {
+  font-family: var(--font-heading);
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--text-dark);
+  letter-spacing: -1px;
+  line-height: 1.15;
+}
+
+.slide-title-lg span.highlight {
+  color: var(--primary);
+}
+
+.slide-tagline {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  max-width: 800px;
+}
+
+/* ==========================================================================
+   Slide 1: Clean Executive Title Cover Page
+   ========================================================================== */
+.title-cover-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  min-height: 480px;
+  max-width: 900px;
+  margin: 0 auto;
+  gap: 18px;
+  position: relative;
+}
+
+.cover-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cover-logo-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary) 0%, #FF6B81 100%);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(255, 71, 87, 0.3);
+}
+
+.cover-brand-name {
+  font-family: var(--font-heading);
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--text-dark);
+  letter-spacing: -0.8px;
+}
+
+.cover-brand-name span {
+  color: var(--primary);
+}
+
+.cover-badge-pill {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+}
+
+.cover-main-title {
+  font-family: var(--font-heading);
+  font-size: 60px;
+  font-weight: 900;
+  color: var(--text-dark);
+  letter-spacing: -2px;
+  line-height: 1.05;
+}
+
+.cover-main-title span.highlight {
+  color: var(--primary);
+}
+
+.cover-main-subtitle {
+  font-size: 20px;
+  color: var(--text-body);
+  line-height: 1.45;
+  max-width: 720px;
+}
+
+.cover-pillars-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 6px 0;
+}
+
+.cover-meta-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  padding: 10px 22px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  box-shadow: var(--shadow-sm);
+  margin-top: 8px;
+}
+
+.cmf-divider {
+  color: var(--border-card);
+}
+
+.cmf-cta {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.keyword-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+.keyword-badge.pink { background: var(--primary-light); border-color: var(--primary-border); color: var(--primary); }
+.keyword-badge.blue { background: var(--verified-blue-light); border-color: var(--verified-blue-border); color: var(--verified-blue); }
+.keyword-badge.green { background: var(--trust-green-light); border-color: var(--trust-green-border); color: var(--trust-green); }
+
+.cover-preview-hero {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: #FFFFFF;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.cover-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cover-chip-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--primary);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.cover-preview-title {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.cover-preview-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Slide 2: Problem (3-Pillar Cards)
+   ========================================================================== */
+.problem-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 4px;
+}
+
+.problem-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
+  border-top: 4px solid #EF4444;
+}
+
+.problem-card-num {
+  font-size: 11px;
+  font-weight: 800;
+  color: #DC2626;
+  background: #FEE2E2;
+  padding: 3px 8px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.problem-card-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-dark);
+  line-height: 1.25;
+}
+
+.problem-card-point {
+  font-size: 13px;
+  color: var(--text-body);
+  line-height: 1.45;
+}
+
+.problem-card-point strong {
+  color: var(--text-dark);
+}
+
+.stat-strip-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 14px 20px;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  margin-top: 6px;
+}
+
+.ssb-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--border-light);
+  padding-right: 14px;
+}
+
+.ssb-col:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.ssb-num {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text-dark);
+}
+
+.ssb-text {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Slide 3: Solution (The Tag-Along Inversion)
+   ========================================================================== */
+.solution-flow-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.solution-step-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
+  border-top: 4px solid var(--trust-green);
+  transition: var(--transition-fast);
+}
+
+.solution-step-box:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+}
+
+.solution-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--trust-green-light);
+  color: var(--trust-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.solution-step-title {
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.solution-step-desc {
+  font-size: 13px;
+  color: var(--text-body);
+  line-height: 1.45;
+}
+
+.inversion-banner {
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.06) 0%, rgba(16, 185, 129, 0.06) 100%);
+  border: 1px solid rgba(255, 71, 87, 0.2);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.inversion-tag {
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.inversion-quote {
+  font-size: 14px;
+  color: var(--text-dark);
+  line-height: 1.4;
+}
+
+.inversion-quote strong {
+  color: var(--primary);
+}
+
+/* ==========================================================================
+   Slide 4: Product Demo (Split Layout)
+   ========================================================================== */
+.product-split-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 32px;
+  align-items: center;
+}
+
+.feature-pills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feature-card-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.feature-card-item:hover, .feature-card-item.active {
+  background: #FFFFFF;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.12);
+}
+
+.fci-num {
+  font-size: 11px;
+  font-weight: 800;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 3px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.fci-text strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 2px;
+}
+
+.fci-text p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Sleek Minimalist Mobile Mockup Frame */
+.mockup-center {
+  display: flex;
+  justify-content: center;
+}
+
+.sleek-phone-box {
+  width: 334px;
+  height: 550px;
+  background: #FFFFFF;
+  border: 9px solid #0F172A;
+  border-radius: 44px;
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.08);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-island-notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88px;
+  height: 20px;
+  background: #0F172A;
+  border-radius: 12px;
+  z-index: 50;
+}
+
+.phone-screen-body {
+  flex: 1;
+  padding: 38px 14px 14px;
+  background: #F8FAFC;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.phone-screen-view {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+.phone-screen-view.active {
+  display: flex;
+}
+
+/* ==========================================================================
+   Slide 5: Trust & Safety
+   ========================================================================== */
+.trust-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.trust-pillar-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
+  border-top: 4px solid var(--verified-blue);
+}
+
+.trust-pillar-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--verified-blue-light);
+  color: var(--verified-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.trust-pillar-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.trust-pillar-desc {
+  font-size: 13px;
+  color: var(--text-body);
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   Slide 6: Business Model (3 Phases)
+   ========================================================================== */
+.phases-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.phase-box-col {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+}
+
+.phase-box-col.p1 { border-top: 4px solid var(--trust-green); }
+.phase-box-col.p2 { border-top: 4px solid var(--primary); background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 241, 242, 0.3) 100%); }
+.phase-box-col.p3 { border-top: 4px solid var(--purple-scale); }
+
+.phase-col-tag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  align-self: flex-start;
+}
+
+.p1 .phase-col-tag { background: var(--trust-green-light); color: var(--trust-green); }
+.p2 .phase-col-tag { background: var(--primary-light); color: var(--primary); }
+.p3 .phase-col-tag { background: var(--purple-scale-light); color: var(--purple-scale); }
+
+.phase-col-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.phase-bullets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pbl-item {
+  font-size: 12.5px;
+  color: var(--text-body);
+  line-height: 1.4;
+}
+
+.pbl-item strong {
+  color: var(--text-dark);
+}
+
+.phase-bottom-stat {
+  margin-top: auto;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+/* ==========================================================================
+   Slide 7: Unit Economics (In-App Dine & Pay in INR ₹)
+   ========================================================================== */
+.unit-econ-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 28px;
+  align-items: stretch;
+  margin-top: 6px;
+}
+
+.econ-steps-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.econ-step-row {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.econ-icon-sq {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.econ-step-text strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 2px;
+}
+
+.econ-step-text p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.calc-breakdown-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calc-row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+}
+
+.calc-row-item.discount {
+  color: var(--trust-green);
+  font-weight: 700;
+}
+
+.calc-net-total {
+  border-top: 1px solid var(--border-light);
+  padding-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.calc-share-badge {
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calc-share-num {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.calc-take-badge {
+  background: var(--trust-green-light);
+  border: 1px solid var(--trust-green-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--trust-green);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Slide 8 & 9: Market Size & Financial Projections
+   ========================================================================== */
+.tam-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.tam-box-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-card);
+}
+
+.tam-box-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.tam-stat-giant {
+  font-family: var(--font-heading);
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--text-dark);
+  letter-spacing: -1px;
+}
+
+.tam-stat-note {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.projections-table-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-card);
+  margin-top: 6px;
+}
+
+.simple-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.simple-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border-light);
+}
+
+.simple-table td {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13px;
+  color: var(--text-body);
+}
+
+.simple-table td strong {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.simple-table td.mrr-highlight {
+  font-family: var(--font-heading);
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   Slide 10: The Ask & Call to Action
+   ========================================================================== */
+.ask-two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 6px;
+}
+
+.ask-fund-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ask-big-figure {
+  font-family: var(--font-heading);
+  font-size: 46px;
+  font-weight: 900;
+  color: var(--primary);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.ask-fund-title {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.alloc-progress-visual {
+  height: 14px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  display: flex;
+  width: 100%;
+}
+
+.alloc-seg-growth { background: var(--primary); width: 45%; }
+.alloc-seg-team { background: var(--trust-green); width: 35%; }
+.alloc-seg-tech { background: var(--verified-blue); width: 20%; }
+
+.alloc-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.adl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  background: var(--bg-card-subtle);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.cta-action-card {
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.05) 0%, rgba(29, 155, 240, 0.05) 100%);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  justify-content: center;
+}
+
+.cta-btn-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-primary-export {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-family: var(--font-heading);
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 11px 18px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.25);
+  transition: var(--transition-fast);
+}
+
+.btn-primary-export:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary-link {
+  background: var(--bg-card);
+  color: var(--text-dark);
+  border: 1px solid var(--border-light);
+  font-family: var(--font-heading);
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 11px 18px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+}
+
+.btn-secondary-link:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-card);
+}
+
+/* ==========================================================================
+   Bottom Navigation
+   ========================================================================== */
+.bottom-control-bar {
+  height: 54px;
+  padding: 0 32px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  position: relative;
+}
+
+.progress-line-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--border-light);
+}
+
+.progress-line-fill {
+  height: 100%;
+  background: var(--primary);
+  width: 10%;
+  transition: width 0.25s ease;
+}
+
+.dots-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-card);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.dot-indicator:hover {
+  background: var(--text-muted);
+}
+
+.dot-indicator.active {
+  width: 22px;
+  border-radius: 4px;
+  background: var(--primary);
+}
+
+.nav-arrows-set {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arrow-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-dark);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+}
+
+.arrow-btn:hover {
+  background: var(--bg-card-hover);
+}
+
+.arrow-btn.red-arrow {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.arrow-btn.red-arrow:hover {
+  background: var(--primary-hover);
+}
+
+/* Speaker Drawer */
+.speaker-drawer-panel {
+  position: fixed;
+  bottom: 54px;
+  right: 32px;
+  width: 360px;
+  max-height: 260px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: var(--transition-fast);
+}
+
+.speaker-drawer-panel.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.sdp-header {
+  padding: 10px 16px;
+  background: var(--bg-card-subtle);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sdp-title {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.sdp-content {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text-main);
+  line-height: 1.45;
+  overflow-y: auto;
+}
+
+/* Toast */
+.toast-notice {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #0F172A;
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: var(--radius-full);
+  font-size: 12.5px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  z-index: 1000;
+  box-shadow: var(--shadow-float);
+}
+
+.toast-notice.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   Print to PDF Stylesheet (@media print)
+   ========================================================================== */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: auto !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .top-header,
+  .bottom-control-bar,
+  .speaker-drawer-panel,
+  .toast-notice {
+    display: none !important;
+  }
+
+  .deck-stage {
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  .deck-slide {
+    position: static !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 36px 48px !important;
+    box-sizing: border-box !important;
+  }
+
+  .slide-content-wrap {
+    max-width: 100% !important;
+  }
+}

@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Along — Local Admin Console</title>
+  <script>
+    // Strictly lock admin console to local access only (blocked on Vercel or any remote domain)
+    const isLocalHost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.hostname.endsWith('.local') ||
+                        window.location.protocol === 'file:';
+    if (!isLocalHost) {
+      window.location.replace('/');
+    }
+  </script>
   <meta name="description" content="Local admin dashboard for managing Along hotspots, inbound venue partner requests, and 10-day event archival.">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

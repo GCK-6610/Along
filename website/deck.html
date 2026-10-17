@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Along — The Hyperlocal Tag-Along Network (Pitch Deck)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="top-header">
+    <div class="brand-section">
+      <div class="brand-logo-mark">A</div>
+      <span class="brand-name-text">Along<span>.</span></span>
+    </div>
+
+    <div class="header-center">
+      <div class="slide-counter-chip" id="slideBadgeDisplay">01 / 10 — Cover</div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-action-pill" id="fullscreenToggleBtn" title="Toggle Fullscreen">
+        ⛶ <span>Fullscreen</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Deck Viewport -->
+  <main class="deck-stage" id="deckContainer">
+
+    <!-- ======================================================================
+         SLIDE 1: COVER / TITLE PAGE
+         ====================================================================== -->
+    <section class="deck-slide active" id="slide-1" data-title="Cover">
+      <div class="slide-content-wrap">
+        <div class="title-cover-hero">
+          
+          <div class="cover-brand-header">
+            <div class="cover-logo-icon">A</div>
+            <span class="cover-brand-name">Along<span>.</span></span>
+          </div>
+
+          <h1 class="cover-main-title">
+            The Hyperlocal<br/>
+            <span class="highlight">Tag-Along Network.</span>
+          </h1>
+
+          <p class="cover-main-subtitle">
+            Turning city strangers into spontaneous real-world hangouts in under 60 seconds.
+          </p>
+
+          <div class="cover-pillars-row">
+            <span class="keyword-badge pink">⚡ Activity-First</span>
+            <span class="keyword-badge blue">🛡️ Aadhaar Verified</span>
+            <span class="keyword-badge green">📍 15-Min Proximity</span>
+            <span class="keyword-badge">👥 2–4 Micro-Groups</span>
+          </div>
+
+          <div class="cover-meta-footer">
+            <span>Along Technologies Inc. • 2026</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SLIDE 2: THE PROBLEM STATEMENT
+         ====================================================================== -->
+    <section class="deck-slide" id="slide-2" data-title="Problem Statement">
+      <div class="slide-content-wrap">
+        <span class="kicker-label">THE URBAN CRISIS</span>
+        <h2 class="slide-title-lg">Young Urban India is <span class="highlight">Lonelier Than Ever.</span></h2>
+        <p class="slide-tagline">
+          Over 65% of young professionals in India's top tech hubs relocate from other cities. They have strong disposable incomes, but finding peers for spontaneous weekend activities remains broken.
+        </p>
+
+        <div class="problem-grid-3">
+          
+          <div class="problem-card">
+            <span class="problem-card-num">PROBLEM 01</span>
+            <div class="problem-card-title">Swipe Fatigue & Ghosting</div>
+            <div class="problem-card-point">
+              <strong>Dating apps fail at friendship:</strong> Bumble BFF & Tinder have an 85% drop-off rate before an in-person meeting. Users want casual friends for badminton or coffee, not awkward romantic interviews.
+            </div>
+          </div>
+
+          <div class="problem-card">
+            <span class="problem-card-num">PROBLEM 02</span>
+            <div class="problem-card-title">The "Kab Milein?" Trap</div>
+            <div class="problem-card-point">
+              <strong>Group chat deadlock:</strong> WhatsApp & society groups debate dates for 4 days across endless messages. Someone cancels at the last minute, and the plan dies.
+            </div>
+          </div>
+
+          <div class="problem-card">
+            <span class="problem-card-num">PROBLEM 03</span>
+            <div class="problem-card-title">The Stranger Barrier</div>
+            <div class="problem-card-point">
+              <strong>Safety & trust anxiety:</strong> Women and young adults hesitate to meet unvetted strangers without identity verification, background transparency, or gender reach controls.
+            </div>
+          </div>
+
+        </div>
+
+        <div class="stat-strip-bar">
+          <div class="ssb-col">
+            <span class="ssb-num">65%+</span>
+            <span class="ssb-text">Migrant tech & corporate workforce living away from college friends</span>
+          </div>
+          <div class="ssb-col">
+            <span class="ssb-num">₹18,000+</span>
+            <span class="ssb-text">Average monthly discretionary spend on weekend leisure & dining</span>
+          </div>
+          <div class="ssb-col">
+            <span class="ssb-num">85%</span>
+            <span class="ssb-text">Drop-off rate on traditional swiping apps before meeting in real life</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SLIDE 3: THE SOLUTION (TAG-ALONG INVERSION)
+         ====================================================================== -->
+    <section class="deck-slide" id="slide-3" data-title="The Solution">
+      <div class="slide-content-wrap">
+        <span class="kicker-label">HOW ALONG WORKS</span>
+        <h2 class="slide-title-lg">Don't Match to Plan. <span class="highlight">Plan to Match.</span></h2>
+        <p class="slide-tagline">
+          The Tag-Along Inversion: You are already going to play badminton or grab coffee. Post what you are doing, and let verified peers tag along.
+        </p>
+
+        <div class="solution-flow-3">
+          
+          <div class="solution-step-box">
+            <div class="solution-icon-box">⚡</div>
+            <div class="solution-step-title">01. Share Intent</div>
+            <div class="solution-step-desc">
+              <strong>1-Sentence AI Plan Creation:</strong> Type <em>"Badminton this Sat 7am at Smash Arena for 4 people"</em>. Our hybrid NLP auto-fills venue, coordinates, and sets group size.
+            </div>
+          </div>
+
+          <div class="solution-step-box">
+            <div class="solution-icon-box">📍</div>
+            <div class="solution-step-title">02. 15-Min Proximity</div>
+            <div class="solution-step-desc">
+              <strong>PostGIS Radar Alerts:</strong> Nearby verified neighbors within 1.5–3 km receive a notification or discover the plan on their live map. Join with 1 click.
+            </div>
+          </div>
+
+          <div class="solution-step-box">
+            <div class="solution-icon-box">☕</div>
+            <div class="solution-step-title">03. Show Up & Meet</div>
+            <div class="solution-step-desc">
+              <strong>Intimate 2–4 Micro-Groups:</strong> Meet at the partner venue. Physical GPS check-in unlocks 15% off the group bill. Chat auto-archives with mutual +0.2 trust ratings.
+            </div>
+          </div>
+
+        </div>
+
+        <div class="inversion-banner">
+          <span class="inversion-tag">THE INVERSION</span>
+          <div class="inversion-quote">
+            Legacy apps say: <em>"Chat with a stranger for 2 weeks so you can maybe meet."</em><br/>
+            Along says: <strong>"Show up for the activity you already love, and let friendships happen naturally."</strong>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SLIDE 4: PRODUCT DEMO & LIVE SIMULATOR
+         ====================================================================== -->
+    <section class="deck-slide" id="slide-4" data-title="Product Demo">
+      <div class="slide-content-wrap">
+        <span class="kicker-label">PRODUCTION-READY MOBILE APP</span>
+        <h2 class="slide-title-lg">Engineered for Real Life. <span class="highlight">Not Phone Addiction.</span></h2>
+        <p class="slide-tagline">
+          Interactive mobile preview below. Built on React Native, Supabase PostGIS spatial engine, and on-device Vision AI.
+        </p>
+
+        <div class="product-split-grid">
+          
+          <div class="feature-pills-list">
+            
+            <div class="feature-card-item active" data-mock-screen="feed">
+              <span class="fci-num">01</span>
+              <div class="fci-text">
+                <strong>Hyperlocal Radar Feed & Venue Hotspots</strong>
+                <p>Clean cards showcasing partner perks (15% off bill), ratings, and open attendee slots within 15 minutes.</p>
+              </div>
+            </div>
+
+            <div class="feature-card-item" data-mock-screen="create">
+              <span class="fci-num">02</span>
+              <div class="fci-text">
+                <strong>AI Plan Creation + Women-Only Reach Mode</strong>
+                <p>1 natural sentence maps coordinates and lets female organizers restrict plans to verified women only.</p>
+              </div>
+            </div>
+
+            <div class="feature-card-item" data-mock-screen="id">
+              <span class="fci-num">03</span>
+              <div class="fci-text">
+                <strong>Digital ID OCR & Live Selfie Liveness</strong>
+                <p>Aadhaar, DL, PAN extraction with live front-camera selfie check granting the blue verified checkmark.</p>
+              </div>
+            </div>
+
+            <div class="feature-card-item" data-mock-screen="pay">
+              <span class="fci-num">04</span>
+              <div class="fci-text">
+                <strong>Along Dine & Pay (1-Tap UPI Bill Split)</strong>
+                <p>Automatic 15% Along discount and instant per-person UPI split eliminating awkward bill calculations.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="mockup-center">
+            <div class="sleek-phone-box">
+              <div class="phone-island-notch"></div>
+              
+              <div class="phone-screen-body">
+                
+                <!-- VIEW 1: FEED -->
+                <div class="phone-screen-view active" id="mock-feed">
+                  <!-- iOS Status Bar -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: #0F172A; padding: 0 4px 6px;">
+                    <span>9:41</span>
+                    <span style="display: flex; gap: 4px; align-items: center;">5G 📶 100% 🔋</span>
+                  </div>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 2px;">
+                    <span style="font-family: var(--font-heading); font-weight: 900; color: var(--primary); font-size: 19px; letter-spacing: -0.5px;">Along.</span>
+                    <span style="font-size: 11px; font-weight: 700; color: #10B981; background: #ECFDF5; padding: 4px 10px; border-radius: 12px;">● 4 Hangouts Nearby</span>
+                  </div>
+
+                  <!-- Venue Hotspot Card with Photo Cover -->
+                  <div style="background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(15,23,42,0.04);">
+                    <div style="height: 100px; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.7) 100%), url('https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80') center/cover; padding: 10px; display: flex; justify-content: space-between; align-items: flex-start;">
+                      <span style="font-size: 10px; font-weight: 800; color: #fff; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); padding: 3px 8px; border-radius: 6px;">🎁 PARTNER PERK</span>
+                      <span style="font-size: 11px; font-weight: 800; color: #fff; background: rgba(0,0,0,0.55); padding: 2px 7px; border-radius: 6px;">★ 4.8</span>
+                    </div>
+                    <div style="padding: 10px 12px 12px;">
+                      <div style="font-family: var(--font-heading); font-size: 14.5px; font-weight: 800; color: #0F172A;">Third Wave Coffee Roasters</div>
+                      <div style="font-size: 11.5px; color: #64748B; margin-top: 2px;">#specialty_cafe • 0.8 km away</div>
+                      <div style="font-size: 11px; font-weight: 700; color: var(--amber-gold); background: var(--amber-gold-light); padding: 4px 8px; border-radius: 6px; margin-top: 8px; display: inline-block;">🎁 15% off bill for Along groups</div>
+                    </div>
+                  </div>
+
+                  <!-- Active Hangout Card with Sports Photo -->
+                  <div style="background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(15,23,42,0.04);">
+                    <div style="height: 70px; background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.75) 100%), url('https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80') center/cover; padding: 8px 10px; display: flex; justify-content: space-between; align-items: flex-start;">
+                      <span style="font-size: 10px; font-weight: 800; color: #fff; background: var(--primary); padding: 2px 7px; border-radius: 5px;">🏸 SPORTS</span>
+                      <span style="font-size: 10px; font-weight: 800; color: #fff; background: rgba(0,0,0,0.55); padding: 2px 6px; border-radius: 5px;">2/4 Joined</span>
+                    </div>
+                    <div style="padding: 10px 12px 12px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-family: var(--font-heading); font-size: 13.5px; font-weight: 800; color: #0F172A;">Badminton Doubles Match</div>
+                        <span style="font-size: 11px; color: #64748B; font-weight: 600;">Sat, 7 AM</span>
+                      </div>
+                      <div style="font-size: 11.5px; color: #64748B; margin-top: 2px;">Smash Arena • Rahul S. <strong style="color: #1D9BF0;">✓ Verified</strong></div>
+                      <button style="margin-top: 8px; width: 100%; padding: 9px; border-radius: 8px; background: var(--primary); color: #fff; border: none; font-size: 12px; font-weight: 800; cursor: pointer;">Request to Tag Along ⚡</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- VIEW 2: CREATE -->
+                <div class="phone-screen-view" id="mock-create">
+                  <!-- iOS Status Bar -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: #0F172A; padding: 0 4px 6px;">
+                    <span>9:41</span>
+                    <span style="display: flex; gap: 4px; align-items: center;">5G 📶 100% 🔋</span>
+                  </div>
+
+                  <div style="font-family: var(--font-heading); font-size: 16px; font-weight: 800; color: #0F172A;">Host a Hangout</div>
+                  
+                  <div style="background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 10px; padding: 10px; font-size: 11.5px; color: var(--primary); line-height: 1.4;">
+                    ⚡ <strong>AI Auto-Fill Active:</strong><br/>
+                    <em>"Board games at Third Wave this Sunday 4pm for 4 people"</em>
+                  </div>
+
+                  <div style="background: #fff; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 4px;">
+                    <span style="font-size: 10px; font-weight: 800; color: #64748B; text-transform: uppercase;">Plan Details</span>
+                    <strong style="font-size: 13px; color: #0F172A;">Board Game Sunday</strong>
+                    <span style="font-size: 11.5px; color: #64748B;">📍 Third Wave Coffee • Sun, 4:00 PM • 4 Pax</span>
+                  </div>
+
+                  <div style="font-size: 11px; font-weight: 800; color: #475569; margin-top: 2px;">Audience Reach & Safety Filter:</div>
+                  <div style="display: flex; gap: 8px;">
+                    <div style="flex: 1; padding: 10px; border-radius: 8px; border: 1.5px solid var(--primary); background: #FFF1F2; text-align: center; font-size: 11px; font-weight: 800; color: var(--primary);">👥 Everyone</div>
+                    <div style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #E2E8F0; background: #fff; text-align: center; font-size: 11px; font-weight: 700; color: #64748B;">🔒 Women Only</div>
+                  </div>
+
+                  <button style="margin-top: auto; padding: 12px; border-radius: 8px; background: var(--primary); color: #fff; border: none; font-size: 12.5px; font-weight: 800; cursor: pointer;">Publish to Radar Feed 🚀</button>
+                </div>
+
+                <!-- VIEW 3: ID -->
+                <div class="phone-screen-view" id="mock-id">
+                  <!-- iOS Status Bar -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: #0F172A; padding: 0 4px 6px;">
+                    <span>9:41</span>
+                    <span style="display: flex; gap: 4px; align-items: center;">5G 📶 100% 🔋</span>
+                  </div>
+
+                  <div style="text-align: center; padding: 16px 0 8px;">
+                    <div style="width: 52px; height: 52px; border-radius: 26px; background: #ECFDF5; border: 2.5px solid #10B981; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 4px 12px rgba(16,185,129,0.2);">🛡️</div>
+                    <div style="font-family: var(--font-heading); font-size: 15px; font-weight: 800; color: #0F172A; margin-top: 8px;">Identity Verified</div>
+                    <div style="font-size: 11px; color: #64748B;">Official Government ID Confirmed</div>
+                  </div>
+
+                  <div style="background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; font-size: 11.5px; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #F1F5F9; padding-bottom: 6px;">
+                      <span style="color: #64748B;">Verified Name:</span>
+                      <strong style="color: #0F172A;">Rahul Sharma</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #F1F5F9; padding-bottom: 6px;">
+                      <span style="color: #64748B;">Document:</span>
+                      <strong style="color: #0F172A;">Driving License (DL-04-XXXX)</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #F1F5F9; padding-bottom: 6px;">
+                      <span style="color: #64748B;">Liveness Match:</span>
+                      <strong style="color: #10B981;">✓ 96% Real Human Match</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span style="color: #64748B;">Trust Tier:</span>
+                      <strong style="color: #1D9BF0;">Blue Verified Checkmark ✓</strong>
+                    </div>
+                  </div>
+
+                  <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 8px; font-size: 11px; color: #1D9BF0; text-align: center; margin-top: auto;">
+                    ✓ Badge visible across your profile & hangout cards
+                  </div>
+                </div>
+
+                <!-- VIEW 4: PAY -->
+                <div class="phone-screen-view" id="mock-pay">
+                  <!-- iOS Status Bar -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: #0F172A; padding: 0 4px 6px;">
+                    <span>9:41</span>
+                    <span style="display: flex; gap: 4px; align-items: center;">5G 📶 100% 🔋</span>
+                  </div>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-family: var(--font-heading); font-size: 15px; font-weight: 800; color: #0F172A;">Along Dine & Pay</span>
+                    <span style="font-size: 10px; font-weight: 700; color: var(--primary); background: #FFF1F2; padding: 2px 8px; border-radius: 6px;">Table #4</span>
+                  </div>
+
+                  <div style="background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; font-size: 11.5px; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="display: flex; justify-content: space-between;">
+                      <span style="color: #64748B;">Gross Cafe Bill:</span>
+                      <span>₹1,400.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #10B981; font-weight: 700;">
+                      <span>Along 15% Group Perk:</span>
+                      <span>- ₹210.00</span>
+                    </div>
+                    <div style="border-top: 1px solid #E2E8F0; padding-top: 6px; display: flex; justify-content: space-between; font-weight: 800; font-size: 13px; color: #0F172A;">
+                      <span>Net Group Bill:</span>
+                      <span>₹1,190.00</span>
+                    </div>
+                  </div>
+
+                  <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; padding: 10px; text-align: center;">
+                    <div style="font-size: 10px; font-weight: 700; color: #64748B; text-transform: uppercase;">Your 1/4th Split Share</div>
+                    <div style="font-family: var(--font-heading); font-size: 22px; font-weight: 900; color: #1D9BF0; margin: 2px 0;">₹297.50</div>
+                    <div style="font-size: 10px; color: #64748B;">Direct 1-tap UPI debit</div>
+                  </div>
+
+                  <button style="margin-top: auto; padding: 12px; border-radius: 8px; background: #10B981; color: #fff; border: none; font-size: 12.5px; font-weight: 800; cursor: pointer;">Pay ₹297.50 via UPI (GPay/PhonePe)</button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SLIDE 5: TRUST & SAFETY (THE UNFAIR MOAT)
+         ====================================================================== -->
+    <section class="deck-slide" id="slide-5" data-title="Trust & Safety">
+      <div class="slide-content-wrap">
+        <span class="kicker-label">THE TRUST SHIELD</span>
+        <h2 class="slide-title-lg">Zero Anonymity. <span class="highlight">Complete Peace of Mind.</span></h2>
+        <p class="slide-tagline">
+          Safety is the foundational unlock for young adults in India—especially women. We eliminated anonymity with automated digital ID scans, liveness verification, and strict community moderation.
+        </p>
+
+        <div class="trust-grid-3">
+          
+          <div class="trust-pillar-card">
+            <div class="trust-pillar-icon">🪪</div>
+            <div class="trust-pillar-title">Govt ID OCR Scanning</div>
+            <div class="trust-pillar-desc">
+              Fast-track verification using Aadhaar, Driving License, Passport, or PAN. Extracts verified full name, infers gender, and automatically masks ID numbers.
+            </div>
+          </div>
+
+          <div class="trust-pillar-card">
+            <div class="trust-pillar-icon" style="background: var(--trust-green-light); color: var(--trust-green);">📸</div>
+            <div class="trust-pillar-title">Live Selfie Liveness</div>
+            <div class="trust-pillar-desc">
+              Front-camera selfie analyzes real-human facial resemblance and liveness. Completely prevents fake stock-photo profiles and catfishing bots.
+            </div>
+          </div>
+
+          <div class="trust-pillar-card">
+            <div class="trust-pillar-icon" style="background: var(--primary-light); color: var(--primary);">🔒</div>
+            <div class="trust-pillar-title">Women-Only Safe Filter</div>
+            <div class="trust-pillar-desc">
+              Female hosts can lock hangouts to Women Only. Male users cannot view or request entry into these hangouts—enforced strictly in PostgreSQL.
+            </div>
+          </div>
+
+        </div>
+
+        <div class="stat-strip-bar">
+          <div class="ssb-col">
+            <span class="ssb-num">Blue Tick ✓</span>
+            <span class="ssb-text">Verified badge rendered across profile cards, attendee lists & join requests</span>
+          </div>
+          <div class="ssb-col">
+            <span class="ssb-num">Two-Way Rating</span>
+            <span class="ssb-text">+0.2 reputation added only after verified physical hangout attendance</span>
+          </div>
+          <div class="ssb-col">
+            <span class="ssb-num">Zero Spam</span>
+            <span class="ssb-text">Private phone numbers and personal social handles are never revealed</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SLIDE 6: BUSINESS MODEL (3-PHASE EVOLUTION)
+         ====================================================================== -->
+    <section class="deck-slide" id="slide-6" data-title="Business Model">
+      <div class="slide-content-wrap">
+        <span class="kicker-label">MONETIZATION ROADMAP</span>
+        <h2 class="slide-title-lg">Monetizing Footfall. <span class="highlight">Zero Banner Ads.</span></h2>
+        <p class="slide-tagline">
+          We don't trap users behind screens to sell banner impressions. We bring paying groups into neighborhood businesses and take a cut of real-world commerce.
+        </p>
+
+        <div class="phases-grid-3">
+          
+          <!-- Phase 1 -->
+          <div class="phase-box-col p1">
+            <span class="phase-col-tag">PHASE 1 • CURRENT</span>
+            <div class="phase-col-title">Density & Partner Perks</div>
+            
+            <div class="phase-bullets-list">
+              <div class="pbl-item">
+                <span>📍</span> <strong>Zero-Fee Onboarding:</strong> Free listing for cafes & turfs to bootstrap initial neighborhood supply.
+              </div>
+              <div class="pbl-item">
+                <span>🎁</span> <strong>15% Off-Peak Perks:</strong> Venues offer group discounts to attract 4-person tables during slow hours.
+              </div>
+              <div class="pbl-item">
+                <span>🔄</span> <strong>1:3 Viral Coefficient:</strong> 1 host invites 3 joiners, keeping blended CAC under ₹40.
+              </div>
+            </div>
+
+            <div class="phase-bottom-stat">
+              Goal: 10,000 Hangouts • 50 Key Venues
+            </div>
+          </div>
+
+          <!-- Phase 2 -->
+          <div class="phase-box-col p2">
+            <span class="phase-col-tag">PHASE 2 • NEXT QUARTER</span>
+            <div class="phase-col-title">Along Dine & Pay</div>
+
+            <div class="phase-bullets-list">
+              <div class="pbl-item">
+                <span>💳</span> <strong>In-App Bill Settlement:</strong> Table checkout directly inside Along via integrated UPI.
+              </div>
+              <div class="pbl-item">
+                <span>💰</span> <strong>10% Platform Commission:</strong> Venues happily pay 10% for guaranteed high-margin group tables.
+              </div>
+              <div class="pbl-item">
+                <span>⭐</span> <strong>Sponsored Hotspot Cards:</strong> ₹3,999/mo per venue for top-of-radar featured placement.
+              </div>
+            </div>
+
+            <div class="phase-bottom-stat" style="color: var(--primary); background: #FFF1F2;">
+              Unit Economics: ₹119 Net Take per Table
+            </div>
+          </div>
+
+          <!-- Phase 3 -->
+          <div class="phase-box-col p3">
+            <span class="phase-col-tag">PHASE 3 • SCALE & ECOSYSTEM</span>
+            <div class="phase-col-title">Recurring Subscriptions</div>
+
+            <div class="phase-bullets-list">
+              <div class="pbl-item">
+                <span>💎</span> <strong>Along Pass (₹149/mo):</strong> Zero split fees, priority join queues, and secret café perks.
+              </div>
+              <div class="pbl-item">
+                <span>🎟️</span> <strong>B2B Event Ticketing (8% Take):</strong> Curated pottery, bouldering, turf tournaments & treks.
+              </div>
+              <div class="pbl-item">
+                <span>🚀</span> <strong>Hyperlocal Sampling:</strong> Beverage & FMCG brands sponsoring weekend sports hangouts.
+              </div>
+            </div>
+
+            <div class="phase-bottom-stat" style="color: var(--purple-scale); background: var(--purple-scale-light);">
+              Target: ₹1.5 Cr+ ARR from Memberships
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SLIDE 7: PHASE 2 UNIT ECONOMICS (DINE & PAY IN INR ₹)
+         ====================================================================== -->
+    <section class="deck-slide" id="slide-7" data-title="Unit Economics">
+      <div class="slide-content-wrap">
+        <span class="kicker-label">IN-APP COMMERCE BREAKDOWN</span>
+        <h2 class="slide-title-lg">Along Dine & Pay: <span class="highlight">Unit Economics in INR ₹.</span></h2>
+        <p class="slide-tagline">
+          No awkward math at the table. Groups settle in 1 tap, users save money with perks, venues make new revenue, and Along takes 10%.
+        </p>
+
+        <div class="unit-econ-grid">
+          
+          <div class="econ-steps-col">
+            <div class="econ-step-row">
+              <div class="econ-icon-sq">1</div>
+              <div class="econ-step-text">
+                <strong>Hangout Concludes at Partner Venue</strong>
+                <p>The 4 attendees finish their coffee or badminton session. Host taps "Pay Bill via Along".</p>
+              </div>
+            </div>
+
+            <div class="econ-step-row">
+              <div class="econ-icon-sq">2</div>
+              <div class="econ-step-text">
+                <strong>Automatic 15% Group Discount Applied</strong>
+                <p>Along's partner perk deducts ₹210 directly from the gross bill, delighting all 4 participants.</p>
+              </div>
+            </div>
+
+            <div class="econ-step-row">
+              <div class="econ-icon-sq">3</div>
+              <div class="econ-step-text">
+                <strong>1-Tap Instant UPI Bill Split</strong>
+                <p>Each member approves their ₹297.50 share via GPay or PhonePe. Zero manual UPI requests.</p>
+              </div>
+            </div>
+
+            <div class="econ-step-row">
+              <div class="econ-icon-sq" style="background: var(--trust-green-light); color: var(--trust-green);">4</div>
+              <div class="econ-step-text">
+                <strong>Automated 10% Platform Commission</strong>
+                <p>Along's payment gateway remits 90% to the merchant's bank account while retaining a 10% take-rate.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-breakdown-card">
+            <div style="font-family: var(--font-heading); font-size: 15px; font-weight: 800; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">
+              Live Table Settlement Example (4 Pax)
+            </div>
+
+            <div class="calc-row-item">
+              <span>Gross Café / Sports Turf Bill:</span>
+              <strong>₹1,400.00</strong>
+            </div>
+
+            <div class="calc-row-item discount">
+              <span>Along 15% Exclusive Group Perk:</span>
+              <span>- ₹210.00</span>
+            </div>
+
+            <div class="calc-net-total">
+              <span>Net Settled Bill via Along:</span>
+              <strong>₹1,190.00</strong>
+            </div>
+
+            <div class="calc-share-badge">
+              <div>
+                <div style="font-size: 10px; color: #64748B;">Per-Person Share (4 Pax):</div>
+                <div style="font-size: 10px; color: #64748B;">1-tap UPI Split</div>
+              </div>
+              <div class="calc-share-num">₹297.50 / pax</div>
+            </div>
+
+            <div class="calc-take-badge">
+              <span>Along 10% Platform Take-Rate:</span>
+              <strong>₹119.00 Net Revenue</strong>
+            </div>
+
+            <div style="font-size: 11px; color: #64748B; text-align: center; margin-top: 4px;">
+              💡 <em>Merchant gains ₹1,071.00 of incremental revenue on an otherwise empty off-peak table.</em>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SLIDE 8: MARKET OPPORTUNITY (GROUNDED INR NUMBERS)
+         ====================================================================== -->
+    <section class="deck-slide" id="slide-8" data-title="Market Opportunity">
+      <div class="slide-content-wrap">
+        <span class="kicker-label">TOTAL ADDRESSABLE MARKET</span>
+        <h2 class="slide-title-lg">Massive Indian Opportunity. <span class="highlight">Grounded Metrics.</span></h2>
+        <p class="slide-tagline">
+          Targeting the top 6 Indian metro tech clusters (Bengaluru, Mumbai, Delhi-NCR, Hyderabad, Pune, Chennai). Grounded in real transaction volumes.
+        </p>
+
+        <div class="tam-row-3">
+          
+          <div class="tam-box-item">
+            <span class="tam-box-label">TOTAL ADDRESSABLE MARKET (TAM)</span>
+            <div class="tam-stat-giant">28M</div>
+            <div style="font-family: var(--font-heading); font-size: 16px; font-weight: 800; color: #0F172A; margin: 2px 0;">Urban Young Adults</div>
+            <p class="tam-stat-note">Ages 21–34 in Top 6 Indian metros with smartphones and active UPI payment setups.</p>
+          </div>
+
+          <div class="tam-box-item">
+            <span class="tam-box-label">SERVICEABLE MARKET (SAM)</span>
+            <div class="tam-stat-giant">4.5M</div>
+            <div style="font-family: var(--font-heading); font-size: 16px; font-weight: 800; color: #0F172A; margin: 2px 0;">Corporate & Tech Migrants</div>
+            <p class="tam-stat-note">Young professionals living away from home spending ₹18,000+ monthly on discretionary recreation.</p>
+          </div>
+
+          <div class="tam-box-item">
+            <span class="tam-box-label">TARGET INITIAL SCALE (SOM)</span>
+            <div class="tam-stat-giant">120K</div>
+            <div style="font-family: var(--font-heading); font-size: 16px; font-weight: 800; color: #0F172A; margin: 2px 0;">Monthly Active Hangout Users</div>
+            <p class="tam-stat-note">Across 4 flagship pilot clusters: Hitec City, Indiranagar, Koramangala, and Bandra West.</p>
+          </div>
+
+        </div>
+
+        <div class="inversion-banner" style="margin-top: 10px;">
+          <span class="inversion-tag">HIGH FREQUENCY</span>
+          <div class="inversion-quote">
+            Social hangouts happen <strong>2 to 4 times every week</strong> per user, creating transaction frequency higher than food delivery or ride-hailing.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SLIDE 9: REVENUE PROJECTIONS
+         ====================================================================== -->
+    <section class="deck-slide" id="slide-9" data-title="Revenue Roadmap">
+      <div class="slide-content-wrap">
+        <span class="kicker-label">FINANCIAL ROADMAP</span>
+        <h2 class="slide-title-lg">Path to ₹54L+ MRR <span class="highlight">(~₹6.5 Crore ARR).</span></h2>
+        <p class="slide-tagline">
+          Conservative, grounded milestone roadmap driven by partner venue count, payment take-rate, and sponsored card listings.
+        </p>
+
+        <div class="projections-table-box">
+          <table class="simple-table">
+            <thead>
+              <tr>
+                <th>Milestone Stage</th>
+                <th>Active Partner Venues</th>
+                <th>Monthly Hangouts</th>
+                <th>Take-Rate (10%)</th>
+                <th>Sponsored Listings</th>
+                <th>Monthly Revenue (MRR)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Phase 1 (Pilot Traction)</strong></td>
+                <td>35 Venues</td>
+                <td>1,200 Hangouts</td>
+                <td>₹0 (Zero-fee Pilot)</td>
+                <td>₹1,05,000 (Early Sponsors)</td>
+                <td class="mrr-highlight">₹1,05,000 / mo</td>
+              </tr>
+              <tr>
+                <td><strong>Phase 2 (Dine & Pay Live)</strong></td>
+                <td>100 Venues</td>
+                <td>6,500 Hangouts</td>
+                <td>₹7,73,500 (₹119/table)</td>
+                <td>₹3,99,900 (₹3,999/mo)</td>
+                <td class="mrr-highlight">₹11,73,400 / mo</td>
+              </tr>
+              <tr>
+                <td><strong>Phase 3 (Multi-City Scale)</strong></td>
+                <td>400 Venues</td>
+                <td>32,000 Hangouts</td>
+                <td>₹38,08,000</td>
+                <td>₹15,99,600</td>
+                <td class="mrr-highlight">₹54,07,600 / mo (~₹6.5 Cr ARR)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="stat-strip-bar" style="margin-top: 10px;">
+          <div class="ssb-col">
+            <span class="ssb-num">35 Venues</span>
+            <span class="ssb-text">Operational breakeven achieved in pilot tech cluster</span>
+          </div>
+          <div class="ssb-col">
+            <span class="ssb-num">100 Venues</span>
+            <span class="ssb-text">₹1.4 Cr ARR run-rate with positive unit contribution</span>
+          </div>
+          <div class="ssb-col">
+            <span class="ssb-num">400 Venues</span>
+            <span class="ssb-text">Expansion across top 4 tech clusters in Bengaluru & Hyderabad</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SLIDE 10: THE ASK & CALL TO ACTION
+         ====================================================================== -->
+    <section class="deck-slide" id="slide-10" data-title="The Ask & Contact">
+      <div class="slide-content-wrap">
+        <span class="kicker-label">PILOT DENSITY FINANCING</span>
+        <h2 class="slide-title-lg">Backing the Offline Social Revolution. <span class="highlight">The Ask.</span></h2>
+        <p class="slide-tagline">
+          Building the infrastructure that gets people off their screens and into real-world hangouts.
+        </p>
+
+        <div class="ask-two-cols">
+          
+          <div class="ask-fund-box">
+            <div class="ask-big-figure">₹15 Lakhs</div>
+            <div class="ask-fund-title">6-Month Pilot Density Financing</div>
+            
+            <div class="alloc-progress-visual">
+              <div class="alloc-seg-growth" title="45% Growth & Hangout Subsidies"></div>
+              <div class="alloc-seg-team" title="35% Lean Founder Team"></div>
+              <div class="alloc-seg-tech" title="20% Cloud Infra & PostGIS"></div>
+            </div>
+
+            <div class="alloc-details-list">
+              <div class="adl-row">
+                <span><strong>Growth & Hangout Subsidies (45%):</strong></span>
+                <span style="font-weight: 700;">₹6.75 Lakhs</span>
+              </div>
+              <div class="adl-row">
+                <span><strong>Lean Team & Ground Ops Runway (35%):</strong></span>
+                <span style="font-weight: 700;">₹5.25 Lakhs</span>
+              </div>
+              <div class="adl-row">
+                <span><strong>Cloud Infra, PostGIS & APIs (20%):</strong></span>
+                <span style="font-weight: 700;">₹3.00 Lakhs</span>
+              </div>
+            </div>
+
+            <div style="font-size: 11.5px; color: #64748B;">
+              📌 <strong>6-Month Target:</strong> 50 partner venues, 5,000 completed hangouts, and operational cash-flow breakeven.
+            </div>
+          </div>
+
+          <div class="cta-action-card">
+            <div style="font-size: 38px;">🤝</div>
+            <div style="font-family: var(--font-heading); font-size: 22px; font-weight: 800; color: #0F172A;">
+              The Offline Social Revolution.
+            </div>
+            <p style="font-size: 14px; color: #475569; max-width: 360px; line-height: 1.5;">
+              Bringing young urban India back to the real world. Functional mobile app running on React Native & PostGIS.
+            </p>
+
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px 24px; font-size: 13.5px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: 0.3px;">
+              ⚡ Along Technologies Inc. (Private Founder Keynote)
+            </div>
+
+            <div style="font-size: 12px; color: #64748B; margin-top: 4px;">
+              Along Technologies Inc. • All rights reserved
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <footer class="bottom-control-bar">
+    <div class="progress-line-track">
+      <div class="progress-line-fill" id="progressBar"></div>
+    </div>
+
+    <div class="dots-wrapper" id="slideDotsRow"></div>
+
+    <div class="nav-arrows-set">
+      <button class="arrow-btn" id="prevSlideBtn" title="Previous Slide">←</button>
+      <button class="arrow-btn red-arrow" id="nextSlideBtn" title="Next Slide">→</button>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
