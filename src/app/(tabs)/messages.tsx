@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState, useEffect } from 'react';
 
-import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator } from 'react-native';
 import { MessageCircle, Users, Lock } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router, useFocusEffect } from 'expo-router';
@@ -13,7 +13,7 @@ const EMPTY_CHATS: any[] = [];
 
 export default function MessagesScreen() {
   const { user } = useAuth();
-  const { hostedPlans, joinedPlans, refetch: refetchPlans } = useMyPlans();
+  const { hostedPlans, joinedPlans, isLoading, refetch: refetchPlans } = useMyPlans();
   const [latestMessages, setLatestMessages] = useState<Record<string, { content: string; sender: string; time: string }>>({});
 
   const fetchLatestMessages = useCallback(async (planIds: string[]) => {
@@ -141,11 +141,17 @@ export default function MessagesScreen() {
             </Pressable>
           )}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>💬</Text>
-              <Text style={styles.emptyTitle}>No conversations yet</Text>
-              <Text style={styles.emptySubtitle}>Join a plan to start chatting with others</Text>
-            </View>
+            isLoading ? (
+              <View style={{ alignItems: 'center', marginTop: 80 }}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+              </View>
+            ) : (
+              <View style={styles.empty}>
+                <Text style={styles.emptyEmoji}>💬</Text>
+                <Text style={styles.emptyTitle}>No conversations yet</Text>
+                <Text style={styles.emptySubtitle}>Join a plan to start chatting with others</Text>
+              </View>
+            )
           }
         />
       </View>

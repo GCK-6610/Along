@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { View, Platform } from 'react-native';
 import { theme } from '../../styles/theme';
 import { Home, Compass, PlusCircle, MessageCircle, User } from 'lucide-react-native';
@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 
 export default function TabLayout() {
-  const { user } = useAuth();
+  const { user, session, loading, hasProfile } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -19,6 +19,21 @@ export default function TabLayout() {
       });
     }
   }, [user]);
+
+  // While auth state is resolving from storage, do not render tabs
+  if (loading) {
+    return null;
+  }
+
+  // Guard: if not authenticated, redirect immediately to login
+  if (!session) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  // Guard: if authenticated but onboarding profile not completed, redirect to onboarding
+  if (!hasProfile) {
+    return <Redirect href="/onboarding" />;
+  }
 
   return (
     <Tabs

@@ -34,32 +34,47 @@ function RootNavigator() {
   const segments = useSegments();
 
   useEffect(() => {
-    if (!loading) {
-      SplashScreen.hideAsync();
-      
-      const inAuthGroup = segments[0] === '(auth)';
-      const isRoot = (segments as string[]).length === 0;
+    if (loading) return;
 
-      if (!session) {
-        // If not logged in and not already in auth group, go to login
-        if (!inAuthGroup) router.replace('/(auth)/login');
-      } else if (!hasProfile) {
-        // If logged in but no profile, go to onboarding
-        if (segments[0] !== 'onboarding') router.replace('/onboarding');
-      } else {
-        // If logged in and has profile, and we are at the root or stuck in auth screen, send to tabs
-        if (isRoot || inAuthGroup) {
-          router.replace('/(tabs)');
-        }
+    SplashScreen.hideAsync();
+    
+    const inAuthGroup = segments[0] === '(auth)';
+    const inOnboarding = segments[0] === 'onboarding';
+
+    if (!session) {
+      // If not logged in and not already in auth group, go to login
+      if (!inAuthGroup) router.replace('/(auth)/login');
+    } else if (!hasProfile) {
+      // If logged in but no profile, go to onboarding
+      if (!inOnboarding) router.replace('/onboarding');
+    } else {
+      // If logged in and has profile, and we are on an auth or onboarding screen, send to tabs
+      if (inAuthGroup || inOnboarding) {
+        router.replace('/(tabs)');
       }
     }
   }, [session, loading, hasProfile, segments]);
 
+  // While checking auth token in storage, do NOT mount tabs
+  if (loading) {
+    return null;
+  }
+
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="onboarding" />
+    <Stack screenOptions={{ headerShown: false }} initialRouteName={session ? '(tabs)' : '(auth)'}>
+      {session ? (
+        <>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </>
+      )}
       <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
     </Stack>
   );

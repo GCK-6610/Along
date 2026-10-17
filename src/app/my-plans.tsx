@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect } from 'react';
 
-import { View, Text, StyleSheet, ScrollView, Pressable, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, FlatList, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Calendar } from 'lucide-react-native';
 import { theme } from '../styles/theme';
@@ -14,7 +14,7 @@ export default function MyPlansScreen() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'hosted' | 'joined'>('hosted');
   
-  const { hostedPlans, joinedPlans, refetch } = useMyPlans();
+  const { hostedPlans, joinedPlans, isLoading, refetch } = useMyPlans();
 
   useFocusEffect(
     useCallback(() => {
@@ -51,10 +51,16 @@ export default function MyPlansScreen() {
         )}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Calendar size={48} color={theme.colors.mutedForeground} />
-            <Text style={styles.emptyText}>No plans found</Text>
-          </View>
+          isLoading ? (
+            <View style={{ alignItems: 'center', marginTop: 80 }}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <Calendar size={48} color={theme.colors.mutedForeground} />
+              <Text style={styles.emptyText}>No plans found</Text>
+            </View>
+          )
         }
       />
     </SafeAreaView>

@@ -6,7 +6,7 @@ import {
   ActivityIndicator, Alert, ScrollView
 
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../styles/theme';
@@ -29,10 +29,20 @@ const GENDERS = [
 ];
 
 export default function OnboardingScreen() {
-  const { user, setHasProfile } = useAuth();
+  const { user, session, loading: authLoading, hasProfile, setHasProfile } = useAuth();
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Guard: if unauthenticated, cannot onboard
+  if (!authLoading && !session) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  // Guard: if already completed profile, go to main feed
+  if (!authLoading && session && hasProfile) {
+    return <Redirect href="/(tabs)" />;
+  }
   const [avatar, setAvatar] = useState(ALL_AVATARS[0]?.url || '');
   const [isModalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

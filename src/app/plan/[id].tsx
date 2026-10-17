@@ -33,10 +33,32 @@ export default function PlanDetailsScreen() {
   const [myRating, setMyRating] = useState<number | null>(null);
   const [isAttendeeRatingVisible, setAttendeeRatingVisible] = useState(false);
 
-  if (isLoading || !plan) {
+  if (isLoading) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center', padding: theme.spacing.xl }]}>
+        <Text style={{ fontSize: 48, marginBottom: 16 }}>📍</Text>
+        <Text style={{ fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xl, color: theme.colors.foreground, textAlign: 'center', marginBottom: 8 }}>
+          Plan Not Found
+        </Text>
+        <Text style={{ fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.sm, color: theme.colors.mutedForeground, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+          This hangout may have been deleted, concluded, or the link is invalid.
+        </Text>
+        <Pressable 
+          style={{ backgroundColor: theme.colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: theme.borderRadius.pill }}
+          onPress={() => safeBack('/(tabs)')}
+        >
+          <Text style={{ color: '#fff', fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm }}>
+            Back to Home
+          </Text>
+        </Pressable>
       </SafeAreaView>
     );
   }

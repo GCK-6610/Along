@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect } from 'react';
 
-import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Image, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { CheckCircle2, LogOut, Settings, Star, Shield, Edit2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
@@ -14,6 +14,7 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   
   const [profile, setProfile] = useState<any>({});
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const { plans, refetch: refetchPlans } = usePlans();
 
   useFocusEffect(
@@ -26,6 +27,7 @@ export default function ProfileScreen() {
           } else {
             setProfile({});
           }
+          setLoadingProfile(false);
         });
       }
     }, [user])
@@ -61,10 +63,16 @@ export default function ProfileScreen() {
             </View>
           )}
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{profile?.full_name || 'Your Name'}</Text>
-            {profile?.is_verified && <CheckCircle2 size={18} color="#1D9BF0" />}
+            {loadingProfile && !profile?.full_name ? (
+              <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginVertical: 4 }} />
+            ) : (
+              <>
+                <Text style={styles.name}>{profile?.full_name || 'Member'}</Text>
+                {profile?.is_verified && <CheckCircle2 size={18} color="#1D9BF0" />}
+              </>
+            )}
           </View>
-          <Text style={styles.phone}>{user?.phone || '+91 XXXXX XXXXX'}</Text>
+          <Text style={styles.phone}>{user?.phone || ''}</Text>
           {profile?.base_location_name && (
             <Text style={[styles.phone, { marginTop: 4 }]}>📍 {profile.base_location_name}</Text>
           )}
