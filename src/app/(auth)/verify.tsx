@@ -48,18 +48,47 @@ export default function VerifyScreen() {
 
   const handleVerify = async (token: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.verifyOtp({
-      phone: phone as string,
-      token,
-      type: 'sms',
-    });
-    setLoading(false);
-    if (error) {
-      Alert.alert('Invalid OTP', 'The code you entered is incorrect. Please try again.');
-      setOtp(Array(OTP_LENGTH).fill(''));
-      inputs.current[0]?.focus();
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: phone as string,
+        token,
+        type: 'sms',
+      });
+
+      if (error) {
+        setLoading(false);
+        Alert.alert('Invalid OTP', error.message || 'The code you entered is incorrect. Please try again.');
+        setOtp(Array(OTP_LENGTH).fill(''));
+        inputs.current[0]?.focus();
+        return;
+      }
+
+      // Check profile & direct redirect fallback so user is never stuck
+      if (data?.session) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', data.session.user.id)
+            .maybeSingle();
+
+          setLoading(false);
+          if (profile && profile.full_name && profile.full_name.trim() !== '') {
+            router.replace('/(tabs)');
+          } else {
+            router.replace('/onboarding');
+          }
+        } catch {
+          setLoading(false);
+          router.replace('/(tabs)');
+        }
+      } else {
+        setLoading(false);
+      }
+    } catch (e: any) {
+      setLoading(false);
+      Alert.alert('Verification Error', e?.message || 'Something went wrong. Please try again.');
     }
-    // On success, AuthContext listener handles redirect automatically
   };
 
   const handleResend = async () => {

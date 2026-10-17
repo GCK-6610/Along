@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Along — 5-Minute Startup Pitch Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Ambient Gradient Glow Orbs -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <!-- Top Presentation Bar -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <div class="logo">Along<span>.</span></div>
+      <div class="deck-tag">PRE-LAUNCH • HYDERABAD PILOT • 2026</div>
+    </div>
+    <div class="nav-center">
+      <!-- 5-Minute Rehearsal Timer -->
+      <div class="timer-widget" id="timerWidget">
+        <span class="timer-icon">⏱️</span>
+        <span class="timer-display" id="timerDisplay">05:00</span>
+        <button class="timer-btn" id="timerToggleBtn" title="Start/Pause Timer">▶</button>
+        <button class="timer-btn" id="timerResetBtn" title="Reset Timer">↺</button>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="action-btn" id="notesToggleBtn" title="Toggle Speaker Script (Key: N)">
+        🎙️ <span class="btn-text">Speaker Script</span>
+      </button>
+      <button class="action-btn" id="fullscreenBtn" title="Toggle Fullscreen (Key: F)">
+        ⛶ <span class="btn-text">Fullscreen</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Slide Viewport -->
+  <main class="deck-container" id="deckContainer">
+
+    <!-- SLIDE 1: TITLE / HOOK -->
+    <section class="slide active" id="slide-1" data-title="Title">
+      <div class="slide-content title-layout">
+        <div class="badge-pill">🇮🇳 BORN IN HYDERABAD • FUNCTIONAL MVP READY • PRE-LAUNCH ALPHA</div>
+        <h1 class="hero-title">The Hyperlocal<br/><span class="gradient-text">Tag-Along Network</span></h1>
+        <p class="hero-sub">Empowering young urbanites to turn crowds of city strangers into real-world hangouts in under 60 seconds.</p>
+        
+        <div class="stats-row">
+          <div class="stat-pill">
+            <span class="stat-num">Activity-First</span>
+            <span class="stat-label">Not Profile Swiping</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-num">&lt; 15 Mins</span>
+            <span class="stat-label">Neighborhood Proximity</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-num">2 to 6 Pax</span>
+            <span class="stat-label">Intimate Micro-Groups</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-num">Verified</span>
+            <span class="stat-label">Along Trust Shield</span>
+          </div>
+        </div>
+
+        <div class="slide-footer-meta">
+          <span>Presented by Founder & Team • Hyderabad</span>
+          <span>•</span>
+          <span>Target: 5 Minutes</span>
+          <span>•</span>
+          <span>Press <strong>Space</strong> or <strong>→</strong> to Begin</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: THE URBAN REALITY (MEET ANANYA & RAHUL) -->
+    <section class="slide" id="slide-2" data-title="The Problem">
+      <div class="slide-content">
+        <div class="slide-header">
+          <div class="section-tag">THE REALITY OF URBAN INDIA • MEET OUR USERS</div>
+          <h2 class="slide-title">High Salaries. Gated High-Rises. <span class="gradient-text">Zero Real-World Plans.</span></h2>
+          <p class="slide-desc">Over 65% of tech professionals in Hyderabad's IT Corridor relocate from other cities. They have disposable income, but zero frictionless way to find peers for spontaneous weekend activities.</p>
+        </div>
+
+        <div class="characters-grid">
+          <!-- Ananya's Persona Card -->
+          <div class="character-card ananya">
+            <div class="char-header">
+              <div class="char-avatar-box">
+                <img src="ananya.jpg" alt="Ananya" class="char-avatar-img" />
+              </div>
+              <div>
+                <div class="char-name">Ananya, 24</div>
+                <div class="char-role">Product Designer @ Microsoft • Madhapur</div>
+              </div>
+            </div>
+
+            <div class="char-tags">
+              <span class="char-tag accent">📍 Relocated from Delhi</span>
+              <span class="char-tag">☕ Specialty Coffee</span>
+              <span class="char-tag">🧗 Bouldering</span>
+              <span class="char-tag">🎲 Board Games</span>
+            </div>
+
+            <div class="char-pains">
+              <div class="char-pain-item">
+                <span class="char-pain-icon">💔</span>
+                <span><strong>Dating Apps Fail at Friendship:</strong> Bumble BFF feels like awkward job interviews with 85% ghosting.</span>
+              </div>
+              <div class="char-pain-item">
+                <span class="char-pain-icon">🛡️</span>
+                <span><strong>Safety & Verification Hesitation:</strong> Hesitates to join random mixed WhatsApp groups without verified identities or gender boundaries.</span>
+              </div>
+            </div>
+
+            <div class="char-speech-bubble">
+              "On Friday 7 PM, I have the budget and energy to go out, but my only choice is watching Netflix in my flat or texting friends 1,500 km away."
+            </div>
+          </div>
+
+          <!-- Rahul's Persona Card -->
+          <div class="character-card rahul">
+            <div class="char-header">
+              <div class="char-avatar-box">
+                <img src="rahul.jpg" alt="Rahul" class="char-avatar-img" />
+              </div>
+              <div>
+                <div class="char-name">Rahul, 25</div>
+                <div class="char-role">Backend Engineer @ Swiggy • Gachibowli</div>
+              </div>
+            </div>
+
+            <div class="char-tags">
+              <span class="char-tag accent">📍 Relocated from Pune</span>
+              <span class="char-tag">🏸 Doubles Badminton</span>
+              <span class="char-tag">🏏 Box Cricket</span>
+              <span class="char-tag">🍺 Craft Breweries</span>
+            </div>
+
+            <div class="char-pains">
+              <div class="char-pain-item">
+                <span class="char-pain-icon">💬</span>
+                <span><strong>The "Kab Milein?" Deadlock:</strong> College buddies live 2 hours away across traffic. WhatsApp groups debate dates for 4 days until the plan dies.</span>
+              </div>
+              <div class="char-pain-item">
+                <span class="char-pain-icon">🏢</span>
+                <span><strong>The Gated Island:</strong> Surrounded by 5,000 fellow techies in his apartment complex, but no frictionless way to say <em>"Who wants to play badminton tomorrow at 7 AM?"</em></span>
+              </div>
+            </div>
+
+            <div class="char-speech-bubble">
+              "I don't need a date or a 100-person meetup. I just need 3 other badminton players within 2 km who can show up at Smash Arena tomorrow."
+            </div>
+          </div>
+        </div>
+
+        <div class="story-stats-strip">
+          <div class="sss-item"><strong>65% Migrant Techies</strong><span>relocated to Hyderabad & Bengaluru</span></div>
+          <div class="sss-divider">•</div>
+          <div class="sss-item"><strong>₹18 LPA Avg Income</strong><span>disposable income waiting to be spent</span></div>
+          <div class="sss-divider">•</div>
+          <div class="sss-item"><strong>85% Plan Drop-off</strong><span>on swiping & group chat apps</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: THE SOLUTION / USER JOURNEY -->
+    <section class="slide" id="slide-3" data-title="The Solution">
+      <div class="slide-content">
+        <div class="slide-header">
+          <div class="section-tag">THE TAG-ALONG PHILOSOPHY • HOW IT WORKS</div>
+          <h2 class="slide-title">Turning Shared Intent into <span class="gradient-text">Real-World Meetups.</span></h2>
+          <p class="slide-desc">Don't swipe on profiles to find plans. <strong>Post what you are already doing, and let vetted neighborhood peers tag along.</strong></p>
+        </div>
+
+        <div class="journey-grid-4">
+          <!-- Step 1 -->
+          <div class="journey-card">
+            <div class="journey-avatar-badge">
+              <img src="rahul.jpg" alt="Rahul" class="j-mini-avatar" />
+              <span>Rahul's Spark</span>
+            </div>
+            <div class="journey-step-num">Step 01</div>
+            <div class="journey-icon">⚡</div>
+            <h3 class="journey-title">1-Sentence AI Plan Creation</h3>
+            <p class="journey-desc">Rahul types: <em>"Badminton this Sat 7am at Smash Arena for 4 people"</em>. Hybrid AI auto-fills venue, coordinates, and caps group to 4.</p>
+            <span class="journey-pill pill-ai">Zero Friction Creation</span>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="journey-card">
+            <div class="journey-avatar-badge">
+              <img src="ananya.jpg" alt="Ananya" class="j-mini-avatar" />
+              <span>Ananya's Safety Shield</span>
+            </div>
+            <div class="journey-step-num">Step 02</div>
+            <div class="journey-icon">🛡️</div>
+            <h3 class="journey-title">Gender Filter & Safety Shield</h3>
+            <p class="journey-desc">Host sets reach: <strong>Everyone Welcome</strong> or <strong>Women Only</strong>. Phone verification, mutual ratings, and host approvals remove all hesitation for Ananya.</p>
+            <span class="journey-pill pill-safety">Trust Layer</span>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="journey-card">
+            <div class="journey-avatar-badge">
+              <img src="ananya.jpg" alt="Ananya" class="j-mini-avatar" />
+              <span>Ananya's Map Radar</span>
+            </div>
+            <div class="journey-step-num">Step 03</div>
+            <div class="journey-icon">🗺️</div>
+            <h3 class="journey-title">PostGIS Map Discovery</h3>
+            <p class="journey-desc">Ananya opens the Explore Map. She sees Rahul's badminton pin 1.1 km away in Gachibowli with 2 spots open, and joins with 1 click.</p>
+            <span class="journey-pill pill-geo">15-Min Proximity</span>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="journey-card">
+            <div class="journey-avatar-badge dual">
+              <div class="dual-avatar-wrap">
+                <img src="rahul.jpg" alt="Rahul" class="j-mini-avatar" />
+                <img src="ananya.jpg" alt="Ananya" class="j-mini-avatar overlap" />
+              </div>
+              <span>Real-Life Meetup</span>
+            </div>
+            <div class="journey-step-num">Step 04</div>
+            <div class="journey-icon">🏸</div>
+            <h3 class="journey-title">Real Meetup & Off-Peak Perk</h3>
+            <p class="journey-desc">They meet at Smash Arena at 7 AM. GPS check-in unlocks 20% off the court. Chat auto-archives, and they exchange mutual +0.2 trust ratings.</p>
+            <span class="journey-pill pill-perk">Completed Plan</span>
+          </div>
+        </div>
+
+        <div class="quote-callout" style="margin-top: 18px;">
+          <div class="quote-badge">THE CORE INVERSION</div>
+          <p class="quote-text">Dating apps say: <em>"Talk to a stranger for 2 weeks to see if you want to meet."</em> Along says: <strong>"Show up for the activity you already love, and let friendships happen naturally."</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: PRODUCT DEMO & ARCHITECTURE -->
+    <section class="slide" id="slide-4" data-title="Product">
+      <div class="slide-content demo-layout">
+        <div class="demo-left">
+          <div class="section-tag">WORKING PRODUCT DEMO</div>
+          <h2 class="slide-title">Engineered for Real Life. <span class="gradient-text">Interactive Map & Safety.</span></h2>
+          <p class="slide-desc">Explore the live features below to see our functional mobile interface in action.</p>
+
+          <div class="feature-tabs" id="demoTabs">
+            <button class="feat-tab active" data-mockup="map">
+              <span class="tab-badge">01</span>
+              <div>
+                <strong>Explore Map View (Hyderabad IT Corridor)</strong>
+                <p>PostGIS radius map showing real-time hangouts & partner venues across Gachibowli, Madhapur & Jubilee Hills.</p>
+              </div>
+            </button>
+            <button class="feat-tab" data-mockup="create">
+              <span class="tab-badge">02</span>
+              <div>
+                <strong>AI Create with Gender Reach Filter</strong>
+                <p>1 natural sentence auto-fills venue & time + toggle '👥 Everyone' or '🔒 Women Only' for peace of mind.</p>
+              </div>
+            </button>
+            <button class="feat-tab" data-mockup="chat">
+              <span class="tab-badge">03</span>
+              <div>
+                <strong>Micro-Group Chat & Off-Peak Perks</strong>
+                <p>Zero-latency chat, physical GPS check-in (unlocking 20% group perk), and permanent shared memory lock.</p>
+              </div>
+            </button>
+          </div>
+
+          <div class="tech-stack-strip">
+            <span class="tech-item">⚡ React Native (iOS & Android)</span>
+            <span class="tech-item">📍 Supabase PostGIS Geospatial</span>
+            <span class="tech-item">🛡️ Dynamic Gender Reach Controls</span>
+            <span class="tech-item">🧠 Hybrid Offline NLP + GPT-4o</span>
+          </div>
+        </div>
+
+        <div class="demo-right">
+          <!-- Interactive Phone Mockup Frame -->
+          <div class="phone-frame">
+            <div class="phone-dynamic-island"></div>
+            <div class="phone-display" id="phoneDisplay">
+
+              <!-- MOCKUP VIEW 1: MAP VIEW (HYDERABAD IT CORRIDOR) -->
+              <div class="mock-screen active mock-map-screen" id="mock-map">
+                <div class="mock-map-header">
+                  <div class="mock-search-bar">
+                    <span>🔍</span>
+                    <span class="mock-search-text">Gachibowli • Within 2 km</span>
+                  </div>
+                  <div class="mock-filter-icon">⚙️</div>
+                </div>
+
+                <div class="mock-category-chips">
+                  <span class="m-chip active">✨ All</span>
+                  <span class="m-chip">🏸 Sports</span>
+                  <span class="m-chip">☕ Coffee</span>
+                  <span class="m-chip women-chip">🔒 Women Only</span>
+                </div>
+
+                <!-- Styled Dark Map Visual -->
+                <div class="mock-map-canvas">
+                  <div class="mock-map-road r1"></div>
+                  <div class="mock-map-road r2"></div>
+                  <div class="mock-map-road r3"></div>
+                  
+                  <div class="mock-map-area hitec">HITEC CITY</div>
+                  <div class="mock-map-area gachibowli">GACHIBOWLI</div>
+                  <div class="mock-map-area madhapur">MADHAPUR</div>
+
+                  <!-- User Location Beacon -->
+                  <div class="user-beacon" title="Your Location: Madhapur">
+                    <div class="beacon-pulse"></div>
+                    <div class="beacon-dot"></div>
+                  </div>
+
+                  <!-- Map Pins -->
+                  <div class="map-pin pin-badminton active" id="pinBadminton" title="Smash Badminton Arena">
+                    <span class="pin-icon">🏸</span>
+                    <span class="pin-badge">4 Pax</span>
+                  </div>
+
+                  <div class="map-pin pin-coffee" id="pinCoffee" title="Third Wave Coffee">
+                    <span class="pin-icon">☕</span>
+                    <span class="pin-tag-gold">PERK</span>
+                  </div>
+
+                  <div class="map-pin pin-women" id="pinWomen" title="Women's Book Reading">
+                    <span class="pin-icon">🔒</span>
+                    <span class="pin-badge-pink">Girls Only</span>
+                  </div>
+                </div>
+
+                <!-- Floating Bottom Sheet on Map -->
+                <div class="mock-map-bottom-sheet" id="mapBottomSheet">
+                  <div class="sheet-drag-handle"></div>
+                  <div class="sheet-plan-header">
+                    <span class="sheet-tag fitness">FITNESS • 4 PAX</span>
+                    <span class="sheet-dist">📍 1.1 km away</span>
+                  </div>
+                  <div class="sheet-title">Badminton Doubles Match</div>
+                  <div class="sheet-venue">Smash Arena, Gachibowli • Sat, 7:00 AM</div>
+                  <div class="sheet-footer">
+                    <div class="sheet-avatars">
+                      <span class="m-avatar a-rahul" title="Rahul (Host)"><img src="rahul.jpg" alt="Rahul" class="sheet-avatar-img" /></span>
+                      <span class="m-avatar a-ananya" title="Ananya"><img src="ananya.jpg" alt="Ananya" class="sheet-avatar-img" /></span>
+                      <span class="m-open-slots">+2 spots</span>
+                    </div>
+                    <button class="sheet-join-btn">Request to Join</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MOCKUP VIEW 2: AI CREATE WITH GENDER FILTER -->
+              <div class="mock-screen" id="mock-create">
+                <div class="mock-topbar-sub">
+                  <span>← Back</span>
+                  <strong>Create Hangout</strong>
+                  <span></span>
+                </div>
+                <div class="mock-ai-banner">
+                  ⚡ <strong>AI Auto-Fill Active</strong>
+                  <div class="mock-ai-prompt">"Badminton this Sat 7am at Smash Arena for 4 people"</div>
+                </div>
+                <div class="mock-field">
+                  <label>Plan Title</label>
+                  <div class="mock-input">Badminton Doubles Match</div>
+                </div>
+                <div class="mock-field">
+                  <label>Meeting Venue</label>
+                  <div class="mock-input">📍 Smash Arena, Gachibowli (17.44°N, 78.34°E)</div>
+                </div>
+                <div class="mock-field-row">
+                  <div class="mock-field half">
+                    <label>When?</label>
+                    <div class="mock-input">Sat, 7:00 AM</div>
+                  </div>
+                  <div class="mock-field half">
+                    <label>Capacity</label>
+                    <div class="mock-input">4 People</div>
+                  </div>
+                </div>
+
+                <!-- Gender Reach Selector -->
+                <div class="mock-field">
+                  <label>Audience Reach & Safety Filter</label>
+                  <div class="mock-gender-selector">
+                    <div class="mock-gender-btn active" id="btnReachAll">
+                      <span>👥</span>
+                      <strong>Everyone Welcome</strong>
+                    </div>
+                    <div class="mock-gender-btn" id="btnReachWomen">
+                      <span>🔒</span>
+                      <strong>Women Only</strong>
+                    </div>
+                  </div>
+                  <div class="mock-reach-hint" id="reachHint">Open to verified badminton players of any gender.</div>
+                </div>
+
+                <div class="mock-cta-btn">🚀 Publish to Neighborhood Feed</div>
+              </div>
+
+              <!-- MOCKUP VIEW 3: CHAT & GPS CHECK-IN -->
+              <div class="mock-screen" id="mock-chat">
+                <div class="mock-topbar-sub">
+                  <span>← Back</span>
+                  <strong>Smash Badminton Doubles</strong>
+                  <span class="mock-archive-badge">4/4 ATTENDEES</span>
+                </div>
+                <div class="mock-chat-bubble other">
+                  <div class="chat-sender-header">
+                    <img src="rahul.jpg" alt="Rahul" class="chat-mini-avatar" />
+                    <strong>Rahul (Host)</strong>
+                  </div>
+                  <p>Booked Court 2 at Smash Arena for 7 AM! 🏸</p>
+                  <span class="m-time">6:40 AM</span>
+                </div>
+                <div class="mock-chat-bubble me">
+                  <div class="chat-sender-header me-header">
+                    <strong>Ananya</strong>
+                    <img src="ananya.jpg" alt="Ananya" class="chat-mini-avatar" />
+                  </div>
+                  <p>Awesome! Bringing 2 extra Yonex rackets 👍</p>
+                  <span class="m-time">6:43 AM</span>
+                </div>
+                <div class="mock-checkin-banner">
+                  ✅ <strong>GPS Check-In Verified at Smash Arena</strong>
+                  <span>20% Off-Peak Group Perk Applied to Court Fee!</span>
+                </div>
+                <div class="mock-archived-lock-bar">
+                  🔒 <em>Hangout Concluded • Chat Archived into Shared Memory • Mutual Ratings Submitted (+0.2 Trust Score)</em>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: BUSINESS MODEL -->
+    <section class="slide" id="slide-5" data-title="Business Model">
+      <div class="slide-content">
+        <div class="slide-header">
+          <div class="section-tag">BUSINESS MODEL & UNIT ECONOMICS</div>
+          <h2 class="slide-title">Monetizing Real-World Footfall. <span class="gradient-text">Zero Banner Ads.</span></h2>
+          <p class="slide-desc">We don't sell user attention to advertisers. We bring high-intent group customers to physical neighborhood businesses.</p>
+        </div>
+
+        <div class="bento-grid-3">
+          <div class="bento-card card-accent-red">
+            <div class="card-icon">🏪</div>
+            <div class="card-stat">₹2,999 - ₹4,999 / mo</div>
+            <h3 class="card-title">Sponsored Hotspot Subscriptions</h3>
+            <p class="card-text">Specialty cafes, sports turfs, climbing gyms, and craft breweries pay a monthly subscription for featured placement on Home and Explore maps.</p>
+            <div class="bento-sub-pill">ROI: Just 2 group bookings/wk recovers their cost</div>
+          </div>
+
+          <div class="bento-card card-accent-yellow">
+            <div class="card-icon">🎟️</div>
+            <div class="card-stat">10% - 15% Take</div>
+            <h3 class="card-title">Group Perks & Off-Peak Bookings</h3>
+            <p class="card-text">Venues offer exclusive perks (e.g. 20% off idle turf hours, complimentary platters for 4+ pax) during off-peak times. Unlocked <em>strictly via physical group check-in</em>—guaranteeing high-ticket tables while Along takes a 10%–15% commission.</p>
+            <div class="bento-sub-pill">Anti-abuse: Unlocks only for active 4+ attendee hangouts</div>
+          </div>
+
+          <div class="bento-card card-accent-purple">
+            <div class="card-icon">🚀</div>
+            <div class="card-stat">₹49 - ₹99</div>
+            <h3 class="card-title">Host Plan Boosts</h3>
+            <p class="card-text">Micro-transactions allowing hosts to instantly boost their hangout's visibility across wider neighborhood zones when they need quick attendees.</p>
+            <div class="bento-sub-pill">Impulse consumer monetization</div>
+          </div>
+        </div>
+
+        <div class="business-metrics-strip">
+          <div class="bm-card">
+            <span class="bm-label">ESTIMATED GROUP TICKET</span>
+            <span class="bm-val">₹1,500 – ₹2,500</span>
+            <span class="bm-desc">Cafe bill or 1-hr badminton court for 4 people</span>
+          </div>
+          <div class="bm-card">
+            <span class="bm-label">MERCHANT ROI</span>
+            <span class="bm-val">2 Group Visits / mo</span>
+            <span class="bm-desc">100% covers the ₹2,999 monthly subscription</span>
+          </div>
+          <div class="bm-card highlight">
+            <span class="bm-label">HYDERABAD PILOT BREAKEVEN</span>
+            <span class="bm-val">35 Paying Venues</span>
+            <span class="bm-desc">₹1,05,000 MRR covers all pilot operations</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: TRACTION & NORTH STAR -->
+    <section class="slide" id="slide-6" data-title="Traction">
+      <div class="slide-content">
+        <div class="slide-header">
+          <div class="section-tag">MARKET & NORTH STAR</div>
+          <h2 class="slide-title">We Optimize for Getting Users <span class="gradient-text">OFF Their Phones.</span></h2>
+          <p class="slide-desc">Legacy apps optimize for screen addiction. Along optimizes for <strong>Completed Real-World Hangouts</strong>.</p>
+        </div>
+
+        <div class="bento-grid-2x2">
+          <div class="bento-card">
+            <div class="metric-header">
+              <span class="metric-icon">🎯</span>
+              <span class="metric-badge">NORTH STAR METRIC</span>
+            </div>
+            <div class="card-stat">Completed Plans</div>
+            <p class="card-text">When two or more users complete a hangout and submit mutual peer ratings, 30-day cohort retention jumps by <strong>4.2x</strong>. Real connection drives authentic word of mouth.</p>
+          </div>
+
+          <div class="bento-card">
+            <div class="metric-header">
+              <span class="metric-icon">🏙️</span>
+              <span class="metric-badge">INDIAN TECH-HUB TAM</span>
+            </div>
+            <div class="card-stat">12 Million Youth</div>
+            <p class="card-text">Tech and corporate professionals living in top Indian tech clusters (Hyderabad, Bengaluru, Pune, Gurugram). Average monthly discretionary spend on weekend activities: <strong>₹4,000–₹8,000</strong>.</p>
+          </div>
+
+          <div class="bento-card">
+            <div class="metric-header">
+              <span class="metric-icon">🛡️</span>
+              <span class="metric-badge">SAFETY & TRUST SHIELD</span>
+            </div>
+            <div class="card-stat">Trust Layer</div>
+            <p class="card-text">Host approval workflow, optional verified badges, transparent peer reputation scores, and women-only hangout filters built natively into the database.</p>
+          </div>
+
+          <div class="bento-card">
+            <div class="metric-header">
+              <span class="metric-icon">📱</span>
+              <span class="metric-badge">PRODUCT READINESS</span>
+            </div>
+            <div class="card-stat">Production-Ready MVP</div>
+            <p class="card-text">React Native iOS and Android app fully coded, PostGIS spatial indexing live on Supabase, zero-latency optimistic chat built, and hybrid offline NLP active—ready for immediate closed rollout.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: THE ASK & HYDERABAD ROADMAP -->
+    <section class="slide" id="slide-7" data-title="The Ask">
+      <div class="slide-content ask-layout">
+        <div class="badge-pill">MICRO PRE-SEED / PILOT ASK • 6-MONTH RUNWAY</div>
+        <h2 class="hero-title">Backing the Hyderabad<br/><span class="gradient-text">IT Corridor Pilot.</span></h2>
+        
+        <div class="ask-grid">
+          <div class="ask-card">
+            <div class="ask-amount">₹10 Lakhs</div>
+            <div class="ask-title">6-Month Pilot Financing (~$12,000)</div>
+            <p class="ask-desc">Funding 6 months of hyper-focused merchant partnerships & neighborhood community density across Hitec City, Gachibowli & Madhapur.</p>
+          </div>
+
+          <div class="ask-card">
+            <div class="fund-allocation-title">Pilot Capital Allocation (₹10 Lakhs):</div>
+            <div class="allocation-bar">
+              <div class="bar-seg seg-1" style="width: 45%;">45%</div>
+              <div class="bar-seg seg-2" style="width: 35%;">35%</div>
+              <div class="bar-seg seg-3" style="width: 20%;">20%</div>
+            </div>
+
+            <div class="allocation-legend-grid">
+              <div class="alloc-item">
+                <span class="alloc-dot dot-1"></span>
+                <div>
+                  <strong class="alloc-amount">₹4.5L (45%)</strong>
+                  <span class="alloc-desc">User Growth & Meetup Subsidies (subsidizing ₹250 off court/cafe bills for early groups)</span>
+                </div>
+              </div>
+              <div class="alloc-item">
+                <span class="alloc-dot dot-2"></span>
+                <div>
+                  <strong class="alloc-amount">₹3.5L (35%)</strong>
+                  <span class="alloc-desc">Lean Team & Ops Runway (modest 6-month stipends for 2 core operators on ground)</span>
+                </div>
+              </div>
+              <div class="alloc-item">
+                <span class="alloc-dot dot-3"></span>
+                <div>
+                  <strong class="alloc-amount">₹2.0L (20%)</strong>
+                  <span class="alloc-desc">Cloud Infra, APIs & App Store (Supabase PostGIS, OpenAI NLP, Google Maps, Apple & Google Play)</span>
+                </div>
+              </div>
+            </div>
+
+            <ul class="milestones-list">
+              <li>📍 <strong>Months 1–2 (Pilot Rollout)</strong>: Onboard 15 partner venues in Gachibowli & Kondapur; invite 500 initial techies.</li>
+              <li>🚀 <strong>Months 3–4 (Scaling Density)</strong>: Scale to 35 paying partner venues; 2,500 monthly completed hangouts.</li>
+              <li>✨ <strong>Months 5–6 (Operational Breakeven)</strong>: Reach ₹1,05,000+ MRR, validating local unit economics for larger seed round.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="contact-box">
+          <div>
+            <div class="contact-name">Along Technologies • Hyderabad</div>
+            <div class="contact-email">founders@along.social • Working App Ready to Demo Today</div>
+          </div>
+          <button class="cta-live-btn" onclick="alert('Open Along on iPhone/Android Simulator to test live!')">📱 Test App Demo</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation & Controls -->
+  <footer class="bottom-bar">
+    <div class="slide-progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="bottom-controls">
+      <div class="slide-indicator" id="slideIndicator">01 / 07 — Title</div>
+      <div class="slide-dots" id="slideDots"></div>
+      <div class="nav-arrows">
+        <button class="nav-btn" id="prevBtn" title="Previous Slide (←)">←</button>
+        <button class="nav-btn primary-nav" id="nextBtn" title="Next Slide (→)">→</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating Speaker Script Drawer (Toggled by 'N') -->
+  <aside class="speaker-drawer hidden" id="speakerDrawer">
+    <div class="drawer-header">
+      <span class="drawer-title">🎙️ 45-Second Rehearsal Script</span>
+      <span class="drawer-slide-label" id="drawerSlideLabel">Slide 1 of 7</span>
+      <button class="drawer-close" id="drawerCloseBtn">✕</button>
+    </div>
+    <div class="drawer-content" id="drawerScriptText">
+      <!-- Dynamically populated via JS -->
+    </div>
+  </aside>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -16,32 +16,44 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     return null;
   }
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
-  }
-
-  if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+  try {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
     }
-    if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
+
+    if (Device.isDevice) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        console.log('Failed to get push token: permission not granted');
+        return null;
+      }
+      
+      try {
+        const projectId = process.env.EXPO_PUBLIC_PROJECT_ID;
+        const tokenResponse = await Notifications.getExpoPushTokenAsync(
+          projectId && projectId !== 'along-project' ? { projectId } : undefined
+        );
+        return tokenResponse.data;
+      } catch (tokenErr) {
+        console.warn('Could not fetch Expo push token (expected in Expo Go without EAS ID):', tokenErr);
+        return null;
+      }
+    } else {
+      console.log('Must use physical device for Push Notifications');
       return null;
     }
-    const token = (await Notifications.getExpoPushTokenAsync({
-      projectId: process.env.EXPO_PUBLIC_PROJECT_ID || 'along-project' // In a real app, from app.json/EAS
-    })).data;
-    return token;
-  } else {
-    console.log('Must use physical device for Push Notifications');
+  } catch (err) {
+    console.warn('Error registering for push notifications:', err);
     return null;
   }
 }
