@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 
 import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
 import { MessageCircle, Users, Lock } from 'lucide-react-native';
@@ -7,18 +7,60 @@ import { theme } from '../../styles/theme';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useMyPlans } from '../../hooks/useMyPlans';
+import { supabase } from '../../lib/supabase';
 
 const EMPTY_CHATS: any[] = [];
 
 export default function MessagesScreen() {
   const { user } = useAuth();
   const { hostedPlans, joinedPlans, refetch: refetchPlans } = useMyPlans();
+  const [latestMessages, setLatestMessages] = useState<Record<string, { content: string; sender: string; time: string }>>({});
+
+  const fetchLatestMessages = useCallback(async (planIds: string[]) => {
+    if (planIds.length === 0) return;
+    try {
+      const { data } = await supabase
+        .from('chat_messages')
+        .select(`
+          plan_id,
+          content,
+          created_at,
+          user:profiles(full_name)
+        `)
+        .in('plan_id', planIds)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        const msgMap: Record<string, { content: string; sender: string; time: string }> = {};
+        for (const msg of data) {
+          if (!msgMap[msg.plan_id]) {
+            const senderName = (msg.user as any)?.full_name?.split(' ')[0] || 'Someone';
+            msgMap[msg.plan_id] = {
+              content: msg.content,
+              sender: senderName,
+              time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+          }
+        }
+        setLatestMessages(msgMap);
+      }
+    } catch (e) {
+      console.warn('Error fetching latest messages:', e);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       refetchPlans();
     }, [])
   );
+
+  useEffect(() => {
+    const allIds = [...hostedPlans, ...joinedPlans].map(p => p.id);
+    if (allIds.length > 0) {
+      fetchLatestMessages(allIds);
+    }
+  }, [hostedPlans, joinedPlans, fetchLatestMessages]);
 
   const chats = useMemo(() => {
     if (!user) return EMPTY_CHATS;
@@ -38,16 +80,19 @@ export default function MessagesScreen() {
         if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
         return new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime();
       })
-      .map(p => ({
-        id: p.id,
-        planTitle: p.title,
-        lastMessage: `📍 ${p.venue || 'No location set'}`,
-        time: new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
-        unread: 0,
-        members: 1 + (p.participants_list || []).filter((u: any) => u.join_status === 'approved' && u.id !== p.host_id).length,
-        isArchived: p.status === 'completed',
-      }));
-  }, [user, hostedPlans, joinedPlans]);
+      .map(p => {
+        const latest = latestMessages[p.id];
+        return {
+          id: p.id,
+          planTitle: p.title,
+          lastMessage: latest ? `${latest.sender}: ${latest.content}` : `📍 ${p.venue || 'No location set'}`,
+          time: latest?.time || new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+          unread: 0,
+          members: 1 + (p.participants_list || []).filter((u: any) => u.join_status === 'approved' && u.id !== p.host_id).length,
+          isArchived: p.status === 'completed',
+        };
+      });
+  }, [user, hostedPlans, joinedPlans, latestMessages]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

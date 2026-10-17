@@ -79,11 +79,23 @@ export default function ProfileScreen() {
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{profile?.events_attended || 0}</Text>
-            <Text style={styles.statLabel}>Plans Attended</Text>
+            <Text style={styles.statLabel}>Attended</Text>
           </View>
+          <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{profile?.events_hosted || 0}</Text>
-            <Text style={styles.statLabel}>Plans Hosted</Text>
+            <Text style={styles.statLabel}>Hosted</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: '#D97706' }]}>
+              {profile?.rating_count && profile.rating_count > 0
+                ? `★ ${profile.rating_avg ? profile.rating_avg.toFixed(1) : '5.0'}`
+                : '⭐ New'}
+            </Text>
+            <Text style={styles.statLabel}>
+              {profile?.rating_count && profile.rating_count > 0 ? `${profile.rating_count} ratings` : 'Community'}
+            </Text>
           </View>
         </View>
 
@@ -161,8 +173,9 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xl, color: theme.colors.foreground, letterSpacing: -0.3 },
   phone: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
-  statsRow: { flexDirection: 'row', backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.lg, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.sm },
+  statsRow: { flexDirection: 'row', backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.lg, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.sm, alignItems: 'center' },
   statItem: { flex: 1, alignItems: 'center', gap: 2 },
+  statDivider: { width: 1, height: 28, backgroundColor: theme.colors.border },
   statValue: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xl, color: theme.colors.foreground },
   statLabel: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, textAlign: 'center' },
   menuSection: { gap: theme.spacing.xs },

@@ -33,7 +33,7 @@ export default function CreateScreen() {
   const [scheduledAt, setScheduledAt] = useState(new Date(Date.now() + 86400000));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isMapModalVisible, setMapModalVisible] = useState(false);
-  const [mapCoordinate, setMapCoordinate] = useState({ latitude: 28.5921, longitude: 77.2250 });
+  const [mapCoordinate, setMapCoordinate] = useState({ latitude: 17.4375, longitude: 78.3845 });
   const [mapSearchQuery, setMapSearchQuery] = useState('');
   const [isPosting, setIsPosting] = useState(false);
   const mapRef = useRef<MapView>(null);
@@ -41,14 +41,22 @@ export default function CreateScreen() {
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
   const [isAiModalVisible, setAiModalVisible] = useState(false);
 
-  useEffect(() => {
-    (async () => {
+  const fetchLiveLocation = async () => {
+    try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
-      let location = await Location.getCurrentPositionAsync({});
-      setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
-      setMapCoordinate({ latitude: location.coords.latitude, longitude: location.coords.longitude });
-    })();
+      let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (location?.coords) {
+        setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
+        setMapCoordinate({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+      }
+    } catch (e) {
+      console.warn('Could not acquire live device coordinates:', e);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveLocation();
   }, []);
 
   const resetForm = () => {
@@ -60,18 +68,19 @@ export default function CreateScreen() {
     setNlpInput('');
     setAiSuccessBadge(false);
     setTags([]);
-    setMapCoordinate(userLocation ? { latitude: userLocation.lat, longitude: userLocation.lon } : { latitude: 28.5921, longitude: 77.2250 });
+    setMapCoordinate(userLocation ? { latitude: userLocation.lat, longitude: userLocation.lon } : { latitude: 17.4375, longitude: 78.3845 });
   };
 
   useFocusEffect(
     useCallback(() => {
+      fetchLiveLocation();
       if (params.venue) setVenue(params.venue as string);
       if (params.tags) setTags((params.tags as string).split(','));
     }, [params.venue, params.tags])
   );
 
   const handleNLPParse = async () => {
-    const promptToParse = nlpInput.trim() || 'Morning run at Lodhi Gardens tomorrow 6am for 4 people';
+    const promptToParse = nlpInput.trim() || 'Coffee & startup chat at Roastery Coffee House tomorrow 5pm for 4 people';
     setParsing(true);
     setAiSuccessBadge(false);
     

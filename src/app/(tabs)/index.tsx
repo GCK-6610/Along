@@ -1,10 +1,11 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { View, Text, StyleSheet, FlatList, StatusBar, Image, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, StatusBar, Image, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { Compass, Flame, Bell } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
+import * as Location from 'expo-location';
 
 import { ActivityIndicator } from 'react-native';
 import { usePlans } from '../../hooks/usePlans';
@@ -17,23 +18,48 @@ import PlanCard from '../../components/features/PlanCard';
 import { PlanCardSkeleton, HotspotCardSkeleton } from '../../components/features/Skeletons';
 import { Plan, Hotspot } from '../../types';
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
 export default function HomeScreen() {
   const { user } = useAuth();
-  const [firstName, setFirstName] = useState(user?.user_metadata?.full_name?.split(' ')[0] || 'Rahul');
+  const [firstName, setFirstName] = useState(user?.user_metadata?.full_name?.split(' ')[0] || 'Explorer');
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans(userLocation?.lat, userLocation?.lon);
   const { hotspots, isLoading: hotspotsLoading, refetch: refetchHotspots } = useHotspots();
 
-  useEffect(() => {
-    if (user) {
-      supabase.from('profiles').select('base_latitude, base_longitude').eq('id', user.id).single().then(({ data }) => {
-        if (data && data.base_latitude && data.base_longitude) {
-          setUserLocation({ lat: data.base_latitude, lon: data.base_longitude });
+  const fetchLiveLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (loc?.coords) {
+          setUserLocation({ lat: loc.coords.latitude, lon: loc.coords.longitude });
+          return;
         }
-      });
-      
+      }
+    } catch (e) {
+      console.warn('GPS location request error:', e);
+    }
+    // Fallback to base location in profile
+    if (user) {
+      const { data } = await supabase.from('profiles').select('base_latitude, base_longitude').eq('id', user.id).maybeSingle();
+      if (data?.base_latitude && data?.base_longitude) {
+        setUserLocation({ lat: data.base_latitude, lon: data.base_longitude });
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveLocation();
+    if (user) {
       // Fetch unread notifications count
       supabase.from('notifications')
         .select('*', { count: 'exact', head: true })
@@ -47,10 +73,11 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      fetchLiveLocation();
       refetchPlans();
       refetchHotspots();
       if (user) {
-        supabase.from('profiles').select('full_name').eq('id', user.id).single().then(({ data }) => {
+        supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle().then(({ data }) => {
           if (data && data.full_name) {
             setFirstName(data.full_name.split(' ')[0]);
           }
@@ -58,6 +85,12 @@ export default function HomeScreen() {
       }
     }, [user])
   );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refetchPlans(), refetchHotspots(), fetchLiveLocation()]);
+    setRefreshing(false);
+  };
 
   const renderItem = ({ item }: { item: Plan }) => (
     <PlanCard plan={item} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: item.id } })} />
@@ -74,7 +107,7 @@ export default function HomeScreen() {
         <View style={styles.hotspotBadgeRow}>
           {item.tags && item.tags.length > 0 && <Text style={styles.hotspotCategory}>#{item.tags[0]}</Text>}
           <View style={styles.featuredBadge}>
-            <Text style={styles.featuredBadgeText}>FEATURED</Text>
+            <Text style={styles.featuredBadgeText}>PARTNER PERK 🎁</Text>
           </View>
         </View>
         <Text style={styles.hotspotName} numberOfLines={1}>{item.name}</Text>
@@ -92,7 +125,7 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerGreeting}>Good Morning, {firstName} 👋</Text>
+          <Text style={styles.headerGreeting}>{getGreeting()}, {firstName} 👋</Text>
         </View>
         <View style={styles.headerIcon}>
           <Pressable style={styles.notificationBtn} onPress={() => router.push('/notifications')}>
@@ -106,7 +139,13 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.mainScroll}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.mainScroll}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
+        }
+      >
         <View style={styles.hotspotsSection}>
           <View style={styles.hotspotsHeader}>
             <Flame size={16} color={theme.colors.primary} />

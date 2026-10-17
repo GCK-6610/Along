@@ -86,7 +86,23 @@ export default function PlanCard({ plan, onPress }: PlanCardProps) {
                 <CheckCircle2 size={14} color="#1D9BF0" style={styles.verifiedIcon} />
               )}
             </View>
-            <Text style={styles.hostSubtitle}>Host</Text>
+            <View style={styles.hostSubRow}>
+              <Text style={styles.hostSubtitle}>Host</Text>
+              <Text style={styles.dotSeparator}>•</Text>
+              {host?.rating_count && host.rating_count > 0 ? (
+                <View style={styles.ratingBadge}>
+                  <Text style={styles.ratingStar}>★</Text>
+                  <Text style={styles.ratingText}>
+                    {host.rating_avg ? host.rating_avg.toFixed(1) : '5.0'}
+                  </Text>
+                  <Text style={styles.ratingCountText}>({host.rating_count})</Text>
+                </View>
+              ) : (
+                <View style={styles.ratingBadgeNew}>
+                  <Text style={styles.ratingTextNew}>⭐ New</Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
@@ -340,5 +356,49 @@ const styles = StyleSheet.create({
   },
   capacityTextFull: {
     color: theme.colors.mutedForeground,
+  },
+  hostSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  dotSeparator: {
+    color: theme.colors.mutedForeground,
+    fontSize: 10,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  ratingStar: {
+    color: '#D97706',
+    fontSize: 10,
+  },
+  ratingText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 10,
+    color: '#92400E',
+  },
+  ratingCountText: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 9,
+    color: '#B45309',
+  },
+  ratingBadgeNew: {
+    backgroundColor: theme.colors.secondary,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  ratingTextNew: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 9,
+    color: theme.colors.primary,
   },
 });

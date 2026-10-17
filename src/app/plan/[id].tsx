@@ -188,10 +188,13 @@ export default function PlanDetailsScreen() {
           <Pressable style={styles.iconBtn} onPress={async () => {
             try {
               const url = `along://plan/${id}`;
+              const shareDate = new Date(scheduled_at).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+              const shareTime = new Date(scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const shareMessage = `Hey! Join our hangout for "${title}" on Along! 🚀\n\n📍 Venue: ${venue}\n📅 When: ${shareDate} at ${shareTime}\n👥 Spots: ${current_participants}/${capacity || 4} joined\n\nTap to tag along with us:\n${url}`;
               await Share.share({
-                message: `Join me for ${title} on Along!\n\n${url}`,
+                message: shareMessage,
                 url: url, // iOS only
-                title: `Join ${title}` // Android only
+                title: `Join ${title} on Along`
               });
             } catch (error: any) {
               Alert.alert('Error sharing', error.message);
