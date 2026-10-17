@@ -7,6 +7,10 @@ import { registerForPushNotificationsAsync } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 
+export const unstable_settings = {
+  initialRouteName: 'index',
+};
+
 export default function TabLayout() {
   const { user, session, loading, hasProfile } = useAuth();
 

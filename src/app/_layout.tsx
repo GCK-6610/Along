@@ -29,6 +29,10 @@ LogBox.ignoreLogs([
 
 SplashScreen.preventAutoHideAsync();
 
+export const unstable_settings = {
+  initialRouteName: '(tabs)',
+};
+
 function RootNavigator() {
   const { session, loading, hasProfile } = useAuth();
   const segments = useSegments();
