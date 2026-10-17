@@ -19,7 +19,7 @@ export default function UserProfileScreen() {
         .from('profiles')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       setProfile(data);
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { Hotspot } from '../lib/mockData';
+import { Hotspot } from '../types';
 
 const EMPTY_HOTSPOTS: Hotspot[] = [];
 

@@ -14,9 +14,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as Location from 'expo-location';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function CreateScreen() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const params = useLocalSearchParams();
   
   const [nlpInput, setNlpInput] = useState('');
@@ -129,6 +131,9 @@ export default function CreateScreen() {
         user_id: user.id,
         join_status: 'approved'
       });
+      
+      queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
+      queryClient.invalidateQueries({ queryKey: ['my_plans'] });
       
       resetForm();
       

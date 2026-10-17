@@ -6,7 +6,6 @@ import { router } from 'expo-router';
 import { ArrowLeft, Save, Edit2, X, MapPin } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
-import { updateMockProfile } from '../lib/mockData';
 import { supabase } from '../lib/supabase';
 import { safeBack } from '../utils/navigation';
 
@@ -95,7 +94,7 @@ export default function EditProfileScreen() {
     if (!user) return;
     const fetchProfile = async () => {
       try {
-        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
         if (data) {
           setFullName(data.full_name || '');
           setBio(data.bio || '');

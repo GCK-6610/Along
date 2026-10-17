@@ -15,7 +15,7 @@ export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: nu
       let baseLat = null;
       let baseLon = null;
       if (session?.user) {
-        const { data: profile } = await supabase.from('profiles').select('gender, base_latitude, base_longitude').eq('id', session.user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('gender, base_latitude, base_longitude').eq('id', session.user.id).maybeSingle();
         if (profile) {
           userGender = profile.gender;
           baseLat = profile.base_latitude;

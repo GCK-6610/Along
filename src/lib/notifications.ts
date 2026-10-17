@@ -39,13 +39,14 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       }
       
       try {
-        const projectId = process.env.EXPO_PUBLIC_PROJECT_ID;
+        const rawProjectId = process.env.EXPO_PUBLIC_PROJECT_ID;
+        const isUuid = rawProjectId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(rawProjectId);
         const tokenResponse = await Notifications.getExpoPushTokenAsync(
-          projectId && projectId !== 'along-project' ? { projectId } : undefined
+          isUuid ? { projectId: rawProjectId } : undefined
         );
-        return tokenResponse.data;
+        return tokenResponse?.data ?? null;
       } catch (tokenErr) {
-        console.warn('Could not fetch Expo push token (expected in Expo Go without EAS ID):', tokenErr);
+        // Expected in Expo Go or without configured EAS project
         return null;
       }
     } else {

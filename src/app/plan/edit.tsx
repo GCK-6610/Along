@@ -16,9 +16,11 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as Location from 'expo-location';
 import { safeBack } from '../../utils/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function EditPlanScreen() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(true);
   
@@ -61,7 +63,7 @@ export default function EditPlanScreen() {
     const fetchPlan = async () => {
       if (!id) return;
       try {
-        const { data, error } = await supabase.from('plans').select('*').eq('id', id).single();
+        const { data, error } = await supabase.from('plans').select('*').eq('id', id).maybeSingle();
         if (error) throw error;
         if (data) {
           setTitle(data.title);
@@ -146,6 +148,10 @@ export default function EditPlanScreen() {
 
       if (error) throw error;
 
+      queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
+      queryClient.invalidateQueries({ queryKey: ['my_plans'] });
+      queryClient.invalidateQueries({ queryKey: ['plan', id] });
+
       safeBack({ pathname: '/plan/[id]', params: { id } });
     } catch (err: any) {
       console.error('Error updating plan:', err);
@@ -168,6 +174,8 @@ export default function EditPlanScreen() {
             try {
               const { error } = await supabase.from('plans').delete().eq('id', id);
               if (error) throw error;
+              queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
+              queryClient.invalidateQueries({ queryKey: ['my_plans'] });
               router.replace('/(tabs)');
             } catch (err: any) {
               Alert.alert('Error', err.message);
