@@ -77,7 +77,7 @@ function initFormHandler() {
       feedback.style.background = 'rgba(16, 185, 129, 0.12)';
       feedback.style.color = '#059669';
       feedback.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-      feedback.innerHTML = `<strong>🎉 Application Received!</strong><br>Thank you! Our Hyderabad team will contact you at ${payload.contact_phone} to verify and list your spot on Along.`;
+      feedback.innerHTML = `<strong>🎉 Application Received!</strong><br>Thank you! Our partnerships team will contact you at ${payload.contact_phone} to verify and list your spot on Along.`;
 
       form.reset();
       submitBtn.style.display = 'none';
