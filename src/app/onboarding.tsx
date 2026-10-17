@@ -11,7 +11,9 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../styles/theme';
 import { Image, Modal } from 'react-native';
-import { Edit2, X, MapPin } from 'lucide-react-native';
+import { Edit2, X, MapPin, Shield, CheckCircle2, Camera, Upload, Sparkles, RefreshCw } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult } from '../lib/idVerification';
 import Fuse from 'fuse.js';
 import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
 
@@ -33,6 +35,14 @@ export default function OnboardingScreen() {
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // ID Verification state
+  const [isVerified, setIsVerified] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+  const [isVerificationModalVisible, setVerificationModalVisible] = useState(false);
+  const [idDocAsset, setIdDocAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [selfieAsset, setSelfieAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   // Guard: if unauthenticated, cannot onboard
   if (!authLoading && !session) {
@@ -110,6 +120,53 @@ export default function OnboardingScreen() {
       ? ALL_AVATARS 
       : AVATAR_CATALOG.find(c => c.category === activeTab)?.items || [];
 
+  const handleSelectIdDoc = async () => {
+    try {
+      const asset = await pickIdDocument(false);
+      if (asset) setIdDocAsset(asset);
+    } catch (e: any) {
+      Alert.alert('Permission Required', e.message);
+    }
+  };
+
+  const handleCaptureSelfie = async () => {
+    try {
+      const asset = await captureSelfie(true);
+      if (asset) setSelfieAsset(asset);
+    } catch (e: any) {
+      Alert.alert('Permission Required', e.message);
+    }
+  };
+
+  const handleRunVerification = async () => {
+    if (!idDocAsset || !selfieAsset) {
+      Alert.alert('Incomplete Verification', 'Please upload your ID document and take a quick selfie to verify.');
+      return;
+    }
+
+    setIsVerifying(true);
+    const result = await verifyIdAndLiveness(idDocAsset, selfieAsset, fullName);
+    setIsVerifying(false);
+
+    if (result.success && result.isRealHuman) {
+      setIsVerified(true);
+      setVerificationResult(result);
+      if (result.extractedName) {
+        setFullName(result.extractedName);
+      }
+      if (result.extractedGender) {
+        setGender(result.extractedGender);
+      }
+      setVerificationModalVisible(false);
+      Alert.alert(
+        '🎉 Identity Verified!',
+        `Welcome, ${result.extractedName}! Your profile details have been auto-filled from your ${result.documentType} and verified with a live selfie check.`
+      );
+    } else {
+      Alert.alert('Verification Issue', result.errorMessage || 'Please ensure document text and selfie are clearly visible.');
+    }
+  };
+
   const handleSubmit = async () => {
     if (!fullName.trim()) {
       Alert.alert('Missing Name', 'Please enter your name.');
@@ -130,6 +187,7 @@ export default function OnboardingScreen() {
       base_location_name: baseLocationName,
       base_latitude: baseLatitude,
       base_longitude: baseLongitude,
+      is_verified: isVerified,
     });
     setLoading(false);
 
@@ -212,9 +270,65 @@ export default function OnboardingScreen() {
             </View>
           </Modal>
 
+          {/* Fast-Track ID Verification Banner (Optional) */}
+          <View style={[styles.idVerificationCard, isVerified && styles.idVerificationCardVerified]}>
+            <View style={styles.idCardHeader}>
+              <View style={[styles.idShieldIcon, isVerified && { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                {isVerified ? (
+                  <CheckCircle2 size={22} color="#10B981" />
+                ) : (
+                  <Shield size={22} color="#1D9BF0" />
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.idCardTitle}>
+                    {isVerified ? 'ID Verified Member' : 'Fast-Track with ID Scan'}
+                  </Text>
+                  {isVerified && <CheckCircle2 size={16} color="#1D9BF0" />}
+                </View>
+                <Text style={styles.idCardSubtitle}>
+                  {isVerified
+                    ? `Auto-filled & verified via ${verificationResult?.documentType || 'Official ID'}`
+                    : 'Scan ID to auto-fill details & get a verified blue tick 🛡️'}
+                </Text>
+              </View>
+              <View style={[styles.optionalPill, isVerified && styles.verifiedPill]}>
+                <Text style={[styles.optionalPillText, isVerified && styles.verifiedPillText]}>
+                  {isVerified ? 'VERIFIED ✓' : 'OPTIONAL'}
+                </Text>
+              </View>
+            </View>
+
+            {isVerified ? (
+              <Pressable
+                style={styles.reVerifyBtn}
+                onPress={() => setVerificationModalVisible(true)}
+              >
+                <RefreshCw size={12} color={theme.colors.mutedForeground} />
+                <Text style={styles.reVerifyBtnText}>Change or Re-scan ID</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                style={styles.scanIdBtn}
+                onPress={() => setVerificationModalVisible(true)}
+              >
+                <Sparkles size={16} color="#fff" />
+                <Text style={styles.scanIdBtnText}>Scan ID & Auto-Fill Details ⚡</Text>
+              </Pressable>
+            )}
+          </View>
+
           {/* Name Input */}
           <View style={styles.field}>
-            <Text style={styles.label}>Your Name</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.label}>Your Name</Text>
+              {isVerified && (
+                <Text style={{ fontSize: 11, color: '#10B981', fontFamily: theme.typography.fontFamily.bold }}>
+                  ✓ Auto-filled from ID
+                </Text>
+              )}
+            </View>
             <TextInput
               style={styles.input}
               placeholder="e.g. Rahul Sharma"
@@ -307,6 +421,120 @@ export default function OnboardingScreen() {
                 ))}
               </ScrollView>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* ID Verification & Auto-Fill Modal */}
+      <Modal
+        visible={isVerificationModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setVerificationModalVisible(false)}
+      >
+        <View style={styles.verifyModalOverlay}>
+          <View style={styles.verifyModalContent}>
+            <View style={styles.modalHeaderDrag} />
+            <Pressable
+              style={styles.verifyModalCloseBtn}
+              onPress={() => setVerificationModalVisible(false)}
+            >
+              <X size={20} color={theme.colors.foreground} />
+            </Pressable>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <Shield size={28} color="#1D9BF0" />
+              <View>
+                <Text style={styles.verifyModalTitle}>ID Verification</Text>
+                <Text style={styles.verifyModalSubtitle}>Auto-fills profile & awards verified checkmark</Text>
+              </View>
+            </View>
+
+            {/* Step 1: Upload ID */}
+            <View style={styles.verifyStepBox}>
+              <View style={styles.verifyStepHeader}>
+                <Text style={styles.verifyStepNum}>1</Text>
+                <Text style={styles.verifyStepTitle}>Digital ID / ID Proof</Text>
+              </View>
+              <Text style={styles.verifyStepDesc}>
+                Aadhaar, Driving License, PAN Card, Student ID, or Passport
+              </Text>
+
+              {idDocAsset ? (
+                <View style={styles.docPreviewRow}>
+                  <Image source={{ uri: idDocAsset.uri }} style={styles.docThumbnail} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.docSelectedText} numberOfLines={1}>
+                      ✓ Document selected
+                    </Text>
+                    <Pressable onPress={handleSelectIdDoc}>
+                      <Text style={styles.docReSelectText}>Change document</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <Pressable style={styles.uploadDocBtn} onPress={handleSelectIdDoc}>
+                  <Upload size={16} color={theme.colors.primary} />
+                  <Text style={styles.uploadDocBtnText}>Select or Upload ID Document</Text>
+                </Pressable>
+              )}
+            </View>
+
+            {/* Step 2: Live Selfie Check */}
+            <View style={styles.verifyStepBox}>
+              <View style={styles.verifyStepHeader}>
+                <Text style={styles.verifyStepNum}>2</Text>
+                <Text style={styles.verifyStepTitle}>Real-Human Selfie Check</Text>
+              </View>
+              <Text style={styles.verifyStepDesc}>
+                Front-camera selfie to verify a real human & match with ID
+              </Text>
+
+              {selfieAsset ? (
+                <View style={styles.docPreviewRow}>
+                  <Image source={{ uri: selfieAsset.uri }} style={styles.selfieThumbnail} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.docSelectedText}>✓ Live selfie captured</Text>
+                    <Pressable onPress={handleCaptureSelfie}>
+                      <Text style={styles.docReSelectText}>Retake selfie</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <Pressable style={styles.uploadDocBtn} onPress={handleCaptureSelfie}>
+                  <Camera size={16} color={theme.colors.primary} />
+                  <Text style={styles.uploadDocBtnText}>Take Live Selfie</Text>
+                </Pressable>
+              )}
+            </View>
+
+            {/* Verification Action */}
+            <Pressable
+              style={[
+                styles.runVerifyBtn,
+                (!idDocAsset || !selfieAsset || isVerifying) && styles.runVerifyBtnDisabled
+              ]}
+              onPress={handleRunVerification}
+              disabled={!idDocAsset || !selfieAsset || isVerifying}
+            >
+              {isVerifying ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <ActivityIndicator color="#fff" />
+                  <Text style={styles.runVerifyBtnText}>Scanning ID & Matching Face...</Text>
+                </View>
+              ) : (
+                <Text style={styles.runVerifyBtnText}>Verify & Auto-Fill Profile ⚡</Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              style={{ alignItems: 'center', marginTop: 14 }}
+              onPress={() => setVerificationModalVisible(false)}
+            >
+              <Text style={{ fontSize: 13, color: theme.colors.mutedForeground }}>
+                Skip for now (I will fill manually)
+              </Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -534,4 +762,240 @@ const styles = StyleSheet.create({
   },
   locationMainText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 15, color: theme.colors.foreground },
   locationSubText: { fontFamily: theme.typography.fontFamily.regular, fontSize: 13, color: theme.colors.mutedForeground },
+
+  // ID Verification Styles
+  idVerificationCard: {
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    borderRadius: theme.borderRadius.lg,
+    padding: 14,
+    marginBottom: 20,
+    gap: 12,
+  },
+  idVerificationCardVerified: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+  },
+  idCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  idShieldIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(29, 155, 240, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  idCardTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 14,
+    color: theme.colors.foreground,
+  },
+  idCardSubtitle: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 12,
+    color: theme.colors.mutedForeground,
+    marginTop: 1,
+  },
+  optionalPill: {
+    backgroundColor: 'rgba(0,0,0,0.06)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: theme.borderRadius.pill,
+  },
+  optionalPillText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 9,
+    color: theme.colors.mutedForeground,
+    letterSpacing: 0.5,
+  },
+  verifiedPill: {
+    backgroundColor: '#DCFCE7',
+  },
+  verifiedPillText: {
+    color: '#15803D',
+  },
+  scanIdBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#1D9BF0',
+    paddingVertical: 10,
+    borderRadius: theme.borderRadius.md,
+  },
+  scanIdBtnText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 13,
+    color: '#FFF',
+  },
+  reVerifyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingVertical: 2,
+  },
+  reVerifyBtnText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 12,
+    color: theme.colors.mutedForeground,
+    textDecorationLine: 'underline',
+  },
+
+  // Verification Modal Styles
+  verifyModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  verifyModalContent: {
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: theme.spacing.lg,
+    paddingBottom: 36,
+  },
+  modalHeaderDrag: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.border,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  verifyModalCloseBtn: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    padding: 6,
+    backgroundColor: theme.colors.card,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    zIndex: 10,
+  },
+  verifyModalTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 18,
+    color: theme.colors.foreground,
+  },
+  verifyModalSubtitle: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 12,
+    color: theme.colors.mutedForeground,
+  },
+  verifyStepBox: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: 14,
+    marginBottom: 12,
+  },
+  verifyStepHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  verifyStepNum: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: theme.colors.primary,
+    color: '#fff',
+    fontSize: 11,
+    fontFamily: theme.typography.fontFamily.bold,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  verifyStepTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 13,
+    color: theme.colors.foreground,
+  },
+  verifyStepDesc: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 11,
+    color: theme.colors.mutedForeground,
+    marginBottom: 10,
+  },
+  uploadDocBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.colors.background,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderStyle: 'dashed',
+    paddingVertical: 12,
+    borderRadius: theme.borderRadius.sm,
+  },
+  uploadDocBtnText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 12,
+    color: theme.colors.foreground,
+  },
+  docPreviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: theme.colors.background,
+    padding: 8,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  docThumbnail: {
+    width: 56,
+    height: 38,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
+  },
+  selfieThumbnail: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#E2E8F0',
+  },
+  docSelectedText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 12,
+    color: '#059669',
+  },
+  docReSelectText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 11,
+    color: theme.colors.primary,
+    marginTop: 2,
+  },
+  runVerifyBtn: {
+    backgroundColor: '#1D9BF0',
+    paddingVertical: 14,
+    borderRadius: theme.borderRadius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+    shadowColor: '#1D9BF0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  runVerifyBtnDisabled: {
+    backgroundColor: theme.colors.muted,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  runVerifyBtnText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 14,
+    color: '#FFF',
+  },
 });

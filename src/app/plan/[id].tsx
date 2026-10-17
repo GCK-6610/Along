@@ -33,6 +33,28 @@ export default function PlanDetailsScreen() {
   const [myRating, setMyRating] = useState<number | null>(null);
   const [isAttendeeRatingVisible, setAttendeeRatingVisible] = useState(false);
 
+  const fetchMyRating = useCallback(async () => {
+    if (!user?.id || !id) return;
+    const { data } = await supabase
+      .from('ratings')
+      .select('score')
+      .eq('plan_id', id)
+      .eq('rater_id', user.id)
+      .maybeSingle();
+
+    if (data?.score) {
+      setMyRating(data.score);
+    }
+  }, [user?.id, id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (plan?.status === 'completed') {
+        fetchMyRating();
+      }
+    }, [plan?.status, fetchMyRating])
+  );
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -126,30 +148,10 @@ export default function PlanDetailsScreen() {
   const current_participants = Math.max(1, approvedCount);
 
   const isPast = dateObj.getTime() < Date.now();
-  const isCompleted = status === 'completed';
-  const canMarkCompleted = isHost && isPast && !isCompleted;
+  const isOver10Days = dateObj.getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000;
+  const isCompleted = status === 'completed' || isOver10Days;
+  const canMarkCompleted = isHost && isPast && !isCompleted && !isOver10Days;
 
-  const fetchMyRating = useCallback(async () => {
-    if (!user?.id || !id) return;
-    const { data } = await supabase
-      .from('ratings')
-      .select('score')
-      .eq('plan_id', id)
-      .eq('rater_id', user.id)
-      .maybeSingle();
-
-    if (data?.score) {
-      setMyRating(data.score);
-    }
-  }, [user?.id, id]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (isCompleted) {
-        fetchMyRating();
-      }
-    }, [isCompleted, fetchMyRating])
-  );
 
   const handleMarkCompleted = async () => {
     if (current_participants <= 1) {
@@ -383,43 +385,47 @@ export default function PlanDetailsScreen() {
                     ) : (
                       <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
                     )}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <Text style={styles.requestName}>{p.full_name}</Text>
-                  </Pressable>
-                  <Text style={styles.requestMessage}>"{p.intro_message || 'I would like to join your plan!'}"</Text>
-                  <View style={styles.requestActions}>
-                    <Pressable style={[styles.actionBtn, styles.approveBtn]} onPress={() => handleApprove(p.id)}>
-                      <Check size={16} color="#fff" />
-                      <Text style={styles.approveText}>Approve</Text>
-                    </Pressable>
-                    <Pressable style={[styles.actionBtn, styles.rejectBtn]} onPress={() => handleReject(p.id)}>
-                      <X size={16} color={theme.colors.mutedForeground} />
-                    </Pressable>
+                    {p.is_verified && <CheckCircle2 size={13} color="#1D9BF0" />}
                   </View>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Attendees Section */}
-        <View style={styles.attendeesSection}>
-          <View style={styles.attendeesHeader}>
-            <Text style={styles.sectionTitle}>Attendees</Text>
-            <Text style={styles.capacityTag}>{current_participants} / {capacity || 0} joined</Text>
-          </View>
-
-          <View style={styles.attendeeList}>
-            {(participants_list || []).filter(p => p.join_status === 'approved' || !p.join_status).map((p, idx) => (
-              <View key={idx} style={styles.attendeeRow}>
-                <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, flex: 1 }} onPress={() => p.id && router.push({ pathname: '/user/[id]', params: { id: p.id } })}>
-                  {p.avatar_url ? (
-                    <Image source={{ uri: p.avatar_url, headers: { 'Accept': 'image/png' } }} style={styles.attendeeAvatar} />
-                  ) : (
-                    <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
-                  )}
-                  <Text style={styles.attendeeName}>{p.full_name}{p.id === user?.id ? ' (You)' : ''}</Text>
-                  {p.id === host?.id && <Text style={styles.hostBadge}>HOST</Text>}
                 </Pressable>
+                <Text style={styles.requestMessage}>"{p.intro_message || 'I would like to join your plan!'}"</Text>
+                <View style={styles.requestActions}>
+                  <Pressable style={[styles.actionBtn, styles.approveBtn]} onPress={() => handleApprove(p.id)}>
+                    <Check size={16} color="#fff" />
+                    <Text style={styles.approveText}>Approve</Text>
+                  </Pressable>
+                  <Pressable style={[styles.actionBtn, styles.rejectBtn]} onPress={() => handleReject(p.id)}>
+                    <X size={16} color={theme.colors.mutedForeground} />
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Attendees Section */}
+      <View style={styles.attendeesSection}>
+        <View style={styles.attendeesHeader}>
+          <Text style={styles.sectionTitle}>Attendees</Text>
+          <Text style={styles.capacityTag}>{current_participants} / {capacity || 0} joined</Text>
+        </View>
+
+        <View style={styles.attendeeList}>
+          {(participants_list || []).filter(p => p.join_status === 'approved' || !p.join_status).map((p, idx) => (
+            <View key={idx} style={styles.attendeeRow}>
+              <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, flex: 1 }} onPress={() => p.id && router.push({ pathname: '/user/[id]', params: { id: p.id } })}>
+                {p.avatar_url ? (
+                  <Image source={{ uri: p.avatar_url, headers: { 'Accept': 'image/png' } }} style={styles.attendeeAvatar} />
+                ) : (
+                  <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
+                )}
+                <Text style={styles.attendeeName}>{p.full_name}{p.id === user?.id ? ' (You)' : ''}</Text>
+                {p.is_verified && <CheckCircle2 size={13} color="#1D9BF0" />}
+                {p.id === host?.id && <Text style={styles.hostBadge}>HOST</Text>}
+              </Pressable>
                 
                 {/* Host can remove non-host participants */}
                 {isHost && p.id !== user?.id && (

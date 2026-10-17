@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Along — Local Admin Console</title>
+  <meta name="description" content="Local admin dashboard for managing Along hotspots, inbound venue partner requests, and 10-day event archival.">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Admin specific styling extensions */
+    .admin-badge {
+      background: rgba(255, 211, 42, 0.15);
+      color: var(--amber);
+      border: 1px solid rgba(255, 211, 42, 0.3);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-gate-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 10, 18, 0.95);
+      backdrop-filter: blur(20px);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .admin-gate-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    .admin-tab-nav {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 14px;
+      overflow-x: auto;
+    }
+
+    .admin-tab-btn {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 10px 20px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .admin-tab-btn:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .admin-tab-btn.active {
+      background: rgba(255, 71, 87, 0.15);
+      color: #FF4757;
+      border-color: var(--primary);
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .admin-table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+    table.admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    table.admin-table th {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px 18px;
+      font-weight: 700;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border-subtle);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+
+    table.admin-table td {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      vertical-align: middle;
+    }
+
+    table.admin-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+      color: #fff;
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .badge-status.active, .badge-status.approved {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-status.inactive, .badge-status.rejected {
+      background: rgba(255, 71, 87, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(255, 71, 87, 0.3);
+    }
+
+    .badge-status.pending {
+      background: rgba(255, 211, 42, 0.15);
+      color: var(--amber);
+      border: 1px solid rgba(255, 211, 42, 0.3);
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-right: 6px;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .action-btn.btn-danger {
+      color: #FF4757;
+      border-color: rgba(255, 71, 87, 0.3);
+    }
+
+    .action-btn.btn-danger:hover {
+      background: rgba(255, 71, 87, 0.2);
+    }
+
+    .action-btn.btn-success {
+      color: #10B981;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .action-btn.btn-success:hover {
+      background: rgba(16, 185, 129, 0.2);
+    }
+
+    .form-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .preset-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      display: inline-block;
+      margin: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .preset-pill:hover {
+      background: rgba(255, 71, 87, 0.2);
+      color: #fff;
+      border-color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Passkey Gate Overlay -->
+  <div id="adminGate" class="admin-gate-overlay">
+    <div class="admin-gate-card">
+      <div style="font-size: 40px; margin-bottom: 12px;">🛡️</div>
+      <h2 style="font-family: var(--font-display); font-size: 24px; font-weight: 800; margin-bottom: 8px;">Along Admin Portal</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">
+        Local administrative access for managing spots, applications, and system maintenance.
+      </p>
+      <form id="gateForm">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <input type="password" id="gatePasskey" class="form-input" placeholder="Enter admin passkey..." required style="text-align: center; letter-spacing: 2px;">
+        </div>
+        <div id="gateError" style="color: var(--primary); font-size: 12px; font-weight: 700; margin-bottom: 14px; display: none;">
+          Incorrect passkey. Default local passkey is along2026.
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Unlock Admin Console ⚡</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="brand-group">
+      <div class="brand-logo">A</div>
+      <span class="brand-name">Along</span>
+      <span class="admin-badge">Admin Console 🔒</span>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <a href="index.html" class="action-btn" target="_blank">🌐 View Public Site</a>
+      <button id="lockBtn" class="action-btn btn-danger">Lock Console</button>
+    </div>
+  </header>
+
+  <!-- Main Admin Layout -->
+  <main class="container" style="padding-top: 30px; padding-bottom: 60px;">
+
+    <!-- Stats Bar -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Active Hotspots</div>
+        <div id="statActiveHotspots" class="stat-value">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Hotspots</div>
+        <div id="statTotalHotspots" class="stat-value">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Partner Applications</div>
+        <div id="statPendingApps" class="stat-value">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Hangouts Requiring Archive</div>
+        <div id="statExpiredPlans" class="stat-value">--</div>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="admin-tab-nav">
+      <button class="admin-tab-btn active" data-tab="hotspotsTab">
+        🔥 Hotspots & Venues (<span id="hotspotsCountBadge">0</span>)
+      </button>
+      <button class="admin-tab-btn" data-tab="applicationsTab">
+        📥 Partner Applications (<span id="applicationsCountBadge">0</span>)
+      </button>
+      <button class="admin-tab-btn" data-tab="archiveTab">
+        ⏳ 10-Day Hangouts Archiver
+      </button>
+    </div>
+
+    <!-- TAB 1: Hotspots Manager -->
+    <section id="hotspotsTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+          <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 800;">Hotspot Locations in Along App</h2>
+          <p style="color: var(--text-muted); font-size: 13px;">Manage curated spots, commercial partner perks, descriptions, and dual community/Google ratings.</p>
+        </div>
+        <button id="toggleNewHotspotFormBtn" class="btn-primary" style="font-size: 13px; padding: 10px 18px;">+ Add New Hotspot</button>
+      </div>
+
+      <!-- Hotspot Form Panel (Collapsible) -->
+      <div id="hotspotFormPanel" class="form-panel" style="display: none;">
+        <h3 id="formTitle" style="font-family: var(--font-display); font-size: 16px; font-weight: 800; margin-bottom: 16px; color: var(--amber);">
+          ✨ Add New Hotspot Location
+        </h3>
+        <form id="hotspotForm">
+          <input type="hidden" id="hotspotId" name="id">
+          
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label">Venue Name *</label>
+              <input type="text" id="hotspotName" class="form-input" required placeholder="e.g. Roastery Coffee House, KBR Park">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Category / Tags (comma-separated) *</label>
+              <input type="text" id="hotspotTags" class="form-input" required placeholder="e.g. Coffee, Outdoor, Work">
+            </div>
+          </div>
+
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label">Spot Classification</label>
+              <select id="spotTypeSelect" class="form-input">
+                <option value="commercial">Commercial Partner (Offers Perk / Discount)</option>
+                <option value="public">Public / Community Spot (Park, Lake, Trail - No Perk)</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="perkTextGroup">
+              <label class="form-label">Partner Perk Text (Shows 🎁 badge in app)</label>
+              <input type="text" id="hotspotPerk" class="form-input" placeholder="e.g. 10% off bill for Along groups of 4+">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Venue Description (Shows in app modals and detail views) *</label>
+            <textarea id="hotspotDescription" class="form-input" rows="2" required placeholder="Describe ambience, coffee/food highlights, seating, parking, vibe..."></textarea>
+          </div>
+
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label">Google Maps Rating (★ 1.0 - 5.0)</label>
+              <input type="number" id="hotspotGoogleRating" class="form-input" step="0.1" min="1.0" max="5.0" placeholder="e.g. 4.6">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Along Community Rating (★ 1.0 - 5.0)</label>
+              <input type="number" id="hotspotAlongRating" class="form-input" step="0.1" min="1.0" max="5.0" placeholder="e.g. 4.9">
+            </div>
+          </div>
+
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label">Latitude *</label>
+              <input type="number" id="hotspotLat" class="form-input" step="0.000001" required placeholder="e.g. 17.4325">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Longitude *</label>
+              <input type="number" id="hotspotLng" class="form-input" step="0.000001" required placeholder="e.g. 78.4071">
+            </div>
+          </div>
+
+          <!-- Quick Location Presets for Hyderabad -->
+          <div style="margin-bottom: 16px;">
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-dim); margin-right: 8px;">QUICK HYDERABAD PRESETS:</span>
+            <span class="preset-pill" onclick="setCoordinates(17.4325, 78.4071)">Banjara Hills</span>
+            <span class="preset-pill" onclick="setCoordinates(17.4319, 78.4112)">Jubilee Hills</span>
+            <span class="preset-pill" onclick="setCoordinates(17.4435, 78.3772)">Hitec City</span>
+            <span class="preset-pill" onclick="setCoordinates(17.4401, 78.3888)">Madhapur</span>
+            <span class="preset-pill" onclick="setCoordinates(17.4400, 78.3489)">Gachibowli</span>
+            <span class="preset-pill" onclick="setCoordinates(17.4194, 78.3414)">Financial District</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Image URL (Unsplash or direct image link) *</label>
+            <input type="url" id="hotspotImage" class="form-input" required placeholder="https://images.unsplash.com/...">
+          </div>
+
+          <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 20px;">
+            <label style="font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="hotspotActive" checked style="accent-color: var(--primary); transform: scale(1.2);">
+              Active in Mobile App
+            </label>
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <button type="submit" id="saveHotspotBtn" class="btn-primary" style="font-size: 13px; padding: 10px 24px;">Save Hotspot Location</button>
+            <button type="button" id="cancelHotspotBtn" class="action-btn" style="padding: 10px 20px;">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Hotspots Table -->
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Preview</th>
+              <th>Venue Name & Tags</th>
+              <th>Type / Perk</th>
+              <th>Description</th>
+              <th>Ratings</th>
+              <th>Coordinates</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="hotspotsTableBody">
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-dim);">Loading hotspots...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 2: Inbound Partner Applications -->
+    <section id="applicationsTab" class="tab-content" style="display: none;">
+      <div style="margin-bottom: 16px;">
+        <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 800;">Inbound Venue Applications</h2>
+        <p style="color: var(--text-muted); font-size: 13px;">Venues and sports arenas applying for official partnership from the public landing page.</p>
+      </div>
+
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Venue Name</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Contact Person</th>
+              <th>Proposed Perk</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="applicationsTableBody">
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-dim);">Loading applications...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 3: 10-Day Hangouts Archiver -->
+    <section id="archiveTab" class="tab-content" style="display: none;">
+      <div style="margin-bottom: 20px;">
+        <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 800;">10-Day Plan & Chat Auto-Archiver</h2>
+        <p style="color: var(--text-muted); font-size: 13px;">
+          Automatically seals chat rooms and transitions hangouts whose scheduled date was over 10 days ago to Completed status, prompting members for ratings.
+        </p>
+      </div>
+
+      <div class="form-panel" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-weight: 800; font-size: 16px; margin-bottom: 4px;">Run System Archival Batch Job</div>
+          <div style="font-size: 13px; color: var(--text-muted);">
+            Scans all active plans with scheduled date older than 10 days and updates database status to 'completed'.
+          </div>
+        </div>
+        <button id="runArchivalBtn" class="btn-primary" style="font-size: 13px; padding: 12px 24px;">⚡ Run Archival Job Now</button>
+      </div>
+
+      <div id="archivalFeedback" style="display: none; padding: 16px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 13px;"></div>
+
+      <h3 style="font-family: var(--font-display); font-size: 16px; font-weight: 800; margin-bottom: 12px; margin-top: 24px;">
+        Recent Expired Hangouts (>10 Days)
+      </h3>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Hangout Title</th>
+              <th>Venue</th>
+              <th>Scheduled Date</th>
+              <th>Current Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="expiredPlansTableBody">
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-dim);">Loading expired hangouts...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

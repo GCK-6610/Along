@@ -22,7 +22,8 @@ export default function PlanChatRoomScreen() {
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
-  const isArchived = plan?.status === 'completed';
+  const isPast10Days = plan?.scheduled_at ? new Date(plan.scheduled_at).getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000 : false;
+  const isArchived = plan?.status === 'completed' || isPast10Days;
 
   const handleSend = () => {
     if (isArchived || !inputText.trim()) return;

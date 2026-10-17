@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable, Image } from 'react-native';
 import { X } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router } from 'expo-router';
@@ -25,20 +25,43 @@ export default function VenueModal({ modalHotspot, setModalHotspot }: VenueModal
           <Pressable style={styles.closeBtn} onPress={() => setModalHotspot(null)}>
             <X size={20} color={theme.colors.foreground} />
           </Pressable>
+
+          {modalHotspot.image_url && (
+            <View style={styles.coverImageContainer}>
+              <Image source={{ uri: modalHotspot.image_url }} style={styles.coverImage} />
+            </View>
+          )}
           
-          <Text style={{ fontFamily: theme.typography.fontFamily.bold, fontSize: 12, color: theme.colors.primary, marginBottom: 4 }}>
-            {modalHotspot.isSearched ? 'SEARCHED VENUE' : 'RECOMMENDED VENUE'}
+          <Text style={{ fontFamily: theme.typography.fontFamily.bold, fontSize: 12, color: theme.colors.primary, marginBottom: 4, marginTop: modalHotspot.image_url ? 12 : 0 }}>
+            {modalHotspot.isSearched ? 'SEARCHED VENUE' : (modalHotspot.perk_text ? 'PARTNER VENUE 🎁' : 'COMMUNITY HOTSPOT 📍')}
           </Text>
           <Text style={styles.detailsTitle}>{modalHotspot.name}</Text>
           
           <View style={styles.detailsMetaRow}>
-            {modalHotspot.rating && (
-              <Text style={styles.detailsRating}>★ {modalHotspot.rating}</Text>
+            {(modalHotspot.google_rating || modalHotspot.rating) && (
+              <Text style={styles.detailsRating}>★ {modalHotspot.google_rating || modalHotspot.rating} (Google)</Text>
+            )}
+            {modalHotspot.along_rating && (
+              <Text style={[styles.detailsRating, { color: theme.colors.primary }]}>★ {modalHotspot.along_rating} (Along)</Text>
             )}
             {modalHotspot.distance_km != null && (
               <Text style={styles.detailsDist}>{modalHotspot.distance_km?.toFixed(1)} km away</Text>
             )}
           </View>
+
+          {modalHotspot.perk_text ? (
+            <View style={{ backgroundColor: '#FFD32A20', borderWidth: 1, borderColor: '#FFD32A', padding: 10, borderRadius: 8, marginVertical: 8 }}>
+              <Text style={{ fontFamily: theme.typography.fontFamily.bold, color: '#D97706', fontSize: 13 }}>
+                🎁 Partner Perk: {modalHotspot.perk_text}
+              </Text>
+            </View>
+          ) : (modalHotspot.tags?.includes('outdoors') || modalHotspot.name?.toLowerCase().includes('park')) ? (
+            <View style={{ backgroundColor: '#10B98120', borderWidth: 1, borderColor: '#10B981', padding: 8, borderRadius: 8, marginVertical: 8 }}>
+              <Text style={{ fontFamily: theme.typography.fontFamily.medium, color: '#059669', fontSize: 13 }}>
+                🌿 Public Park & Outdoor Community Spot
+              </Text>
+            </View>
+          ) : null}
 
           {modalHotspot.address && (
             <Text style={styles.detailsDesc}>{modalHotspot.address}</Text>
@@ -81,7 +104,18 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg, paddingBottom: 40,
     shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12,
   },
-  modalHeaderDrag: { width: 40, height: 4, borderRadius: 2, backgroundColor: theme.colors.border, alignSelf: 'center', marginBottom: 20 },
+  modalHeaderDrag: { width: 40, height: 4, borderRadius: 2, backgroundColor: theme.colors.border, alignSelf: 'center', marginBottom: 16 },
+  coverImageContainer: {
+    width: '100%',
+    height: 150,
+    borderRadius: theme.borderRadius.lg,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%',
+  },
   closeBtn: { position: 'absolute', top: 20, right: 20, zIndex: 10, padding: 4, backgroundColor: theme.colors.card, borderRadius: 20, borderWidth: 1, borderColor: theme.colors.border },
   detailsTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 24, color: theme.colors.foreground, letterSpacing: -0.5, marginBottom: 8 },
   detailsMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },

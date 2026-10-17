@@ -45,7 +45,10 @@ export interface Hotspot {
   longitude: number;
   address?: string;
   rating?: number;
+  google_rating?: number;
+  along_rating?: number;
   description?: string;
+  perk_text?: string;
   distance_km?: number;
   tags?: string[];
   image_url?: string;

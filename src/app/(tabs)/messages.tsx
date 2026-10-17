@@ -89,7 +89,7 @@ export default function MessagesScreen() {
           time: latest?.time || new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
           unread: 0,
           members: 1 + (p.participants_list || []).filter((u: any) => u.join_status === 'approved' && u.id !== p.host_id).length,
-          isArchived: p.status === 'completed',
+          isArchived: p.status === 'completed' || (new Date(p.scheduled_at).getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000),
         };
       });
   }, [user, hostedPlans, joinedPlans, latestMessages]);

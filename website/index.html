@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Along — Something is Cooking</title>
+  <meta name="description" content="Tag along with people around you. Spontaneous real-world hangouts are coming to Hyderabad.">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Apply saved theme immediately to prevent flash
+    const savedTheme = localStorage.getItem('along_theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Minimal Header -->
+  <header class="navbar">
+    <a href="#" class="brand-group">
+      <div class="brand-logo">A</div>
+      <span class="brand-name">Along</span>
+      <span class="badge-cooking">Cooking Soon 🔥</span>
+    </a>
+    <div class="nav-actions">
+      <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle Theme" aria-label="Toggle Theme">
+        🌓
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container">
+    
+    <!-- Hero / Vibey Teaser -->
+    <section class="hero-section">
+      <div class="hero-pill">⚡ Hyderabad</div>
+      <h1 class="hero-title">
+        Something is<br>
+        <span>cooking.</span>
+      </h1>
+      <p class="hero-sub">
+        Tag along with people around you. No ghosted group chats, no flakes. Spontaneous real-world hangouts are coming soon.
+      </p>
+    </section>
+
+    <!-- Venue Partner Card -->
+    <section class="venue-card">
+      <div class="venue-card-header">
+        <h2 class="venue-card-title">Partner with Along</h2>
+        <p class="venue-card-desc">
+          Are you a café, sports turf, or hangout spot in Hyderabad? Partner with us to host spontaneous group hangouts.
+        </p>
+      </div>
+
+      <form id="venuePartnerForm">
+        <div class="form-group">
+          <label class="form-label">Venue / Business Name *</label>
+          <input type="text" name="venue_name" class="form-input" placeholder="e.g. Roastery Coffee House / Gamepoint Arena" required>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select name="category" class="form-select" required>
+              <option value="Specialty Cafe">Specialty Café / Bakery</option>
+              <option value="Sports Arena / Turf">Sports Turf / Court</option>
+              <option value="Casual Dining / Bar">Restaurant / Craft Brewery</option>
+              <option value="Board Game / Lounge">Gaming / Board Game Lounge</option>
+              <option value="Other">Other Social Venue</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">City & Neighborhood *</label>
+            <input type="text" name="city_area" class="form-input" placeholder="e.g. Jubilee Hills, Hyderabad" required>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Contact Person *</label>
+            <input type="text" name="contact_name" class="form-input" placeholder="Your Name" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input type="tel" name="contact_phone" class="form-input" placeholder="+91 98765 43210" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Proposed Perk for Along Groups (Optional)</label>
+          <input type="text" name="proposed_perk" class="form-input" placeholder="e.g. 10% off bill for groups of 4+, free coffee upgrade">
+        </div>
+
+        <button type="submit" id="submitBtn" class="form-submit-btn">Apply for Venue Tie-Up 🚀</button>
+        <div id="formFeedback" style="display: none;"></div>
+      </form>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Along Technologies Inc. • Hyderabad</p>
+      <div class="footer-links">
+        <a href="admin.html" class="footer-link">🔐 Local Admin Portal</a>
+      </div>
+    </footer>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

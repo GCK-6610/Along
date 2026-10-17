@@ -16,6 +16,7 @@ import { useState, useEffect } from 'react';
 import { calculateHaversineDistance } from '../../lib/geoUtils';
 import PlanCard from '../../components/features/PlanCard';
 import { PlanCardSkeleton, HotspotCardSkeleton } from '../../components/features/Skeletons';
+import VenueModal from '../../components/features/VenueModal';
 import { Plan, Hotspot } from '../../types';
 
 function getGreeting() {
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
 
   const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans(userLocation?.lat, userLocation?.lon);
   const { hotspots, isLoading: hotspotsLoading, refetch: refetchHotspots } = useHotspots();
@@ -96,27 +98,71 @@ export default function HomeScreen() {
     <PlanCard plan={item} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: item.id } })} />
   );
 
-  const renderHotspot = (item: Hotspot) => (
-    <Pressable
-      key={item.id}
-      style={({ pressed }) => [styles.hotspotCard, pressed && { transform: [{ scale: 0.97 }], opacity: 0.94 }]}
-      onPress={() => router.push({ pathname: '/create', params: { venue: item.name, tags: item.tags?.join(',') } })}
-    >
-      <Image source={{ uri: item.image_url }} style={styles.hotspotImage} />
-      <View style={styles.hotspotOverlay}>
-        <View style={styles.hotspotBadgeRow}>
-          {item.tags && item.tags.length > 0 && <Text style={styles.hotspotCategory}>#{item.tags[0]}</Text>}
-          <View style={styles.featuredBadge}>
-            <Text style={styles.featuredBadgeText}>PARTNER PERK 🎁</Text>
+  const renderHotspot = (item: Hotspot) => {
+    const isPublicSpot = item.tags?.includes('outdoors') || item.tags?.includes('fitness') || item.name.toLowerCase().includes('park');
+    const distanceVal = userLocation ? calculateHaversineDistance(userLocation.lat, userLocation.lon, item.latitude, item.longitude) : null;
+    const distanceText = distanceVal != null ? `${distanceVal.toFixed(1)} km away` : 'Nearby';
+    const categoryTag = item.tags && item.tags.length > 0 ? `#${item.tags[0]}` : null;
+
+    return (
+      <Pressable
+        key={item.id}
+        style={({ pressed }) => [styles.hotspotCard, pressed && { transform: [{ scale: 0.98 }], opacity: 0.95 }]}
+        onPress={() => setSelectedHotspot({
+          ...item,
+          distance_km: distanceVal != null ? distanceVal : undefined
+        })}
+      >
+        {/* Top Image Section */}
+        <View style={styles.hotspotImageContainer}>
+          <Image source={{ uri: item.image_url }} style={styles.hotspotImage} resizeMode="cover" />
+          <View style={styles.hotspotGradientScrim} />
+          
+          {/* Top-Left Concise Badge */}
+          {item.perk_text ? (
+            <View style={styles.perkFloatingBadge}>
+              <Text style={styles.perkFloatingBadgeText}>🎁 PARTNER PERK</Text>
+            </View>
+          ) : isPublicSpot ? (
+            <View style={styles.publicFloatingBadge}>
+              <Text style={styles.publicFloatingBadgeText}>POPULAR SPOT 🌿</Text>
+            </View>
+          ) : (
+            <View style={styles.communityFloatingBadge}>
+              <Text style={styles.communityFloatingBadgeText}>COMMUNITY SPOT ✨</Text>
+            </View>
+          )}
+
+          {/* Top-Right Rating Badge */}
+          <View style={styles.ratingFloatingBadge}>
+            <Text style={styles.ratingFloatingBadgeText}>
+              ★ {(item.google_rating || item.rating || 4.5).toFixed(1)}
+            </Text>
           </View>
         </View>
-        <Text style={styles.hotspotName} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.hotspotDistance}>
-          {userLocation ? calculateHaversineDistance(userLocation.lat, userLocation.lon, item.latitude, item.longitude) : '?'} km away
-        </Text>
-      </View>
-    </Pressable>
-  );
+
+        {/* Bottom Info Section */}
+        <View style={styles.hotspotBottomPanel}>
+          <Text style={styles.hotspotName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.hotspotSubtitle} numberOfLines={1}>
+            {categoryTag ? `${categoryTag} • ` : ''}{distanceText}
+          </Text>
+
+          {item.perk_text ? (
+            <View style={styles.perkHighlightBanner}>
+              <Text style={styles.perkHighlightText} numberOfLines={1}>
+                🎁 {item.perk_text}
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.hotspotSnippet} numberOfLines={1}>
+              {item.description || 'Curated community hotspot'}
+            </Text>
+          )}
+        </View>
+      </Pressable>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -197,6 +243,9 @@ export default function HomeScreen() {
         )}
 
       </ScrollView>
+
+      {/* Venue Exploration Modal */}
+      <VenueModal modalHotspot={selectedHotspot} setModalHotspot={setSelectedHotspot} />
     </SafeAreaView>
   );
 }
@@ -266,60 +315,135 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
   },
   hotspotCard: {
-    width: 200,
-    height: 120,
+    width: 255,
+    height: 180,
     borderRadius: theme.borderRadius.lg,
     overflow: 'hidden',
-    position: 'relative',
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     marginRight: theme.spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  hotspotImageContainer: {
+    width: '100%',
+    height: 105,
+    position: 'relative',
+    backgroundColor: '#1E1D2E',
   },
   hotspotImage: {
     width: '100%',
     height: '100%',
+  },
+  hotspotGradientScrim: {
     position: 'absolute',
+    inset: 0,
+    backgroundColor: 'rgba(0,0,0,0.22)',
   },
-  hotspotOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: theme.spacing.sm,
-    justifyContent: 'flex-end',
+  perkFloatingBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#FF4757',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: theme.borderRadius.pill,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
-  hotspotBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  hotspotCategory: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: 10,
-    color: theme.colors.primary,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  featuredBadge: {
-    backgroundColor: '#FFD32A',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  featuredBadgeText: {
+  perkFloatingBadgeText: {
     fontFamily: theme.typography.fontFamily.bold,
     fontSize: 9,
-    color: '#1C1B2E',
-    letterSpacing: 0.5,
+    color: '#FFF',
+    letterSpacing: 0.4,
+  },
+  publicFloatingBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: theme.borderRadius.pill,
+  },
+  publicFloatingBadgeText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 9,
+    color: '#FFF',
+    letterSpacing: 0.4,
+  },
+  communityFloatingBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: theme.borderRadius.pill,
+  },
+  communityFloatingBadgeText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 9,
+    color: theme.colors.primary,
+    letterSpacing: 0.4,
+  },
+  ratingFloatingBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  ratingFloatingBadgeText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 10,
+    color: '#FFD32A',
+  },
+  hotspotBottomPanel: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.card,
   },
   hotspotName: {
     fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.sizes.base,
-    color: '#FFF',
+    fontSize: 14,
+    color: theme.colors.foreground,
   },
-  hotspotDistance: {
+  hotspotSubtitle: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 11,
+    color: theme.colors.mutedForeground,
+    marginTop: 1,
+  },
+  perkHighlightBanner: {
+    backgroundColor: 'rgba(255, 71, 87, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 71, 87, 0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 3,
+  },
+  perkHighlightText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 10,
+    color: theme.colors.primary,
+  },
+  hotspotSnippet: {
     fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.sizes.xs,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
+    color: theme.colors.mutedForeground,
+    marginTop: 2,
   },
   emptyContainer: {
     alignItems: 'center',
