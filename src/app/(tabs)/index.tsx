@@ -66,9 +66,21 @@ export default function HomeScreen() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
-        let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        // Fast path: read cached location instantly without blocking hardware GPS
+        let loc = await Location.getLastKnownPositionAsync();
+        if (!loc) {
+          loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        }
         if (loc?.coords) {
-          setUserLocation({ lat: loc.coords.latitude, lon: loc.coords.longitude });
+          setUserLocation(prev => {
+            if (prev) {
+              const dLat = Math.abs(prev.lat - loc.coords.latitude);
+              const dLon = Math.abs(prev.lon - loc.coords.longitude);
+              // Avoid re-renders if position shifted by less than ~200 meters
+              if (dLat < 0.002 && dLon < 0.002) return prev;
+            }
+            return { lat: loc.coords.latitude, lon: loc.coords.longitude };
+          });
           // Only reverse geocode as fallback if the user has no base location set in profile
           if (!hasProfileLocation) {
             try {
@@ -116,11 +128,9 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchLiveLocation();
-      refetchPlans();
-      refetchHotspots();
+      // On screen focus, only re-sync notification badge. Let TanStack Query handle plan caching.
       fetchUnreadCount();
-    }, [user, fetchUnreadCount])
+    }, [fetchUnreadCount])
   );
 
   const onRefresh = async () => {

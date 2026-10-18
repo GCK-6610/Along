@@ -4,7 +4,7 @@ import {
   View, Text, StyleSheet,
   ScrollView, Pressable, TextInput, Platform, ActivityIndicator, Modal, FlatList
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { Search, MapPin, Map, List, Navigation, ArrowLeft, Image as ImageIcon, X } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { useAuth } from '../../context/AuthContext';
@@ -62,7 +62,10 @@ export default function ExploreScreen() {
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          let location = await Location.getLastKnownPositionAsync();
+          if (!location) {
+            location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          }
           if (location?.coords) {
             const gpsLoc = { lat: location.coords.latitude, lon: location.coords.longitude };
             setUserLocation(gpsLoc);
@@ -86,7 +89,10 @@ export default function ExploreScreen() {
     let target = userLocation;
     if (!target) {
       try {
-        let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        let location = await Location.getLastKnownPositionAsync();
+        if (!location) {
+          location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        }
         if (location?.coords) {
           target = { lat: location.coords.latitude, lon: location.coords.longitude };
           setUserLocation(target);
@@ -153,12 +159,6 @@ export default function ExploreScreen() {
   const [modalHotspot, setModalHotspot] = useState<any | null>(null);
   const [searchedVenue, setSearchedVenue] = useState<any | null>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      refetchPlans();
-      refetchHotspots();
-    }, [])
-  );
 
   const filtered = plans.filter(p => {
     const matchCat = activeCategory === 'all' || (p.tags && p.tags.includes(activeCategory));

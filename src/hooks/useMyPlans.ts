@@ -85,7 +85,9 @@ export function useMyPlans() {
         joinedPlans: (formattedJoined.length > 0 ? formattedJoined : EMPTY_PLANS) as Plan[],
         requestedPlans: (formattedRequested.length > 0 ? formattedRequested : EMPTY_PLANS) as Plan[]
       };
-    }
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes warm cache
+    gcTime: 1000 * 60 * 15,
   });
 
   return { 

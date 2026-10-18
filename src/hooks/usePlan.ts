@@ -28,7 +28,9 @@ export function usePlan(planId: string) {
       if (error) throw error;
       return data as any as Plan;
     },
-    enabled: !!planId
+    enabled: !!planId,
+    staleTime: 1000 * 60 * 1, // 1 minute warm cache
+    gcTime: 1000 * 60 * 10,
   });
 
   const refetchPlan = async () => {

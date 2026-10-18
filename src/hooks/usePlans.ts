@@ -5,8 +5,14 @@ import { Plan } from '../types';
 const EMPTY_PLANS: Plan[] = [];
 
 export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: number[]) {
+  // Quantize coordinates to ~200m spatial grid so micro-drifts and minor pans hit cache
+  const gridLat = userLat != null ? Math.round(userLat * 500) / 500 : null;
+  const gridLon = userLon != null ? Math.round(userLon * 500) / 500 : null;
+
   const queryResult = useQuery({
-    queryKey: ['nearby_plans', userLat, userLon, queryEmbedding],
+    queryKey: ['nearby_plans', gridLat, gridLon, queryEmbedding],
+    staleTime: 1000 * 60 * 3, // 3 minutes warm cache
+    gcTime: 1000 * 60 * 15,
     queryFn: async () => {
       console.log('Fetching plans for location:', userLat, userLon);
       // Fetch user gender and base location

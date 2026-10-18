@@ -16,11 +16,10 @@ export default function ProfileScreen() {
   
   const [profile, setProfile] = useState<any>({});
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const { plans, refetch: refetchPlans } = usePlans();
+  const { plans } = usePlans();
 
   useFocusEffect(
     useCallback(() => {
-      refetchPlans();
       if (user) {
         supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => {
           if (data) {

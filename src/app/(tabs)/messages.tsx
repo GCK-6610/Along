@@ -1,10 +1,10 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState, useEffect } from 'react';
 
-import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { MessageCircle, Users, Lock, Trash2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useMyPlans } from '../../hooks/useMyPlans';
 import { supabase } from '../../lib/supabase';
@@ -52,11 +52,6 @@ export default function MessagesScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      refetchPlans();
-    }, [])
-  );
 
   useEffect(() => {
     AsyncStorage.getItem(DISMISSED_CHATS_STORAGE_KEY).then(val => {
@@ -141,6 +136,13 @@ export default function MessagesScreen() {
           data={chats}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={refetchPlans}
+              tintColor={theme.colors.primary}
+            />
+          }
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           renderItem={({ item }) => (
             <View style={styles.chatRowWrapper}>

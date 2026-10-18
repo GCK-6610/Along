@@ -53,9 +53,14 @@ export default function EditPlanScreen() {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
-      let location = await Location.getCurrentPositionAsync({});
-      setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
-      setMapCoordinate({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+      let location = await Location.getLastKnownPositionAsync();
+      if (!location) {
+        location = await Location.getCurrentPositionAsync({});
+      }
+      if (location?.coords) {
+        setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
+        setMapCoordinate({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+      }
     })();
   }, []);
 

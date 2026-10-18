@@ -48,7 +48,10 @@ export default function CreateScreen() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
-      let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      let location = await Location.getLastKnownPositionAsync();
+      if (!location) {
+        location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      }
       if (location?.coords) {
         setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
         setMapCoordinate({ latitude: location.coords.latitude, longitude: location.coords.longitude });
