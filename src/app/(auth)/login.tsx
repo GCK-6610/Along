@@ -35,7 +35,7 @@ export default function LoginScreen() {
     const { error } = await supabase.auth.signInWithOtp({ phone: fullPhone });
     setLoading(false);
     if (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Unable to Send Code', error.message || 'Please check your phone number and try again.');
     } else {
       router.push({ pathname: '/(auth)/verify', params: { phone: fullPhone } });
     }
