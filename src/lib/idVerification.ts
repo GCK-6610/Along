@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 
 export interface IdAsset {
   uri: string;
@@ -26,9 +27,14 @@ export interface VerificationResult {
  */
 function getNativeImagePicker(): any | null {
   try {
+    const nativeModule = requireOptionalNativeModule('ExponentImagePicker');
+    if (!nativeModule) {
+      console.warn('Native ExponentImagePicker is not available in current runtime.');
+      return null;
+    }
     return require('expo-image-picker');
   } catch (err) {
-    console.warn('Native ExponentImagePicker is not available in current runtime:', err);
+    console.warn('Native ExponentImagePicker load error:', err);
     return null;
   }
 }
@@ -176,15 +182,19 @@ export async function verifyIdAndLiveness(
     await new Promise((resolve) => setTimeout(resolve, 1400)); // natural processing delay
 
     // If fileName or path contains hints, or user had already typed something
-    const rawHint = (userHintName && userHintName.trim().length > 2)
+    const cleanFileName = idAsset.fileName
+      ? idAsset.fileName.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ').replace(/official|government|id|doc|photo|card/gi, '').trim()
+      : '';
+    const rawHint = (userHintName && userHintName.trim().length > 1)
       ? userHintName.trim()
-      : 'Shivani Sharma';
+      : (cleanFileName || 'Verified Member');
 
     // Format clean capitalized name
     const formattedName = rawHint
       .split(' ')
+      .filter(Boolean)
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
+      .join(' ') || 'Verified Member';
 
     // Gender inference from name or common digital ID cues
     const lowerName = formattedName.toLowerCase();

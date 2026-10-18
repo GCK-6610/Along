@@ -1,5 +1,5 @@
 import { Tabs, Redirect } from 'expo-router';
-import { View, Platform } from 'react-native';
+import { View, Platform, ActivityIndicator } from 'react-native';
 import { theme } from '../../styles/theme';
 import { Home, Compass, PlusCircle, MessageCircle, User } from 'lucide-react-native';
 import { useEffect } from 'react';
@@ -24,9 +24,13 @@ export default function TabLayout() {
     }
   }, [user]);
 
-  // While auth state is resolving from storage, do not render tabs
+  // While auth state is resolving from storage, render branded loader
   if (loading) {
-    return null;
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
   }
 
   // Guard: if not authenticated, redirect immediately to login

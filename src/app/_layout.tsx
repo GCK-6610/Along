@@ -9,7 +9,7 @@ import {
   Outfit_700Bold
 } from '@expo-google-fonts/outfit';
 import { AuthProvider, useAuth } from '../context/AuthContext';
-import { LogBox } from 'react-native';
+import { LogBox, View, ActivityIndicator } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient({
@@ -27,7 +27,7 @@ LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
 ]);
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -42,7 +42,7 @@ function RootNavigator() {
     // Only navigate once root navigation container is mounted and ready
     if (!navigationState?.key || loading) return;
 
-    SplashScreen.hideAsync();
+    SplashScreen.hideAsync().catch(() => {});
     
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboarding = segments[0] === 'onboarding';
@@ -63,7 +63,7 @@ function RootNavigator() {
 
   // NEVER return null here! The root layout must render a Navigator on the first render.
   return (
-    <Stack screenOptions={{ headerShown: false }} initialRouteName="(tabs)">
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A0A0F' } }} initialRouteName="(tabs)">
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
@@ -79,7 +79,27 @@ export default function RootLayout() {
     Outfit_700Bold,
   });
 
-  if (!loaded && !error) return null;
+  useEffect(() => {
+    if (loaded || error) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [loaded, error]);
+
+  // Fallback timer: ensure splash never stays locked if font or network stalls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!loaded && !error) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0A0A0F', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#FF5A5F" />
+      </View>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
