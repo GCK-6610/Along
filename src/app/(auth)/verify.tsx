@@ -8,6 +8,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { theme } from '../../styles/theme';
+import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 
 const OTP_LENGTH = 6;
 
@@ -57,7 +58,13 @@ export default function VerifyScreen() {
 
       if (error) {
         setLoading(false);
-        Alert.alert('Invalid OTP', error.message || 'The code you entered is incorrect. Please try again.');
+        Alert.alert(
+          'Verification Code',
+          getUserFriendlyErrorMessage(
+            error,
+            'The code you entered is invalid or has expired. Please try again.'
+          )
+        );
         setOtp(Array(OTP_LENGTH).fill(''));
         inputs.current[0]?.focus();
         return;
@@ -96,7 +103,13 @@ export default function VerifyScreen() {
       }
     } catch (e: any) {
       setLoading(false);
-      Alert.alert('Verification Error', e?.message || 'Something went wrong. Please try again.');
+      Alert.alert(
+        'Verification Unavailable',
+        getUserFriendlyErrorMessage(
+          e,
+          'Something went wrong while verifying your code. Please try again in a moment.'
+        )
+      );
     }
   };
 

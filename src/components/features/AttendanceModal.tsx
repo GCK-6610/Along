@@ -4,6 +4,7 @@ import { Check, X, Users } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { PlanParticipant } from '../../types';
 import { supabase } from '../../lib/supabase';
+import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 
 interface AttendanceModalProps {
   visible: boolean;
@@ -46,7 +47,13 @@ export default function AttendanceModal({ visible, onClose, planId, hostId, atte
       
       onComplete(attendeeIds);
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert(
+        'Unable to Save Attendance',
+        getUserFriendlyErrorMessage(
+          err,
+          'Could not record attendance right now. Please try again in a moment.'
+        )
+      );
     } finally {
       setIsSubmitting(false);
     }

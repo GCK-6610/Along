@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Modal, Pressable, ScrollView, Alert, TextInput 
 import { Star, X, MapPin } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { supabase } from '../../lib/supabase';
+import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 
 interface VenueRatingModalProps {
   visible: boolean;
@@ -74,7 +75,13 @@ export default function VenueRatingModal({
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Could not submit venue rating');
+      Alert.alert(
+        'Unable to Submit Rating',
+        getUserFriendlyErrorMessage(
+          err,
+          'Could not submit your venue rating right now. Please try again in a moment.'
+        )
+      );
     } finally {
       setIsSubmitting(false);
     }

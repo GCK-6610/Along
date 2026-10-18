@@ -17,6 +17,7 @@ import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult,
 import Fuse from 'fuse.js';
 import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
 import { calculateAge, is18Plus, formatDobToIso, getTimeUntil18 } from '../utils/age';
+import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
 
 const ALL_AVATARS = AVATAR_CATALOG.flatMap(c => c.items);
 const fuse = new Fuse(ALL_AVATARS, {
@@ -127,7 +128,7 @@ export default function OnboardingScreen() {
       const asset = await pickIdDocument(false);
       if (asset) setIdDocAsset(asset);
     } catch (e: any) {
-      Alert.alert('Permission Required', e.message);
+      Alert.alert('Permission Needed', getUserFriendlyErrorMessage(e, 'Photo library access is needed to select your ID.'));
     }
   };
 
@@ -136,7 +137,7 @@ export default function OnboardingScreen() {
       const asset = await captureSelfie(true);
       if (asset) setSelfieAsset(asset);
     } catch (e: any) {
-      Alert.alert('Permission Required', e.message);
+      Alert.alert('Permission Needed', getUserFriendlyErrorMessage(e, 'Camera access is needed to take a selfie.'));
     }
   };
 
@@ -172,7 +173,13 @@ export default function OnboardingScreen() {
         `Welcome, ${result.extractedName}! Your profile details have been auto-filled from your ${result.documentType} and verified with a live selfie check.`
       );
     } else {
-      Alert.alert('Verification Issue', result.errorMessage || 'Please ensure document text and selfie are clearly visible.');
+      Alert.alert(
+        'Verification Unavailable',
+        getUserFriendlyErrorMessage(
+          result.errorMessage,
+          'We could not verify your document automatically right now. Please enter your name directly on the form or try again later.'
+        )
+      );
     }
   };
 
@@ -233,7 +240,13 @@ export default function OnboardingScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert(
+        'Unable to Save Profile',
+        getUserFriendlyErrorMessage(
+          error,
+          'Something went wrong while saving your profile. Please check your connection and try again.'
+        )
+      );
     } else {
       setHasProfile(true);
       router.replace('/(tabs)');

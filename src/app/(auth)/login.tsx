@@ -9,6 +9,7 @@ import { router, Redirect } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { theme } from '../../styles/theme';
 import { useAuth } from '../../context/AuthContext';
+import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 
 export default function LoginScreen() {
   const { session, loading: authLoading, hasProfile } = useAuth();
@@ -35,7 +36,13 @@ export default function LoginScreen() {
     const { error } = await supabase.auth.signInWithOtp({ phone: fullPhone });
     setLoading(false);
     if (error) {
-      Alert.alert('Unable to Send Code', error.message || 'Please check your phone number and try again.');
+      Alert.alert(
+        'Unable to Send Code',
+        getUserFriendlyErrorMessage(
+          error,
+          'Something went wrong while sending your code. Please check your connection and try again.'
+        )
+      );
     } else {
       router.push({ pathname: '/(auth)/verify', params: { phone: fullPhone } });
     }

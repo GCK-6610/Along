@@ -4,6 +4,7 @@ import { Star, X } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { PlanParticipant } from '../../types';
 import { supabase } from '../../lib/supabase';
+import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 
 interface RatingsModalProps {
   visible: boolean;
@@ -62,7 +63,13 @@ export default function RatingsModal({
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert(
+        'Unable to Submit Rating',
+        getUserFriendlyErrorMessage(
+          err,
+          'Could not submit your rating right now. Please try again in a moment.'
+        )
+      );
     } finally {
       setIsSubmitting(false);
     }

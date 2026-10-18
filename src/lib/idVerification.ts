@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { requireOptionalNativeModule } from 'expo-modules-core';
+import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
 
 export interface IdAsset {
   uri: string;
@@ -177,7 +178,10 @@ export async function verifyIdAndLiveness(
         isRealHuman: false,
         faceMatched: false,
         confidenceScore: 0,
-        errorMessage: edgeErrorMessage || 'Document text could not be verified automatically. Please enter your name on the profile form and try again.',
+        errorMessage: getUserFriendlyErrorMessage(
+          edgeErrorMessage,
+          'Document text could not be verified automatically right now. Please enter your name directly on the profile form or try again later.'
+        ),
       };
     }
 
@@ -203,7 +207,10 @@ export async function verifyIdAndLiveness(
       isRealHuman: false,
       faceMatched: false,
       confidenceScore: 0,
-      errorMessage: err.message || 'Verification could not be completed. Please try again.',
+      errorMessage: getUserFriendlyErrorMessage(
+        err,
+        'Verification could not be completed right now. Please try again in a little while.'
+      ),
     };
   }
 }

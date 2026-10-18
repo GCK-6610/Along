@@ -15,6 +15,7 @@ import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as Location from 'expo-location';
 import { useQueryClient } from '@tanstack/react-query';
+import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 
 export default function CreateScreen() {
   const { user } = useAuth();
@@ -156,7 +157,13 @@ export default function CreateScreen() {
       router.push({ pathname: '/plan/[id]', params: { id: newPlan.id } });
     } catch (err: any) {
       console.error('Error creating plan:', err);
-      Alert.alert('Error', err.message);
+      Alert.alert(
+        'Unable to Create Hangout',
+        getUserFriendlyErrorMessage(
+          err,
+          'Something went wrong while creating your plan. Please check your connection and try again.'
+        )
+      );
     } finally {
       setIsPosting(false);
     }

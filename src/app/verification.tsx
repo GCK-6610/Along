@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { safeBack } from '../utils/navigation';
 import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult, IdAsset } from '../lib/idVerification';
+import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
 
 export default function VerificationScreen() {
   const { user } = useAuth();
@@ -38,7 +39,7 @@ export default function VerificationScreen() {
       const asset = await pickIdDocument(useCamera);
       if (asset) setIdDocAsset(asset);
     } catch (err: any) {
-      Alert.alert('Permission Needed', err.message || 'Please grant permission to select your ID.');
+      Alert.alert('Permission Needed', getUserFriendlyErrorMessage(err, 'Please grant permission to select your ID.'));
     }
   };
 
@@ -47,7 +48,7 @@ export default function VerificationScreen() {
       const asset = await captureSelfie(true);
       if (asset) setSelfieAsset(asset);
     } catch (err: any) {
-      Alert.alert('Permission Needed', err.message || 'Please grant camera permission for selfie verification.');
+      Alert.alert('Permission Needed', getUserFriendlyErrorMessage(err, 'Please grant camera permission for selfie verification.'));
     }
   };
 
@@ -92,12 +93,24 @@ export default function VerificationScreen() {
         );
       } else {
         setIsVerifying(false);
-        Alert.alert('Verification Issue', result.errorMessage || 'Could not verify ID or match selfie. Please ensure good lighting and clear document text.');
+        Alert.alert(
+          'Verification Unavailable',
+          getUserFriendlyErrorMessage(
+            result.errorMessage,
+            'Could not verify ID or match selfie right now. Please ensure good lighting and clear document text.'
+          )
+        );
       }
     } catch (err: any) {
       clearTimeout(timer1);
       setIsVerifying(false);
-      Alert.alert('Verification Error', err.message || 'An error occurred during verification. Please try again.');
+      Alert.alert(
+        'Verification Unavailable',
+        getUserFriendlyErrorMessage(
+          err,
+          'Something went wrong during verification. Please try again in a little while.'
+        )
+      );
     }
   };
 

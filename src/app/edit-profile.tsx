@@ -8,6 +8,7 @@ import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { safeBack } from '../utils/navigation';
+import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
 
 import Fuse from 'fuse.js';
 import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
@@ -179,7 +180,13 @@ export default function EditProfileScreen() {
         safeBack('/(tabs)/profile');
       }
     } catch (err: any) {
-      Alert.alert('Error saving profile', err.message);
+      Alert.alert(
+        'Unable to Save Profile',
+        getUserFriendlyErrorMessage(
+          err,
+          'Something went wrong while saving your changes. Please try again in a moment.'
+        )
+      );
     } finally {
       setIsSaving(false);
     }
