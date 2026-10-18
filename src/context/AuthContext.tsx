@@ -28,30 +28,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if (session) {
+    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
+      if (initialSession) {
         try {
-          await checkProfile(session.user);
+          await checkProfile(initialSession.user);
         } catch (e) {
           console.warn('Error checking initial profile:', e);
         }
+        setSession(initialSession);
+      } else {
+        setSession(null);
+        setHasProfile(false);
       }
       setLoading(false);
     });
 
     // Listen for auth state changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
-      setSession(session);
-      if (session) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, newSession: Session | null) => {
+      setLoading(true);
+      if (newSession) {
         try {
-          await checkProfile(session.user);
+          await checkProfile(newSession.user);
         } catch (e) {
           console.warn('Error checking profile on auth state change:', e);
         }
+        setSession(newSession);
       } else {
+        setSession(null);
         setHasProfile(false);
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

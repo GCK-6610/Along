@@ -1,8 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
-import { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { useState, useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
-import { ArrowLeft, Bell, Users, MapPin, Info, CheckCircle2 } from 'lucide-react-native';
+import { ArrowLeft, Bell, Users, MapPin, Info, CheckCircle2, X } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -47,18 +47,55 @@ export default function NotificationsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchNotifications();
-      const timer = setTimeout(() => {
-        if (user) {
-          supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false).then();
-        }
-      }, 2000);
-      return () => clearTimeout(timer);
+      if (user) {
+        // Immediately mark unread as read in database and UI upon viewing
+        supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false)
+          .then(() => {
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+          });
+      }
     }, [user])
   );
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchNotifications();
+  };
+
+  const handleClearAll = () => {
+    if (!user || notifications.length === 0) return;
+    Alert.alert(
+      'Clear All Notifications',
+      'Are you sure you want to remove all notifications?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            const previous = [...notifications];
+            setNotifications([]);
+            const { error } = await supabase
+              .from('notifications')
+              .delete()
+              .eq('user_id', user.id);
+            if (error) {
+              setNotifications(previous);
+              Alert.alert('Error', 'Unable to clear notifications. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDismiss = async (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    await supabase.from('notifications').delete().eq('id', id);
   };
 
   const renderIcon = (type: string) => {
@@ -71,7 +108,11 @@ export default function NotificationsScreen() {
     }
   };
 
-  const handlePress = (item: Notification) => {
+  const handlePress = async (item: Notification) => {
+    if (!item.is_read) {
+      setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
+      await supabase.from('notifications').update({ is_read: true }).eq('id', item.id);
+    }
     if (item.reference_id) {
       router.push({ pathname: '/plan/[id]', params: { id: item.reference_id } });
     }
@@ -84,7 +125,13 @@ export default function NotificationsScreen() {
           <ArrowLeft size={20} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <View style={{ width: 36 }} />
+        {notifications.length > 0 ? (
+          <Pressable style={styles.clearBtn} onPress={handleClearAll} hitSlop={8}>
+            <Text style={styles.clearBtnText}>Clear All</Text>
+          </Pressable>
+        ) : (
+          <View style={{ width: 60 }} />
+        )}
       </View>
 
       {isLoading ? (
@@ -123,7 +170,16 @@ export default function NotificationsScreen() {
                   {new Date(item.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                 </Text>
               </View>
-              {!item.is_read && <View style={styles.unreadDot} />}
+              <Pressable
+                style={styles.dismissBtn}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  handleDismiss(item.id);
+                }}
+                hitSlop={8}
+              >
+                <X size={15} color={theme.colors.mutedForeground} />
+              </Pressable>
             </Pressable>
           )}
         />
@@ -145,6 +201,15 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   headerTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 18, color: theme.colors.foreground },
+  clearBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  clearBtnText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.destructive,
+  },
   notificationCard: {
     flexDirection: 'row',
     padding: 16,
@@ -166,5 +231,8 @@ const styles = StyleSheet.create({
   notificationTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 15, color: theme.colors.foreground, marginBottom: 4 },
   notificationBody: { fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground, marginBottom: 8, lineHeight: 20 },
   timestamp: { fontFamily: theme.typography.fontFamily.regular, fontSize: 12, color: theme.colors.mutedForeground },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.primary, marginTop: 6, marginLeft: 8 },
+  dismissBtn: {
+    padding: 4,
+    marginLeft: 8,
+  },
 });

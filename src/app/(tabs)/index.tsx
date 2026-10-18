@@ -96,31 +96,36 @@ export default function HomeScreen() {
     }
   };
 
+  const fetchUnreadCount = useCallback(async () => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+    const { count } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_read', false);
+    if (count !== null) setUnreadCount(count);
+  }, [user]);
+
   useEffect(() => {
     fetchLiveLocation();
-    if (user) {
-      // Fetch unread notifications count
-      supabase.from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false)
-        .then(({ count }) => {
-          if (count !== null) setUnreadCount(count);
-        });
-    }
-  }, [user]);
+    fetchUnreadCount();
+  }, [user, fetchUnreadCount]);
 
   useFocusEffect(
     useCallback(() => {
       fetchLiveLocation();
       refetchPlans();
       refetchHotspots();
-    }, [user])
+      fetchUnreadCount();
+    }, [user, fetchUnreadCount])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetchPlans(), refetchHotspots(), fetchLiveLocation()]);
+    await Promise.all([refetchPlans(), refetchHotspots(), fetchLiveLocation(), fetchUnreadCount()]);
     setRefreshing(false);
   };
 
