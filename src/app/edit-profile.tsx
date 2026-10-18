@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 
-import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, Alert, FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Save, Edit2, X, MapPin } from 'lucide-react-native';
 import { theme } from '../styles/theme';
@@ -204,16 +204,30 @@ export default function EditProfileScreen() {
                     </ScrollView>
                   </View>
                 )}
-                <ScrollView contentContainerStyle={styles.avatarGrid} showsVerticalScrollIndicator={false}>
-                  {displayedAvatars.map((item) => (
-                    <Pressable key={item.id} onPress={() => { setAvatar(item.url); setModalVisible(false); }}>
-                      <Image source={{ uri: item.url, headers: { 'Accept': 'image/png' } }} style={[styles.avatarOption, avatar === item.url && styles.avatarSelected]} />
+                <FlatList
+                  data={displayedAvatars}
+                  keyExtractor={(item) => item.id}
+                  numColumns={4}
+                  contentContainerStyle={{ paddingBottom: 40, paddingTop: 10 }}
+                  columnWrapperStyle={{ justifyContent: 'space-around', marginBottom: 16 }}
+                  initialNumToRender={16}
+                  maxToRenderPerBatch={16}
+                  windowSize={5}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => (
+                    <Pressable onPress={() => { setAvatar(item.url); setModalVisible(false); }}>
+                      <Image
+                        source={{ uri: item.url }}
+                        style={[styles.avatarOption, avatar === item.url && styles.avatarSelected]}
+                      />
                     </Pressable>
-                  ))}
-                  {displayedAvatars.length === 0 && (
-                    <Text style={{ textAlign: 'center', marginTop: 40, color: theme.colors.mutedForeground, width: '100%' }}>No avatars found for "{searchQuery}"</Text>
                   )}
-                </ScrollView>
+                  ListEmptyComponent={
+                    <Text style={{ textAlign: 'center', marginTop: 40, color: theme.colors.mutedForeground, width: '100%' }}>
+                      No avatars found for "{searchQuery}"
+                    </Text>
+                  }
+                />
               </View>
             </View>
           </Modal>

@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import { useEffect } from 'react';
-import { Stack, router, useSegments } from 'expo-router';
+import { Stack, router, useSegments, useRootNavigationState } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
@@ -36,9 +36,11 @@ export const unstable_settings = {
 function RootNavigator() {
   const { session, loading, hasProfile } = useAuth();
   const segments = useSegments();
+  const navigationState = useRootNavigationState();
 
   useEffect(() => {
-    if (loading) return;
+    // Only navigate once root navigation container is mounted and ready
+    if (!navigationState?.key || loading) return;
 
     SplashScreen.hideAsync();
     
@@ -57,15 +59,11 @@ function RootNavigator() {
         router.replace('/(tabs)');
       }
     }
-  }, [session, loading, hasProfile, segments]);
+  }, [session, loading, hasProfile, segments, navigationState?.key]);
 
-  // While checking auth token in storage, do NOT mount tabs
-  if (loading) {
-    return null;
-  }
-
+  // NEVER return null here! The root layout must render a Navigator on the first render.
   return (
-    <Stack screenOptions={{ headerShown: false }} initialRouteName={session ? '(tabs)' : '(auth)'}>
+    <Stack screenOptions={{ headerShown: false }} initialRouteName="(tabs)">
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
