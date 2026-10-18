@@ -61,16 +61,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, push_token, full_name')
+        .select('id, push_token, full_name, gender')
         .eq('id', user.id)
         .maybeSingle();
       
-      if (data && data.full_name && data.full_name.trim() !== '') {
+      const isComplete = Boolean(
+        data &&
+        data.full_name &&
+        data.full_name.trim() !== '' &&
+        data.full_name !== 'New User' &&
+        data.gender &&
+        data.gender !== 'unspecified'
+      );
+
+      if (isComplete) {
         setHasProfile(true);
         // Register for Push Notifications safely
         try {
           const token = await registerForPushNotificationsAsync();
-          if (token && data.push_token !== token) {
+          if (token && data?.push_token !== token) {
             await supabase.from('profiles').update({ push_token: token }).eq('id', user.id);
           }
         } catch (pushErr) {

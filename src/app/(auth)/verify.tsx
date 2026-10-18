@@ -68,19 +68,28 @@ export default function VerifyScreen() {
         try {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('full_name')
+            .select('full_name, gender')
             .eq('id', data.session.user.id)
             .maybeSingle();
 
           setLoading(false);
-          if (profile && profile.full_name && profile.full_name.trim() !== '') {
+          const isComplete = Boolean(
+            profile &&
+            profile.full_name &&
+            profile.full_name.trim() !== '' &&
+            profile.full_name !== 'New User' &&
+            profile.gender &&
+            profile.gender !== 'unspecified'
+          );
+
+          if (isComplete) {
             router.replace('/(tabs)');
           } else {
             router.replace('/onboarding');
           }
         } catch {
           setLoading(false);
-          router.replace('/(tabs)');
+          router.replace('/onboarding');
         }
       } else {
         setLoading(false);
