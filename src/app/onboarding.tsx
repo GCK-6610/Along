@@ -370,6 +370,9 @@ export default function OnboardingScreen() {
                 </Pressable>
               ))}
             </View>
+            <Text style={styles.genderHint}>
+              🔒 Gender is locked after setup to protect community safety and verify same-gender hangouts.
+            </Text>
           </View>
 
           {/* Base Location Selector */}
@@ -736,6 +739,13 @@ const styles = StyleSheet.create({
   genderTextActive: {
     color: theme.colors.primary,
     fontFamily: theme.typography.fontFamily.bold,
+  },
+  genderHint: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 12,
+    color: theme.colors.mutedForeground,
+    marginTop: 6,
+    lineHeight: 16,
   },
   button: {
     backgroundColor: theme.colors.primary,

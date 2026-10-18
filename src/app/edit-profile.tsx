@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Image, KeyboardAvoidingView, Platform, Modal, ActivityIndicator, Alert, FlatList } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Save, Edit2, X, MapPin } from 'lucide-react-native';
+import { ArrowLeft, Save, Edit2, X, MapPin, Lock } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -23,6 +23,8 @@ export default function EditProfileScreen() {
   const { user } = useAuth();
   
   const [fullName, setFullName] = useState('');
+  const [initialFullName, setInitialFullName] = useState('');
+  const [initialIsVerified, setInitialIsVerified] = useState(false);
   const [bio, setBio] = useState('');
   const [gender, setGender] = useState<string | null>(null);
   const [avatar, setAvatar] = useState(ALL_AVATARS[0]?.url || '');
@@ -97,6 +99,8 @@ export default function EditProfileScreen() {
         const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
         if (data) {
           setFullName(data.full_name || '');
+          setInitialFullName(data.full_name || '');
+          setInitialIsVerified(data.is_verified || false);
           setBio(data.bio || '');
           setGender(data.gender || null);
           setAvatar(data.avatar_url || ALL_AVATARS[0]?.url || '');
@@ -115,20 +119,66 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!user) return;
+    const trimmedName = fullName.trim();
+    if (trimmedName.length < 2) {
+      Alert.alert('Invalid Name', 'Full name must be at least 2 characters.');
+      return;
+    }
+
+    const isNameChanged = trimmedName.toLowerCase() !== initialFullName.trim().toLowerCase();
+
+    if (initialIsVerified && isNameChanged) {
+      Alert.alert(
+        'Revoke Verification Badge?',
+        'Changing your verified name will remove your Blue Tick verification badge. You will need to submit your government ID to re-verify under your new name. Do you want to proceed?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Change Name & Revoke',
+            style: 'destructive',
+            onPress: () => performSave(true, trimmedName)
+          }
+        ]
+      );
+      return;
+    }
+
+    performSave(false, trimmedName);
+  };
+
+  const performSave = async (revokeVerification: boolean, validatedName: string) => {
+    if (!user) return;
     setIsSaving(true);
     try {
-      const { error } = await supabase.from('profiles').upsert({
+      const updatePayload: Record<string, any> = {
         id: user.id,
-        full_name: fullName,
-        bio: bio,
-        gender: gender,
+        full_name: validatedName,
+        bio: bio.trim(),
         avatar_url: avatar,
         base_location_name: baseLocationName,
         base_latitude: baseLatitude,
         base_longitude: baseLongitude
-      });
+      };
+
+      if (revokeVerification) {
+        updatePayload.is_verified = false;
+      }
+
+      const { error } = await supabase.from('profiles').upsert(updatePayload);
       if (error) throw error;
-      safeBack('/(tabs)/profile');
+
+      if (revokeVerification) {
+        Alert.alert(
+          'Profile Updated',
+          'Your profile was saved. Your verification badge has been removed because your name changed. Would you like to re-verify your ID now?',
+          [
+            { text: 'Later', onPress: () => safeBack('/(tabs)/profile') },
+            { text: 'Re-verify Now', onPress: () => router.replace('/verification') }
+          ]
+        );
+      } else {
+        safeBack('/(tabs)/profile');
+      }
     } catch (err: any) {
       Alert.alert('Error saving profile', err.message);
     } finally {
@@ -244,30 +294,37 @@ export default function EditProfileScreen() {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Bio</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.label}>Bio</Text>
+              <Text style={styles.charCounter}>{bio.length}/250</Text>
+            </View>
             <TextInput
               style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
               value={bio}
-              onChangeText={setBio}
+              onChangeText={(text) => setBio(text.slice(0, 250))}
               multiline
+              maxLength={250}
               placeholder="Tell people about yourself..."
               placeholderTextColor={theme.colors.mutedForeground}
             />
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Gender</Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Pressable style={[styles.genderBtn, gender === 'male' && styles.genderBtnActive]} onPress={() => setGender('male')}>
-                <Text style={[styles.genderText, gender === 'male' && styles.genderTextActive]}>👨 Male</Text>
-              </Pressable>
-              <Pressable style={[styles.genderBtn, gender === 'female' && styles.genderBtnActive]} onPress={() => setGender('female')}>
-                <Text style={[styles.genderText, gender === 'female' && styles.genderTextActive]}>👩 Female</Text>
-              </Pressable>
-              <Pressable style={[styles.genderBtn, gender === 'other' && styles.genderBtnActive]} onPress={() => setGender('other')}>
-                <Text style={[styles.genderText, gender === 'other' && styles.genderTextActive]}>🧑 Other</Text>
-              </Pressable>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.label}>Gender</Text>
+              <View style={styles.lockedBadge}>
+                <Lock size={12} color={theme.colors.mutedForeground} />
+                <Text style={styles.lockedBadgeText}>Locked for safety</Text>
+              </View>
             </View>
+            <View style={styles.lockedGenderBox}>
+              <Text style={styles.lockedGenderValue}>
+                {gender === 'male' ? '👨 Male' : gender === 'female' ? '👩 Female' : gender === 'other' ? '🧑 Other' : 'Not specified'}
+              </Text>
+            </View>
+            <Text style={styles.lockedHelperText}>
+              Gender cannot be modified after registration to protect community safety and verify same-gender hangouts.
+            </Text>
           </View>
           
           <View style={styles.field}>
@@ -387,13 +444,46 @@ const styles = StyleSheet.create({
   tabBtnActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   tabBtnText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.sm, color: theme.colors.mutedForeground },
   tabBtnTextActive: { color: '#fff', fontFamily: theme.typography.fontFamily.bold },
-  genderBtn: {
-    flex: 1, backgroundColor: theme.colors.card, paddingVertical: 12, borderRadius: theme.borderRadius.md,
-    borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center',
+  charCounter: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.mutedForeground,
   },
-  genderBtnActive: { backgroundColor: theme.colors.secondary, borderColor: theme.colors.primary },
-  genderText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.sm, color: theme.colors.mutedForeground },
-  genderTextActive: { color: theme.colors.primary, fontFamily: theme.typography.fontFamily.bold },
+  lockedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  lockedBadgeText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 11,
+    color: theme.colors.mutedForeground,
+  },
+  lockedGenderBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  lockedGenderValue: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.sizes.base,
+    color: theme.colors.foreground,
+  },
+  lockedHelperText: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 12,
+    color: theme.colors.mutedForeground,
+    lineHeight: 16,
+  },
   field: { gap: 8 },
   label: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm, color: theme.colors.foreground },
   input: {
