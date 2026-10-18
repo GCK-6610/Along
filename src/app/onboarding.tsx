@@ -11,10 +11,12 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../styles/theme';
 import { Image, Modal } from 'react-native';
-import { Edit2, X, MapPin, Shield, CheckCircle2, Camera, Upload, Sparkles, RefreshCw } from 'lucide-react-native';
+import { Edit2, X, MapPin, Shield, CheckCircle2, Camera, Upload, Sparkles, RefreshCw, Calendar } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult, IdAsset } from '../lib/idVerification';
 import Fuse from 'fuse.js';
 import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
+import { calculateAge, is18Plus, formatDobToIso } from '../utils/age';
 
 const ALL_AVATARS = AVATAR_CATALOG.flatMap(c => c.items);
 const fuse = new Fuse(ALL_AVATARS, {
@@ -33,6 +35,9 @@ export default function OnboardingScreen() {
   const { user, session, loading: authLoading, hasProfile, setHasProfile } = useAuth();
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<string | null>(null);
+  const [dob, setDob] = useState<Date | null>(null);
+  const [dobInputText, setDobInputText] = useState('');
+  const [showDobPicker, setShowDobPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // ID Verification state
@@ -154,6 +159,13 @@ export default function OnboardingScreen() {
       if (result.extractedGender) {
         setGender(result.extractedGender);
       }
+      if (result.extractedDob) {
+        const parsed = new Date(result.extractedDob);
+        if (!isNaN(parsed.getTime())) {
+          setDob(parsed);
+          setDobInputText(result.extractedDob);
+        }
+      }
       setVerificationModalVisible(false);
       Alert.alert(
         '🎉 Identity Verified!',
@@ -173,13 +185,48 @@ export default function OnboardingScreen() {
       Alert.alert('Missing Gender', 'Please select your gender.');
       return;
     }
+
+    let selectedDob = dob;
+    if (!selectedDob && dobInputText.trim()) {
+      const parts = dobInputText.trim().split(/[-/.]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          selectedDob = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        } else {
+          selectedDob = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        }
+      }
+    }
+
+    if (!selectedDob || isNaN(selectedDob.getTime())) {
+      Alert.alert('Missing Date of Birth', 'Please select your date of birth.');
+      return;
+    }
+
+    const calculatedAge = calculateAge(selectedDob);
+    if (calculatedAge < 18) {
+      Alert.alert(
+        'Age Requirement',
+        'Along is an 18+ community network. You must be at least 18 years old to join Along.'
+      );
+      return;
+    }
+
+    if (!baseLocationName) {
+      Alert.alert('Missing Location', 'Please select where you are based.');
+      return;
+    }
+
     if (!user) return;
+
+    const formattedDob = formatDobToIso(selectedDob);
 
     setLoading(true);
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
       full_name: fullName.trim(),
       gender,
+      dob: formattedDob,
       avatar_url: avatar,
       base_location_name: baseLocationName,
       base_latitude: baseLatitude,
@@ -372,6 +419,29 @@ export default function OnboardingScreen() {
             </Text>
           </View>
 
+          {/* Date of Birth */}
+          <View style={styles.field}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.label}>Date of Birth</Text>
+              {dob && (
+                <View style={styles.dobBadge}>
+                  <Text style={styles.dobBadgeText}>{calculateAge(dob)} yrs</Text>
+                </View>
+              )}
+            </View>
+            <Pressable style={styles.inputRow} onPress={() => setShowDobPicker(true)}>
+              <Calendar size={18} color={theme.colors.primary} />
+              <Text style={[styles.inputFlex, !dob && !dobInputText && { color: theme.colors.mutedForeground }]}>
+                {dob
+                  ? dob.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })
+                  : dobInputText || 'Select your Date of Birth (DD / MM / YYYY)'}
+              </Text>
+            </Pressable>
+            <Text style={styles.genderHint}>
+              🔒 Used for 18+ verification and community safety.
+            </Text>
+          </View>
+
           {/* Base Location Selector */}
           <View style={styles.field}>
             <Text style={styles.label}>Where are you based?</Text>
@@ -385,9 +455,9 @@ export default function OnboardingScreen() {
 
           {/* CTA */}
           <Pressable
-            style={[styles.button, (!fullName.trim() || !gender || !baseLocationName) && styles.buttonDisabled]}
+            style={[styles.button, (!fullName.trim() || !gender || (!dob && !dobInputText.trim()) || !baseLocationName) && styles.buttonDisabled]}
             onPress={handleSubmit}
-            disabled={loading || !fullName.trim() || !gender || !baseLocationName}
+            disabled={loading || !fullName.trim() || !gender || (!dob && !dobInputText.trim()) || !baseLocationName}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -438,6 +508,84 @@ export default function OnboardingScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Date Picker Modal for iOS */}
+      {Platform.OS === 'ios' && (
+        <Modal visible={showDobPicker} transparent animationType="fade" onRequestClose={() => setShowDobPicker(false)}>
+          <View style={styles.datePickerModalOverlay}>
+            <View style={styles.datePickerModalContent}>
+              <View style={styles.datePickerModalHeader}>
+                <Text style={styles.datePickerModalTitle}>Select Date of Birth</Text>
+                <Pressable onPress={() => setShowDobPicker(false)}>
+                  <Text style={styles.datePickerDoneText}>Done</Text>
+                </Pressable>
+              </View>
+              <DateTimePicker
+                value={dob || new Date(2000, 0, 1)}
+                mode="date"
+                display="spinner"
+                maximumDate={new Date()}
+                minimumDate={new Date(1920, 0, 1)}
+                onChange={(event, date) => {
+                  if (date) {
+                    setDob(date);
+                    setDobInputText(date.toISOString().split('T')[0]);
+                  }
+                }}
+                themeVariant="dark"
+                textColor={theme.colors.foreground}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Date Picker for Android */}
+      {Platform.OS === 'android' && showDobPicker && (
+        <DateTimePicker
+          value={dob || new Date(2000, 0, 1)}
+          mode="date"
+          display="default"
+          maximumDate={new Date()}
+          minimumDate={new Date(1920, 0, 1)}
+          onChange={(event, date) => {
+            setShowDobPicker(false);
+            if (date) {
+              setDob(date);
+              setDobInputText(date.toISOString().split('T')[0]);
+            }
+          }}
+        />
+      )}
+
+      {/* Date Picker fallback for Web */}
+      {Platform.OS === 'web' && showDobPicker && (
+        <Modal visible={showDobPicker} transparent animationType="fade" onRequestClose={() => setShowDobPicker(false)}>
+          <View style={styles.datePickerModalOverlay}>
+            <View style={[styles.datePickerModalContent, { padding: 20 }]}>
+              <View style={styles.datePickerModalHeader}>
+                <Text style={styles.datePickerModalTitle}>Enter Date of Birth (YYYY-MM-DD)</Text>
+                <Pressable onPress={() => setShowDobPicker(false)}>
+                  <Text style={styles.datePickerDoneText}>Done</Text>
+                </Pressable>
+              </View>
+              <TextInput
+                style={[styles.input, { marginTop: 12 }]}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={theme.colors.mutedForeground}
+                value={dobInputText}
+                onChangeText={(text) => {
+                  setDobInputText(text);
+                  const parsed = new Date(text);
+                  if (!isNaN(parsed.getTime())) {
+                    setDob(parsed);
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
 
       {/* ID Verification & Auto-Fill Modal */}
       <Modal
@@ -1018,5 +1166,44 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.bold,
     fontSize: 14,
     color: '#FFF',
+  },
+  dobBadge: {
+    backgroundColor: theme.colors.secondary,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  dobBadgeText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 11,
+    color: theme.colors.primary,
+  },
+  datePickerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  datePickerModalContent: {
+    backgroundColor: theme.colors.card,
+    paddingBottom: 40,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  datePickerModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  datePickerModalTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.foreground,
+    fontSize: 18,
+  },
+  datePickerDoneText: {
+    color: theme.colors.primary,
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 16,
   },
 });

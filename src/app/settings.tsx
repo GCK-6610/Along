@@ -103,8 +103,8 @@ export default function SettingsScreen() {
               <Shield size={16} color={theme.colors.primary} />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowTitle}>Privacy & Reach Defaults</Text>
-              <Text style={styles.rowSub}>Default plan visibility preferences</Text>
+              <Text style={styles.rowTitle}>Public Profile & Privacy</Text>
+              <Text style={styles.rowSub}>Stats, ratings, location & bio visibility</Text>
             </View>
             <ChevronRight size={16} color={theme.colors.mutedForeground} />
           </Pressable>

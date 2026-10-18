@@ -1,3 +1,10 @@
+export interface PrivacySettings {
+  show_stats?: boolean;
+  show_ratings?: boolean;
+  show_location?: boolean;
+  show_bio?: boolean;
+}
+
 export interface Profile {
   id: string;
   full_name: string;
@@ -5,6 +12,11 @@ export interface Profile {
   bio?: string;
   avatar_url?: string;
   is_verified: boolean;
+  dob?: string;
+  base_location_name?: string;
+  base_latitude?: number;
+  base_longitude?: number;
+  privacy_settings?: PrivacySettings;
   events_hosted?: number;
   events_attended?: number;
   rating_avg?: number;

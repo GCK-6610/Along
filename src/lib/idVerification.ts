@@ -14,6 +14,7 @@ export interface VerificationResult {
   success: boolean;
   extractedName?: string;
   extractedGender?: 'male' | 'female' | 'other';
+  extractedDob?: string;
   documentType?: string;
   idNumberMasked?: string;
   isRealHuman: boolean;
@@ -150,6 +151,7 @@ export async function verifyIdAndLiveness(
             success: true,
             extractedName: data.extractedName,
             extractedGender: data.extractedGender || 'female',
+            extractedDob: data.extractedDob,
             documentType: data.documentType || 'Government ID',
             idNumberMasked: data.idNumberMasked || 'ID-VERIFIED',
             isRealHuman: true,

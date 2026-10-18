@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import { router } from 'expo-router';
 import { MapPin, Users, Calendar, CheckCircle2, Clock } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { Plan } from '../../types';
@@ -64,7 +65,15 @@ export default function PlanCard({ plan, onPress }: PlanCardProps) {
     >
       {/* Header: Host & Category Tag */}
       <View style={styles.header}>
-        <View style={styles.hostInfo}>
+        <Pressable
+          style={({ pressed }) => [styles.hostInfo, pressed && { opacity: 0.75 }]}
+          onPress={(e) => {
+            e.stopPropagation();
+            if (host?.id) {
+              router.push(`/user/${host.id}`);
+            }
+          }}
+        >
           {host?.avatar_url ? (
             <Image
               source={{ uri: host.avatar_url, headers: { Accept: 'image/png' } }}
@@ -104,7 +113,7 @@ export default function PlanCard({ plan, onPress }: PlanCardProps) {
               )}
             </View>
           </View>
-        </View>
+        </Pressable>
 
         <View style={[styles.categoryBadge, { backgroundColor: tagTheme.bg, borderColor: tagTheme.border }]}>
           <Text style={[styles.categoryText, { color: tagTheme.text }]}>

@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { usePlans } from '../../hooks/usePlans';
 import { supabase } from '../../lib/supabase';
 import PlanCard from '../../components/features/PlanCard';
+import { calculateAge } from '../../utils/age';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -72,7 +73,14 @@ export default function ProfileScreen() {
               </>
             )}
           </View>
-          <Text style={styles.phone}>{user?.phone || ''}</Text>
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Text style={styles.phone}>{user?.phone || ''}</Text>
+            {profile?.dob && (
+              <View style={styles.agePill}>
+                <Text style={styles.agePillText}>{calculateAge(profile.dob)} yrs</Text>
+              </View>
+            )}
+          </View>
           {profile?.base_location_name && (
             <Text style={[styles.phone, { marginTop: 4 }]}>📍 {profile.base_location_name}</Text>
           )}
@@ -181,6 +189,8 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xl, color: theme.colors.foreground, letterSpacing: -0.3 },
   phone: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
+  agePill: { backgroundColor: theme.colors.secondary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 },
+  agePillText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 10, color: theme.colors.primary },
   statsRow: { flexDirection: 'row', backgroundColor: theme.colors.card, borderRadius: theme.borderRadius.lg, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.sm, alignItems: 'center' },
   statItem: { flex: 1, alignItems: 'center', gap: 2 },
   statDivider: { width: 1, height: 28, backgroundColor: theme.colors.border },

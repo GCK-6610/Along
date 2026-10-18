@@ -6,6 +6,7 @@ import { theme } from '../../styles/theme';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { safeBack } from '../../utils/navigation';
+import { calculateAge } from '../../utils/age';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -49,6 +50,19 @@ export default function UserProfileScreen() {
     );
   }
 
+  const age = profile.dob ? calculateAge(profile.dob) : null;
+  const privacy = profile.privacy_settings || {
+    show_stats: true,
+    show_ratings: true,
+    show_location: true,
+    show_bio: true,
+  };
+
+  const showStats = privacy.show_stats !== false;
+  const showRatings = privacy.show_ratings !== false;
+  const showLocation = privacy.show_location !== false;
+  const showBio = privacy.show_bio !== false;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -68,18 +82,25 @@ export default function UserProfileScreen() {
           </View>
         )}
         
+        {/* Name and Verification - Always Visible */}
         <View style={styles.nameRow}>
           <Text style={styles.name}>{profile.full_name || 'Member'}</Text>
           {profile.is_verified && <CheckCircle2 size={20} color="#1D9BF0" />}
         </View>
         
+        {/* Info Pills: Age (Always Visible), Gender, Location (Privacy-Controlled) */}
         <View style={styles.infoPills}>
+          {age !== null && (
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>{age} yrs</Text>
+            </View>
+          )}
           {profile.gender && (
             <View style={styles.pill}>
               <Text style={styles.pillText}>{profile.gender === 'male' ? 'Male' : profile.gender === 'female' ? 'Female' : 'Other'}</Text>
             </View>
           )}
-          {profile.base_location_name && (
+          {showLocation && profile.base_location_name && (
             <View style={[styles.pill, styles.pillOutline]}>
               <MapPin size={12} color={theme.colors.primary} />
               <Text style={styles.pillText}>{profile.base_location_name}</Text>
@@ -87,39 +108,50 @@ export default function UserProfileScreen() {
           )}
         </View>
 
-        {/* Community Stats */}
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{profile.events_attended || 0}</Text>
-            <Text style={styles.statLabel}>Attended</Text>
+        {/* Community Stats & Ratings - Privacy-Controlled */}
+        {(showStats || showRatings) && (
+          <View style={styles.statsRow}>
+            {showStats && (
+              <>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{profile.events_attended || 0}</Text>
+                  <Text style={styles.statLabel}>Attended</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{profile.events_hosted || 0}</Text>
+                  <Text style={styles.statLabel}>Hosted</Text>
+                </View>
+                {showRatings && <View style={styles.statDivider} />}
+              </>
+            )}
+            {showRatings && (
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: '#D97706' }]}>
+                  {profile.rating_count && profile.rating_count > 0
+                    ? `★ ${profile.rating_avg ? profile.rating_avg.toFixed(1) : '5.0'}`
+                    : '⭐ New'}
+                </Text>
+                <Text style={styles.statLabel}>
+                  {profile.rating_count && profile.rating_count > 0 ? `${profile.rating_count} ratings` : 'Community'}
+                </Text>
+              </View>
+            )}
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{profile.events_hosted || 0}</Text>
-            <Text style={styles.statLabel}>Hosted</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: '#D97706' }]}>
-              {profile.rating_count && profile.rating_count > 0
-                ? `★ ${profile.rating_avg ? profile.rating_avg.toFixed(1) : '5.0'}`
-                : '⭐ New'}
-            </Text>
-            <Text style={styles.statLabel}>
-              {profile.rating_count && profile.rating_count > 0 ? `${profile.rating_count} ratings` : 'Community'}
-            </Text>
-          </View>
-        </View>
+        )}
 
-        {profile.bio ? (
-          <View style={styles.bioBox}>
-            <Text style={styles.bioTitle}>About</Text>
-            <Text style={styles.bio}>{profile.bio}</Text>
-          </View>
-        ) : (
-          <Text style={[styles.bio, { color: theme.colors.mutedForeground, fontStyle: 'italic', marginTop: 12 }]}>
-            No bio provided yet.
-          </Text>
+        {/* Bio Section - Privacy-Controlled */}
+        {showBio && (
+          profile.bio ? (
+            <View style={styles.bioBox}>
+              <Text style={styles.bioTitle}>About</Text>
+              <Text style={styles.bio}>{profile.bio}</Text>
+            </View>
+          ) : (
+            <Text style={[styles.bio, { color: theme.colors.mutedForeground, fontStyle: 'italic', marginTop: 12 }]}>
+              No bio provided yet.
+            </Text>
+          )
         )}
       </ScrollView>
     </SafeAreaView>

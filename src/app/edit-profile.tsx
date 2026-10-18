@@ -27,6 +27,7 @@ export default function EditProfileScreen() {
   const [initialIsVerified, setInitialIsVerified] = useState(false);
   const [bio, setBio] = useState('');
   const [gender, setGender] = useState<string | null>(null);
+  const [dob, setDob] = useState<string | null>(null);
   const [avatar, setAvatar] = useState(ALL_AVATARS[0]?.url || '');
   const [isModalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,6 +105,7 @@ export default function EditProfileScreen() {
           setBaseLocationName(data.base_location_name || '');
           setBaseLatitude(data.base_latitude || null);
           setBaseLongitude(data.base_longitude || null);
+          setDob(data.dob || null);
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -323,6 +325,26 @@ export default function EditProfileScreen() {
               Gender cannot be modified after registration to protect community safety and verify same-gender hangouts.
             </Text>
           </View>
+
+          {dob && (
+            <View style={styles.field}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={styles.label}>Date of Birth</Text>
+                <View style={styles.lockedBadge}>
+                  <Lock size={12} color={theme.colors.mutedForeground} />
+                  <Text style={styles.lockedBadgeText}>Verified 18+</Text>
+                </View>
+              </View>
+              <View style={styles.lockedGenderBox}>
+                <Text style={styles.lockedGenderValue}>
+                  📅 {new Date(dob).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}
+                </Text>
+              </View>
+              <Text style={styles.lockedHelperText}>
+                Date of birth is verified to maintain our 18+ adult tag-along community standards.
+              </Text>
+            </View>
+          )}
           
           <View style={styles.field}>
             <Text style={styles.label}>Base Location</Text>
