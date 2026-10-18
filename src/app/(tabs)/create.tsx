@@ -82,7 +82,11 @@ export default function CreateScreen() {
   );
 
   const handleNLPParse = async () => {
-    const promptToParse = nlpInput.trim() || 'Coffee & startup chat at Roastery Coffee House tomorrow 5pm for 4 people';
+    if (!nlpInput.trim()) {
+      Alert.alert('Empty Description', 'Please type a quick plan description first (e.g. "Morning coffee at Blue Tokai tomorrow 9am for 4 people").');
+      return;
+    }
+    const promptToParse = nlpInput.trim();
     setParsing(true);
     setAiSuccessBadge(false);
     

@@ -73,10 +73,7 @@ export default function OnboardingScreen() {
     try {
       const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
       if (!apiKey) {
-        setLocationResults([
-          { place_id: '1', structured_formatting: { main_text: locationQuery, secondary_text: 'Bandra West, Mumbai' }, geometry: { location: { lat: 19.0596, lng: 72.8295 } } },
-          { place_id: '2', structured_formatting: { main_text: 'Kondapur', secondary_text: 'Hyderabad' }, geometry: { location: { lat: 17.4614, lng: 78.3639 } } },
-        ]);
+        setLocationResults([]);
         return;
       }
 

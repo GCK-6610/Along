@@ -25,21 +25,17 @@ serve(async (req: any) => {
     const apiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!apiKey) {
-      // Fallback response if no OpenAI key is set in edge function
       return new Response(
         JSON.stringify({
-          success: true,
-          extractedName: 'Verified Member',
-          extractedGender: 'female',
-          documentType: 'Digital Identity Document',
-          idNumberMasked: 'XXXX-XXXX-9912',
-          isRealHuman: true,
-          faceMatched: true,
-          confidenceScore: 0.94,
+          success: false,
+          error: 'OPENAI_API_KEY secret is not configured in Supabase Edge Functions',
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
+
+    const cleanIdBase64 = String(idImageBase64).replace(/^data:image\/[a-z]+;base64,/, '');
+    const cleanSelfieBase64 = String(selfieImageBase64).replace(/^data:image\/[a-z]+;base64,/, '');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -81,14 +77,14 @@ Respond ONLY with a JSON object:
               {
                 type: 'image_url',
                 image_url: {
-                  url: `data:image/jpeg;base64,${idImageBase64}`,
+                  url: `data:image/jpeg;base64,${cleanIdBase64}`,
                   detail: 'low'
                 }
               },
               {
                 type: 'image_url',
                 image_url: {
-                  url: `data:image/jpeg;base64,${selfieImageBase64}`,
+                  url: `data:image/jpeg;base64,${cleanSelfieBase64}`,
                   detail: 'low'
                 }
               }
@@ -100,7 +96,29 @@ Respond ONLY with a JSON object:
       })
     });
 
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('OpenAI vision error:', errText);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `OpenAI vision verification failed (${response.status}): ${errText}`,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
     const data = await response.json();
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Unexpected response from OpenAI vision model',
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
     const result = JSON.parse(data.choices[0].message.content);
 
     return new Response(
@@ -109,7 +127,7 @@ Respond ONLY with a JSON object:
     );
   } catch (error: any) {
     return new Response(
-      JSON.stringify({ error: error.message || 'Verification failed' }),
+      JSON.stringify({ success: false, error: error.message || 'Verification failed' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

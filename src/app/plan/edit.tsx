@@ -89,11 +89,7 @@ export default function EditPlanScreen() {
     try {
       const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
       if (!apiKey) {
-        console.log('No Google Places API Key found. Returning mock data.');
-        setLocationResults([
-          { place_id: '1', structured_formatting: { main_text: locationQuery, secondary_text: 'Bandra West, Mumbai, Maharashtra' } },
-          { place_id: '2', structured_formatting: { main_text: locationQuery + ' Cafe', secondary_text: 'Koramangala, Bengaluru, Karnataka' } },
-        ]);
+        setLocationResults([]);
         return;
       }
 
@@ -110,7 +106,11 @@ export default function EditPlanScreen() {
   };
 
   const handleNLPParse = async () => {
-    const promptToParse = nlpInput.trim() || 'Morning run at Lodhi Gardens tomorrow 6am for 4 people';
+    if (!nlpInput.trim()) {
+      Alert.alert('Empty Description', 'Please type a quick plan description first (e.g. "Morning run at Lodhi Gardens tomorrow 6am for 4 people").');
+      return;
+    }
+    const promptToParse = nlpInput.trim();
     setParsing(true);
     setAiSuccessBadge(false);
     
