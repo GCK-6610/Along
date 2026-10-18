@@ -110,6 +110,13 @@ export default function CreateScreen() {
     setAiModalVisible(false);
   };
 
+  const closeAiModal = () => {
+    if (!aiSuccessBadge) {
+      setNlpInput('');
+    }
+    setAiModalVisible(false);
+  };
+
   const handlePostPlan = async () => {
     if (!title.trim() || !venue.trim() || !user) {
       Alert.alert('Missing Details', 'Please provide a title and location for your plan.');
@@ -131,7 +138,7 @@ export default function CreateScreen() {
         host_id: user.id,
         title: title.trim(),
         tags: finalTags,
-        description: nlpInput.trim() || `Group hangout at ${venue.trim()}`,
+        description: (aiSuccessBadge && nlpInput.trim()) ? nlpInput.trim() : `Group hangout at ${venue.trim()}`,
         venue: venue.trim(),
         distance_km: 1.0,
         scheduled_at: scheduledAt.toISOString(),
@@ -457,16 +464,16 @@ export default function CreateScreen() {
       </Modal>
 
       {/* AI Auto-fill Modal */}
-      <Modal visible={isAiModalVisible} transparent animationType="slide" onRequestClose={() => setAiModalVisible(false)}>
+      <Modal visible={isAiModalVisible} transparent animationType="slide" onRequestClose={closeAiModal}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, justifyContent: 'flex-end' }}>
-          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setAiModalVisible(false)} />
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={closeAiModal} />
           <View style={{ backgroundColor: theme.colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: theme.spacing.lg, paddingBottom: 40, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Zap size={20} color={theme.colors.primary} />
                 <Text style={{ fontFamily: theme.typography.fontFamily.bold, fontSize: 18, color: theme.colors.foreground }}>AI Auto-fill</Text>
               </View>
-              <Pressable style={styles.iconBtn} onPress={() => setAiModalVisible(false)}>
+              <Pressable style={styles.iconBtn} onPress={closeAiModal}>
                 <X size={20} color={theme.colors.foreground} />
               </Pressable>
             </View>

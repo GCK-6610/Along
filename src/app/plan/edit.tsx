@@ -25,6 +25,7 @@ export default function EditPlanScreen() {
   const [isLoading, setIsLoading] = useState(true);
   
   const [nlpInput, setNlpInput] = useState('');
+  const [planDescription, setPlanDescription] = useState('');
   const [parsing, setParsing] = useState(false);
   const [aiSuccessBadge, setAiSuccessBadge] = useState(false);
   const [title, setTitle] = useState('');
@@ -77,7 +78,7 @@ export default function EditPlanScreen() {
           setCapacity(String(data.capacity));
           setGenderReach(data.gender_reach);
           setScheduledAt(new Date(data.scheduled_at));
-          setNlpInput(data.description || '');
+          setPlanDescription(data.description || '');
         }
       } catch (err) {
         console.error('Error fetching plan:', err);
@@ -142,7 +143,7 @@ export default function EditPlanScreen() {
       const { error } = await supabase.from('plans').update({
         title,
         tags,
-        description: nlpInput || 'A great new plan created by me.',
+        description: (aiSuccessBadge && nlpInput.trim()) ? nlpInput.trim() : (planDescription || `Group hangout at ${venue.trim()}`),
         venue,
         scheduled_at: scheduledAt.toISOString(),
         capacity: parseInt(capacity),
