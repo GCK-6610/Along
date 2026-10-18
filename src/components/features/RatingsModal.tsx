@@ -100,7 +100,7 @@ export default function RatingsModal({
                       ) : (
                         <View style={[styles.avatar, { backgroundColor: theme.colors.muted }]} />
                       )}
-                      <Text style={styles.name}>{a.full_name}</Text>
+                      <Text style={styles.name}>{a.full_name || 'Member'}</Text>
                     </View>
                     
                     <View style={styles.starsRow}>

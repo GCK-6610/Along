@@ -435,7 +435,7 @@ export default function PlanDetailsScreen() {
                       <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
                     )}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text style={styles.requestName}>{p.full_name}</Text>
+                    <Text style={styles.requestName}>{p.full_name || 'Member'}</Text>
                     {p.is_verified && <CheckCircle2 size={13} color="#1D9BF0" />}
                   </View>
                 </Pressable>
@@ -471,7 +471,7 @@ export default function PlanDetailsScreen() {
                 ) : (
                   <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
                 )}
-                <Text style={styles.attendeeName}>{p.full_name}{p.id === user?.id ? ' (You)' : ''}</Text>
+                <Text style={styles.attendeeName}>{p.full_name || 'Member'}{p.id === user?.id ? ' (You)' : ''}</Text>
                 {p.is_verified && <CheckCircle2 size={13} color="#1D9BF0" />}
                 {p.id === host?.id && <Text style={styles.hostBadge}>HOST</Text>}
               </Pressable>
@@ -481,7 +481,7 @@ export default function PlanDetailsScreen() {
                   <Pressable 
                     style={{ padding: 6, backgroundColor: theme.colors.background, borderRadius: 20, borderWidth: 1, borderColor: theme.colors.border }}
                     onPress={() => {
-                      Alert.alert('Remove User', `Are you sure you want to remove ${p.full_name}?`, [
+                      Alert.alert('Remove User', `Are you sure you want to remove ${p.full_name || 'this member'}?`, [
                         { text: 'Cancel', style: 'cancel' },
                         { text: 'Remove', style: 'destructive', onPress: () => handleReject(p.id) }
                       ]);

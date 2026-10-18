@@ -24,10 +24,21 @@ export function useChat(planId: string) {
   // Prime the current user's profile in cache
   useEffect(() => {
     if (session?.user) {
-      profileCache.current.set(session.user.id, {
-        full_name: session.user.user_metadata?.full_name || 'You',
-        avatar_url: session.user.user_metadata?.avatar_url || '',
-      });
+      supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', session.user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data && data.full_name) {
+            profileCache.current.set(session.user.id, data);
+          } else {
+            profileCache.current.set(session.user.id, {
+              full_name: session.user.user_metadata?.full_name || 'You',
+              avatar_url: session.user.user_metadata?.avatar_url || '',
+            });
+          }
+        });
     }
   }, [session]);
 

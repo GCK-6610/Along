@@ -69,7 +69,7 @@ export default function UserProfileScreen() {
         )}
         
         <View style={styles.nameRow}>
-          <Text style={styles.name}>{profile.full_name}</Text>
+          <Text style={styles.name}>{profile.full_name || 'Member'}</Text>
           {profile.is_verified && <CheckCircle2 size={20} color="#1D9BF0" />}
         </View>
         

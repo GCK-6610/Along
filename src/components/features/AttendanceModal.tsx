@@ -86,7 +86,7 @@ export default function AttendanceModal({ visible, onClose, planId, hostId, atte
                     ) : (
                       <View style={[styles.avatar, { backgroundColor: theme.colors.muted }]} />
                     )}
-                    <Text style={[styles.name, isPresent && styles.namePresent]}>{a.full_name}</Text>
+                    <Text style={[styles.name, isPresent && styles.namePresent]}>{a.full_name || 'Member'}</Text>
                     <View style={[styles.toggleBtn, isPresent && styles.toggleBtnPresent]}>
                       {isPresent && <Check size={14} color="#fff" />}
                     </View>

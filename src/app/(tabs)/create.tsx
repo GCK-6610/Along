@@ -107,19 +107,31 @@ export default function CreateScreen() {
   };
 
   const handlePostPlan = async () => {
-    if (!title || !venue || tags.length === 0 || !user) return;
+    if (!title.trim() || !venue.trim() || !user) {
+      Alert.alert('Missing Details', 'Please provide a title and location for your plan.');
+      return;
+    }
     setIsPosting(true);
     
     try {
+      let finalTags = [...tags];
+      if (tagInput.trim()) {
+        const clean = tagInput.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (clean && !finalTags.includes(clean)) finalTags.push(clean);
+      }
+      if (finalTags.length === 0) {
+        finalTags = ['hangout'];
+      }
+
       const { data: newPlan, error } = await supabase.from('plans').insert({
         host_id: user.id,
-        title,
-        tags,
-        description: nlpInput || 'A great new plan created by me.',
-        venue: venue,
+        title: title.trim(),
+        tags: finalTags,
+        description: nlpInput.trim() || `Group hangout at ${venue.trim()}`,
+        venue: venue.trim(),
         distance_km: 1.0,
         scheduled_at: scheduledAt.toISOString(),
-        capacity: parseInt(capacity),
+        capacity: parseInt(capacity) || 4,
         gender_reach: genderReach,
         embedding: embedding,
         latitude: mapCoordinate.latitude,
@@ -311,9 +323,9 @@ export default function CreateScreen() {
         {/* Sticky Bottom Bar */}
         <View style={styles.stickyBottom}>
           <Pressable 
-            style={[styles.postBtn, (!title || !venue || tags.length === 0 || isPosting) && styles.postBtnDisabled]} 
+            style={[styles.postBtn, (!title.trim() || !venue.trim() || isPosting) && styles.postBtnDisabled]} 
             onPress={handlePostPlan} 
-            disabled={!title || !venue || tags.length === 0 || isPosting}
+            disabled={!title.trim() || !venue.trim() || isPosting}
           >
             {isPosting ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.postBtnText}>Post Plan</Text>}
           </Pressable>
