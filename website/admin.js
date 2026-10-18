@@ -371,9 +371,7 @@ async function fetchApplications() {
   const tbody = document.getElementById('applicationsTableBody');
   try {
     const { data, error } = await supabaseClient
-      .from('venue_partner_applications')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .rpc('get_admin_partner_applications', { admin_secret: PASSKEY });
 
     if (error) throw error;
     allApplications = data || [];
@@ -432,9 +430,11 @@ function renderApplicationsTable(apps) {
 window.updateAppStatus = async (id, status) => {
   try {
     const { error } = await supabaseClient
-      .from('venue_partner_applications')
-      .update({ status })
-      .eq('id', id);
+      .rpc('update_admin_partner_application_status', {
+        admin_secret: PASSKEY,
+        target_id: id,
+        new_status: status
+      });
     if (error) throw error;
     await fetchApplications();
     updateDashboardStats();
