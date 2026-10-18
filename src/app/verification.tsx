@@ -2,20 +2,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
 import { ArrowLeft, CheckCircle2, Shield, Camera, Upload, Sparkles, RefreshCw, FileText, Check, UserCheck } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { safeBack } from '../utils/navigation';
-import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult } from '../lib/idVerification';
+import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult, IdAsset } from '../lib/idVerification';
 
 export default function VerificationScreen() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   
-  const [idDocAsset, setIdDocAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [selfieAsset, setSelfieAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [idDocAsset, setIdDocAsset] = useState<IdAsset | null>(null);
+  const [selfieAsset, setSelfieAsset] = useState<IdAsset | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStepText, setVerificationStepText] = useState('Verifying credentials...');
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);

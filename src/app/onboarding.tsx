@@ -12,8 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { theme } from '../styles/theme';
 import { Image, Modal } from 'react-native';
 import { Edit2, X, MapPin, Shield, CheckCircle2, Camera, Upload, Sparkles, RefreshCw } from 'lucide-react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult } from '../lib/idVerification';
+import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult, IdAsset } from '../lib/idVerification';
 import Fuse from 'fuse.js';
 import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
 
@@ -40,8 +39,8 @@ export default function OnboardingScreen() {
   const [isVerified, setIsVerified] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
   const [isVerificationModalVisible, setVerificationModalVisible] = useState(false);
-  const [idDocAsset, setIdDocAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [selfieAsset, setSelfieAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [idDocAsset, setIdDocAsset] = useState<IdAsset | null>(null);
+  const [selfieAsset, setSelfieAsset] = useState<IdAsset | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
   // Guard: if unauthenticated, cannot onboard
