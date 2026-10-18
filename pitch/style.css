@@ -92,6 +92,15 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.brand-section:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
 }
 
 .brand-logo-mark {
