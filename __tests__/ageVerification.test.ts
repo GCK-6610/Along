@@ -1,4 +1,4 @@
-import { calculateAge, is18Plus, formatDobToIso } from '../src/utils/age';
+import { calculateAge, is18Plus, formatDobToIso, getTimeUntil18 } from '../src/utils/age';
 
 describe('18+ Age Verification & Privacy Rules', () => {
   it('correctly calculates age for adult over 18', () => {
@@ -33,6 +33,38 @@ describe('18+ Age Verification & Privacy Rules', () => {
   it('formats Date of Birth to ISO YYYY-MM-DD correctly', () => {
     const dob = new Date(2002, 4, 15); // May 15, 2002
     expect(formatDobToIso(dob)).toBe('2002-05-15');
+  });
+
+  describe('getTimeUntil18 Countdown Calculation', () => {
+    it('returns isAdult true if already 18 or older', () => {
+      const ref = new Date(2026, 9, 18);
+      const dob = new Date(2000, 0, 1);
+      const res = getTimeUntil18(dob, ref);
+      expect(res.isAdult).toBe(true);
+      expect(res.totalDays).toBe(0);
+    });
+
+    it('returns cool countdown for someone turning 18 in 5 days', () => {
+      const ref = new Date(2026, 9, 18);
+      // Birthday is Oct 23, 2008 -> turns 18 on Oct 23, 2026 (5 days away)
+      const dob = new Date(2008, 9, 23);
+      const res = getTimeUntil18(dob, ref);
+      expect(res.isAdult).toBe(false);
+      expect(res.totalDays).toBe(5);
+      expect(res.coolAlertTitle).toContain('Almost there!');
+      expect(res.coolMessage).toContain('5 more days');
+    });
+
+    it('returns cool countdown for someone turning 18 in over a year', () => {
+      const ref = new Date(2026, 9, 18);
+      // 16 years old
+      const dob = new Date(2010, 9, 18);
+      const res = getTimeUntil18(dob, ref);
+      expect(res.isAdult).toBe(false);
+      expect(res.years).toBe(2);
+      expect(res.coolAlertTitle).toContain('Hold tight, champ!');
+      expect(res.coolMessage).toContain('2 years');
+    });
   });
 
   it('verifies privacy settings configuration rules', () => {

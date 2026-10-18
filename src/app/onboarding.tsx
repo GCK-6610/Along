@@ -16,7 +16,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult, IdAsset } from '../lib/idVerification';
 import Fuse from 'fuse.js';
 import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
-import { calculateAge, is18Plus, formatDobToIso } from '../utils/age';
+import { calculateAge, is18Plus, formatDobToIso, getTimeUntil18 } from '../utils/age';
 
 const ALL_AVATARS = AVATAR_CATALOG.flatMap(c => c.items);
 const fuse = new Fuse(ALL_AVATARS, {
@@ -203,12 +203,9 @@ export default function OnboardingScreen() {
       return;
     }
 
-    const calculatedAge = calculateAge(selectedDob);
-    if (calculatedAge < 18) {
-      Alert.alert(
-        'Age Requirement',
-        'Along is an 18+ community network. You must be at least 18 years old to join Along.'
-      );
+    const timeInfo = getTimeUntil18(selectedDob);
+    if (!timeInfo.isAdult) {
+      Alert.alert(timeInfo.coolAlertTitle, timeInfo.coolMessage);
       return;
     }
 
@@ -424,8 +421,10 @@ export default function OnboardingScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={styles.label}>Date of Birth</Text>
               {dob && (
-                <View style={styles.dobBadge}>
-                  <Text style={styles.dobBadgeText}>{calculateAge(dob)} yrs</Text>
+                <View style={[styles.dobBadge, !is18Plus(dob) && { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+                  <Text style={[styles.dobBadgeText, !is18Plus(dob) && { color: '#EF4444' }]}>
+                    {is18Plus(dob) ? `${calculateAge(dob)} yrs` : `⏳ 18 in ${getTimeUntil18(dob).totalDays} days`}
+                  </Text>
                 </View>
               )}
             </View>
