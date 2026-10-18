@@ -39,6 +39,7 @@ export default function HomeScreen() {
   const { hotspots, isLoading: hotspotsLoading, refetch: refetchHotspots } = useHotspots();
 
   const fetchLiveLocation = async () => {
+    let hasProfileLocation = false;
     // 1. First sync with profile base location so coordinates and city are instantly available
     if (user) {
       const { data: profile } = await supabase
@@ -51,6 +52,7 @@ export default function HomeScreen() {
         setFirstName(profile.full_name.split(' ')[0]);
       }
       if (profile?.base_location_name) {
+        hasProfileLocation = true;
         const parts = profile.base_location_name.split(',');
         const formatted = parts.length > 1 ? `${parts[0].trim()}, ${parts[1].trim()}` : profile.base_location_name.trim();
         setLocationName(formatted);
@@ -60,29 +62,32 @@ export default function HomeScreen() {
       }
     }
 
-    // 2. Query device GPS
+    // 2. Query device GPS coordinates for proximity sorting
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         if (loc?.coords) {
           setUserLocation({ lat: loc.coords.latitude, lon: loc.coords.longitude });
-          try {
-            const [geo] = await Location.reverseGeocodeAsync({
-              latitude: loc.coords.latitude,
-              longitude: loc.coords.longitude
-            });
-            if (geo) {
-              const locality = geo.subregion || geo.district || geo.city || geo.region;
-              const city = geo.city || geo.region;
-              if (locality && city && locality !== city) {
-                setLocationName(`${locality}, ${city}`);
-              } else if (city) {
-                setLocationName(city);
+          // Only reverse geocode as fallback if the user has no base location set in profile
+          if (!hasProfileLocation) {
+            try {
+              const [geo] = await Location.reverseGeocodeAsync({
+                latitude: loc.coords.latitude,
+                longitude: loc.coords.longitude
+              });
+              if (geo) {
+                const locality = geo.subregion || geo.district || geo.city || geo.region;
+                const city = geo.city || geo.region;
+                if (locality && city && locality !== city) {
+                  setLocationName(`${locality}, ${city}`);
+                } else if (city) {
+                  setLocationName(city);
+                }
               }
+            } catch {
+              // Keep fallback
             }
-          } catch {
-            // Keep profile locationName if reverse geocode fails
           }
         }
       }

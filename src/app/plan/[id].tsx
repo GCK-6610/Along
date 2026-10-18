@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Pressable, Image, Alert, Modal, TextInput, Linking, Platform, Share
+  Pressable, Image, Alert, Modal, TextInput, Linking, Platform, Share, KeyboardAvoidingView
 } from 'react-native';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle, Star } from 'lucide-react-native';
@@ -26,6 +26,7 @@ export default function PlanDetailsScreen() {
   const { plan, isLoading, requestToJoin, leavePlan, updateJoinRequest } = usePlan(id as string);
   const [isJoinModalVisible, setJoinModalVisible] = useState(false);
   const [introText, setIntroText] = useState('');
+  const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
   
   const [isAttendanceVisible, setAttendanceVisible] = useState(false);
   const [isRatingsVisible, setRatingsVisible] = useState(false);
@@ -125,18 +126,33 @@ export default function PlanDetailsScreen() {
   };
 
   const submitJoinRequest = async () => {
-    if (!user || !plan) return;
+    if (!user || !plan || isSubmittingJoin) return;
+    setIsSubmittingJoin(true);
     try {
       await requestToJoin(introText);
       triggerRequestSentNotification();
-      // Notify the host via Push Notification Edge Function
+      // Notify the host via Push Notification Edge Function asynchronously
       supabase.functions.invoke('notify-host', {
         body: { plan_id: plan.id, user_id: user.id }
-      });
+      }).catch((e) => console.log('Edge function error (ignored):', e));
+
       setJoinModalVisible(false);
       setIntroText('');
+      Alert.alert('Request Sent', 'Your request to tag along has been sent to the host!');
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      if (
+        e?.code === '23505' ||
+        e?.message?.includes('duplicate key') ||
+        e?.message?.includes('plan_participants_pkey')
+      ) {
+        setJoinModalVisible(false);
+        setIntroText('');
+        Alert.alert('Request Pending', 'Your request to join is already pending with the host.');
+      } else {
+        Alert.alert('Could Not Send Request', e?.message || 'Something went wrong. Please try again.');
+      }
+    } finally {
+      setIsSubmittingJoin(false);
     }
   };
 
@@ -542,12 +558,34 @@ export default function PlanDetailsScreen() {
       )}
 
       {/* Intro Message Modal */}
-      <Modal visible={isJoinModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+      <Modal 
+        visible={isJoinModalVisible} 
+        transparent 
+        animationType="slide"
+        onRequestClose={() => {
+          if (!isSubmittingJoin) setJoinModalVisible(false);
+        }}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+          style={styles.modalOverlay}
+        >
+          <Pressable 
+            style={StyleSheet.absoluteFill} 
+            onPress={() => {
+              if (!isSubmittingJoin) setJoinModalVisible(false);
+            }} 
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Request to Join</Text>
-              <Pressable onPress={() => setJoinModalVisible(false)} style={styles.modalClose}>
+              <Pressable 
+                onPress={() => {
+                  if (!isSubmittingJoin) setJoinModalVisible(false);
+                }} 
+                style={styles.modalClose}
+                disabled={isSubmittingJoin}
+              >
                 <X size={20} color={theme.colors.foreground} />
               </Pressable>
             </View>
@@ -560,16 +598,24 @@ export default function PlanDetailsScreen() {
               onChangeText={setIntroText}
               multiline
               maxLength={200}
+              editable={!isSubmittingJoin}
             />
             <Pressable 
-              style={[styles.submitRequestBtn, !introText.trim() && styles.submitRequestBtnDisabled]}
+              style={[
+                styles.submitRequestBtn, 
+                (!introText.trim() || isSubmittingJoin) && styles.submitRequestBtnDisabled
+              ]}
               onPress={submitJoinRequest}
-              disabled={!introText.trim()}
+              disabled={!introText.trim() || isSubmittingJoin}
             >
-              <Text style={styles.submitRequestBtnText}>Send Request</Text>
+              {isSubmittingJoin ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.submitRequestBtnText}>Send Request</Text>
+              )}
             </Pressable>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
       
       {/* Attendance & Ratings Modals */}
@@ -746,12 +792,12 @@ const styles = StyleSheet.create({
   markCompleteBtn: { flex: 1, backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: theme.colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
+  modalContent: { backgroundColor: theme.colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 36 : 24 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   modalTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 20, color: theme.colors.foreground },
   modalClose: { padding: 4 },
-  modalSubtitle: { fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground, marginBottom: 20 },
-  modalInput: { backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 12, padding: 16, fontFamily: theme.typography.fontFamily.regular, fontSize: 15, color: theme.colors.foreground, height: 120, textAlignVertical: 'top', marginBottom: 24 },
+  modalSubtitle: { fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground, marginBottom: 16 },
+  modalInput: { backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 12, padding: 16, fontFamily: theme.typography.fontFamily.regular, fontSize: 15, color: theme.colors.foreground, height: 100, textAlignVertical: 'top', marginBottom: 16 },
   submitRequestBtn: { backgroundColor: theme.colors.primary, paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
   submitRequestBtnDisabled: { backgroundColor: theme.colors.muted },
   submitRequestBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 16, color: '#fff' },

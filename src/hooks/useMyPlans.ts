@@ -9,7 +9,7 @@ export function useMyPlans() {
     queryKey: ['my_plans'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return { hostedPlans: EMPTY_PLANS, joinedPlans: EMPTY_PLANS };
+      if (!session?.user) return { hostedPlans: EMPTY_PLANS, joinedPlans: EMPTY_PLANS, requestedPlans: EMPTY_PLANS };
 
       const userId = session.user.id;
 
@@ -26,8 +26,8 @@ export function useMyPlans() {
 
       if (hostedError) throw hostedError;
 
-      // Fetch Joined Plans
-      const { data: joinedData, error: joinedError } = await supabase
+      // Fetch Joined and Requested Plans
+      const { data: participantData, error: participantError } = await supabase
         .from('plan_participants')
         .select(`
           plan_id,
@@ -42,7 +42,7 @@ export function useMyPlans() {
         .neq('join_status', 'left')
         .neq('join_status', 'removed');
 
-      if (joinedError) throw joinedError;
+      if (participantError) throw participantError;
 
       // Format hosted
       const formattedHosted = (hostedData || []).map(p => ({
@@ -54,23 +54,36 @@ export function useMyPlans() {
         }))
       }));
 
-      // Format joined (excluding hosted ones)
-      const formattedJoined = (joinedData || [])
-        .map(jp => jp.plans)
-        .filter((p: any) => p && p.host_id !== userId) // Don't duplicate hosted plans
-        .map((p: any) => ({
+      const formatParticipantPlan = (jp: any) => {
+        const p = jp.plans;
+        if (!p || p.host_id === userId) return null;
+        return {
           ...p,
           participants_list: p.participants_list?.map((pp: any) => ({
             ...pp,
             ...pp.profiles,
             id: pp.user_id
           }))
-        }))
-        .sort((a: any, b: any) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+        };
+      };
+
+      // Filter approved vs pending
+      const formattedJoined = (participantData || [])
+        .filter(jp => jp.join_status === 'approved')
+        .map(formatParticipantPlan)
+        .filter((p): p is Plan => Boolean(p))
+        .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+
+      const formattedRequested = (participantData || [])
+        .filter(jp => jp.join_status === 'pending')
+        .map(formatParticipantPlan)
+        .filter((p): p is Plan => Boolean(p))
+        .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
       return {
         hostedPlans: (formattedHosted.length > 0 ? formattedHosted : EMPTY_PLANS) as Plan[],
-        joinedPlans: (formattedJoined.length > 0 ? formattedJoined : EMPTY_PLANS) as Plan[]
+        joinedPlans: (formattedJoined.length > 0 ? formattedJoined : EMPTY_PLANS) as Plan[],
+        requestedPlans: (formattedRequested.length > 0 ? formattedRequested : EMPTY_PLANS) as Plan[]
       };
     }
   });
@@ -78,6 +91,7 @@ export function useMyPlans() {
   return { 
     hostedPlans: queryResult.data?.hostedPlans ?? EMPTY_PLANS, 
     joinedPlans: queryResult.data?.joinedPlans ?? EMPTY_PLANS, 
+    requestedPlans: queryResult.data?.requestedPlans ?? EMPTY_PLANS,
     isLoading: queryResult.isLoading, 
     error: queryResult.error?.message || null, 
     refetch: queryResult.refetch 
