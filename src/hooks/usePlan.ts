@@ -81,7 +81,8 @@ export function usePlan(planId: string) {
 
   return { 
     plan: queryResult.data || null, 
-    isLoading: queryResult.isLoading, 
+    isLoading: !planId || queryResult.isLoading || queryResult.isPending, 
+    isFetched: queryResult.isFetched,
     error: queryResult.error?.message || null, 
     refetch: refetchPlan, 
     requestToJoin, 

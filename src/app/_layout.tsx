@@ -11,6 +11,7 @@ import {
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { LogBox, View, ActivityIndicator } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { theme } from '../styles/theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,22 +30,17 @@ LogBox.ignoreLogs([
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-export const unstable_settings = {
-  initialRouteName: '(tabs)',
-};
-
 function RootNavigator() {
   const { session, loading, hasProfile } = useAuth();
   const segments = useSegments();
   const navigationState = useRootNavigationState();
   const lastTargetRef = useRef<string | null>(null);
+  const splashHiddenRef = useRef(false);
 
   useEffect(() => {
-    // Only navigate once root navigation container is mounted and ready
+    // Only navigate once root navigation container is mounted and auth has finished loading
     if (!navigationState?.key || loading) return;
 
-    SplashScreen.hideAsync().catch(() => {});
-    
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboarding = segments[0] === 'onboarding';
 
@@ -63,11 +59,17 @@ function RootNavigator() {
       lastTargetRef.current = target;
       router.replace(target as any);
     }
+
+    // Dismiss splash screen only once auth is resolved and initial route is dispatched
+    if (!splashHiddenRef.current) {
+      splashHiddenRef.current = true;
+      SplashScreen.hideAsync().catch(() => {});
+    }
   }, [session, loading, hasProfile, segments, navigationState?.key]);
 
-  // NEVER return null here! The root layout must render a Navigator on the first render.
+  // Render Stack with consistent theme background to eliminate dark frame flashes
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0A0A0F' } }} initialRouteName="(tabs)">
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
@@ -83,24 +85,18 @@ export default function RootLayout() {
     Outfit_700Bold,
   });
 
-  useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [loaded, error]);
-
-  // Fallback timer: ensure splash never stays locked if font or network stalls
+  // Fallback safety timer: ensure splash never stays permanently locked if network stalls
   useEffect(() => {
     const timer = setTimeout(() => {
       SplashScreen.hideAsync().catch(() => {});
-    }, 1500);
+    }, 4000);
     return () => clearTimeout(timer);
   }, []);
 
   if (!loaded && !error) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0A0A0F', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#FF5A5F" />
+      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }

@@ -6,7 +6,7 @@ import {
   ActivityIndicator, Alert, ScrollView, FlatList
 
 } from 'react-native';
-import { router, Redirect } from 'expo-router';
+import { router } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../styles/theme';
@@ -63,15 +63,7 @@ export default function OnboardingScreen() {
   const [locationResults, setLocationResults] = useState<any[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
 
-  // Guard: if unauthenticated, cannot onboard
-  if (!authLoading && !session) {
-    return <Redirect href="/(auth)/login" />;
-  }
 
-  // Guard: if already completed profile, go to main feed
-  if (!authLoading && session && hasProfile) {
-    return <Redirect href="/(tabs)" />;
-  }
 
   const searchLocation = async () => {
     if (!locationQuery.trim()) return;

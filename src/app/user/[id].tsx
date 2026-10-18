@@ -29,7 +29,7 @@ export default function UserProfileScreen() {
     fetchProfile();
   }, [id]);
 
-  if (isLoading) {
+  if (isLoading || !id) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />

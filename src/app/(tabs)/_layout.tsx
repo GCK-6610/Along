@@ -1,5 +1,5 @@
-import { Tabs, Redirect } from 'expo-router';
-import { View, Platform, ActivityIndicator } from 'react-native';
+import { Tabs } from 'expo-router';
+import { View, Platform } from 'react-native';
 import { theme } from '../../styles/theme';
 import { Home, Compass, PlusCircle, MessageCircle, User } from 'lucide-react-native';
 import { useEffect } from 'react';
@@ -12,7 +12,7 @@ export const unstable_settings = {
 };
 
 export default function TabLayout() {
-  const { user, session, loading, hasProfile } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
@@ -23,25 +23,6 @@ export default function TabLayout() {
       });
     }
   }, [user]);
-
-  // While auth state is resolving from storage, render branded loader
-  if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
-
-  // Guard: if not authenticated, redirect immediately to login
-  if (!session) {
-    return <Redirect href="/(auth)/login" />;
-  }
-
-  // Guard: if authenticated but onboarding profile not completed, redirect to onboarding
-  if (!hasProfile) {
-    return <Redirect href="/onboarding" />;
-  }
 
   return (
     <Tabs

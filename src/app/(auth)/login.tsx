@@ -5,26 +5,15 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert
 
 } from 'react-native';
-import { router, Redirect } from 'expo-router';
+import { router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { theme } from '../../styles/theme';
 import { useAuth } from '../../context/AuthContext';
 import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 
 export default function LoginScreen() {
-  const { session, loading: authLoading, hasProfile } = useAuth();
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Guard: if already logged in with a profile, redirect to main tabs
-  if (!authLoading && session && hasProfile) {
-    return <Redirect href="/(tabs)" />;
-  }
-
-  // Guard: if logged in but onboarding pending, redirect to onboarding
-  if (!authLoading && session && !hasProfile) {
-    return <Redirect href="/onboarding" />;
-  }
 
   const handleSendOTP = async () => {
     const fullPhone = `+91${phone.replace(/\s/g, '')}`;
