@@ -15,6 +15,7 @@ import { usePlan } from '../../hooks/usePlan';
 import { supabase } from '../../lib/supabase';
 import AttendanceModal from '../../components/features/AttendanceModal';
 import RatingsModal from '../../components/features/RatingsModal';
+import VenueRatingModal from '../../components/features/VenueRatingModal';
 import { PlanParticipant } from '../../types';
 import { safeBack } from '../../utils/navigation';
 
@@ -33,6 +34,9 @@ export default function PlanDetailsScreen() {
   const [myRating, setMyRating] = useState<number | null>(null);
   const [isAttendeeRatingVisible, setAttendeeRatingVisible] = useState(false);
 
+  const [myVenueRating, setMyVenueRating] = useState<number | null>(null);
+  const [isVenueRatingVisible, setVenueRatingVisible] = useState(false);
+
   const fetchMyRating = useCallback(async () => {
     if (!user?.id || !id) return;
     const { data } = await supabase
@@ -47,12 +51,27 @@ export default function PlanDetailsScreen() {
     }
   }, [user?.id, id]);
 
+  const fetchMyVenueRating = useCallback(async () => {
+    if (!user?.id || !id) return;
+    const { data } = await supabase
+      .from('venue_ratings')
+      .select('score')
+      .eq('plan_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (data?.score) {
+      setMyVenueRating(data.score);
+    }
+  }, [user?.id, id]);
+
   useFocusEffect(
     useCallback(() => {
       if (plan?.status === 'completed') {
         fetchMyRating();
+        fetchMyVenueRating();
       }
-    }, [plan?.status, fetchMyRating])
+    }, [plan?.status, fetchMyRating, fetchMyVenueRating])
   );
 
   if (isLoading) {
@@ -307,6 +326,36 @@ export default function PlanDetailsScreen() {
                 </View>
               )
             )}
+
+            {/* Venue Rating Card for Completed Hangout */}
+            {(isHost || isJoined) && (
+              myVenueRating ? (
+                <View style={[styles.ratingSummaryBox, { marginTop: 10 }]}>
+                  <Text style={styles.ratingSummaryLabel}>You rated {venue}:</Text>
+                  <View style={styles.starsRow}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={22}
+                        color={star <= myVenueRating ? '#FFD32A' : theme.colors.border}
+                        fill={star <= myVenueRating ? '#FFD32A' : 'transparent'}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                <View style={[styles.ratePromptCard, { marginTop: 10 }]}>
+                  <View style={styles.ratePromptInfo}>
+                    <Text style={styles.ratePromptTitle}>Rate the Venue</Text>
+                    <Text style={styles.ratePromptSub}>How was {venue} for this group hangout? Help update the Along Community Rating.</Text>
+                  </View>
+                  <Pressable style={[styles.rateHostBtn, { backgroundColor: '#FF5C00' }]} onPress={() => setVenueRatingVisible(true)}>
+                    <Star size={16} color="#fff" fill="#fff" />
+                    <Text style={styles.rateHostBtnText}>Rate Venue</Text>
+                  </Pressable>
+                </View>
+              )
+            )}
           </View>
         )}
 
@@ -540,12 +589,21 @@ export default function PlanDetailsScreen() {
             visible={isRatingsVisible}
             onClose={() => {
               setRatingsVisible(false);
-              safeBack('/(tabs)');
+              if (!myVenueRating) {
+                setTimeout(() => setVenueRatingVisible(true), 400);
+              } else {
+                safeBack('/(tabs)');
+              }
             }}
             planId={plan.id}
             raterId={user.id}
             hostId={user.id}
             ratees={ratees}
+            onSuccess={() => {
+              if (!myVenueRating) {
+                setTimeout(() => setVenueRatingVisible(true), 400);
+              }
+            }}
           />
 
           {/* Attendee Rating Host */}
@@ -559,9 +617,24 @@ export default function PlanDetailsScreen() {
               ratees={[host as PlanParticipant]}
               title={`Rate ${host.full_name || 'the Host'}`}
               subtitle={`How was your hangout experience with ${host.full_name || 'the host'}?`}
-              onSuccess={fetchMyRating}
+              onSuccess={() => {
+                fetchMyRating();
+                if (!myVenueRating) {
+                  setTimeout(() => setVenueRatingVisible(true), 400);
+                }
+              }}
             />
           )}
+
+          {/* Venue Rating Modal for Both Host & Attendees */}
+          <VenueRatingModal
+            visible={isVenueRatingVisible}
+            onClose={() => setVenueRatingVisible(false)}
+            planId={plan.id}
+            venueName={plan.venue}
+            userId={user.id}
+            onSuccess={fetchMyVenueRating}
+          />
         </>
       )}
 
