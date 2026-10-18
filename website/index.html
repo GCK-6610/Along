@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Along — Something is Cooking</title>
-  <meta name="description" content="Tag along with people around you. Spontaneous real-world hangouts are coming soon.">
+  <title>Along | Something is Cooking</title>
+  <meta name="description" content="Tag along with people around you. Spontaneous real-world hangouts are coming straight to your mobile.">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -25,6 +25,7 @@
       <span class="badge-cooking">Cooking Soon 🔥</span>
     </a>
     <div class="nav-actions">
+      <a href="#partner-apply" class="nav-partner-link">Venue Partners ↓</a>
       <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle Theme" aria-label="Toggle Theme">
         🌓
       </button>
@@ -34,19 +35,50 @@
   <!-- Main Content -->
   <main class="container">
     
-    <!-- Hero / Vibey Teaser -->
+    <!-- Hero / Main Consumer Attraction -->
     <section class="hero-section">
-      <div class="hero-pill">⚡ Early Access • Launching Soon</div>
+      <div class="hero-pill">⚡ Early Access • In Closed Testing</div>
       <h1 class="hero-title">
         Something is<br>
         <span>cooking.</span>
       </h1>
       <p class="hero-sub">
-        Tag along with people around you. No ghosted group chats, no flakes. Spontaneous real-world hangouts are coming soon.
+        Coming straight to your mobile. No swipe fatigue, no dead WhatsApp groups. Spontaneous real-world plans with verified people around you in 15 minutes.
       </p>
+
+      <!-- 3 Catchy Consumer Value Highlights -->
+      <div class="hero-features-grid">
+        <div class="hero-feature-card">
+          <div class="hfc-icon">🏸</div>
+          <div class="hfc-title">Activity-First Plans</div>
+          <div class="hfc-desc">Specialty coffee, badminton doubles, board game cafes, or sunset walks. Join plans you actually enjoy.</div>
+        </div>
+
+        <div class="hero-feature-card">
+          <div class="hfc-icon">📍</div>
+          <div class="hfc-title">15-Min Proximity Radar</div>
+          <div class="hfc-desc">Discover what's happening right around your block right now, not days in advance.</div>
+        </div>
+
+        <div class="hero-feature-card">
+          <div class="hfc-icon">🛡️</div>
+          <div class="hfc-title">Verified Micro-Groups</div>
+          <div class="hfc-desc">Real humans, intimate 2 to 4 person tables, and 1-tap bill split with zero awkward math.</div>
+        </div>
+      </div>
+
+      <!-- Live App Status Indicator -->
+      <div class="mobile-app-banner">
+        <span class="dot-live"></span>
+        <span>Along for iOS & Android • Rolling Out Soon</span>
+      </div>
     </section>
 
-    <!-- Venue Partner Card -->
+    <!-- Venue Partner Anchor Section (Docked Cleanly at Bottom) -->
+    <div class="partner-jump-section" id="partner-apply">
+      <span style="font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--text-dim); text-transform: uppercase;">FOR LOCAL VENUES & COMMERCIAL PARTNERS</span>
+    </div>
+
     <section class="venue-card">
       <div class="venue-card-header">
         <h2 class="venue-card-title">Partner with Along</h2>

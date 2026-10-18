@@ -1,5 +1,5 @@
 // ==========================================================================
-// Along — Executive Investor & Partner Deck Controller (10 Slides)
+// Along | Executive Investor & Partner Deck Controller (10 Slides)
 // Clean presentation mode, keyboard navigation, and interactive mockup switcher
 // ==========================================================================
 
@@ -41,7 +41,7 @@ function goToSlide(index) {
   const totNum = String(TOTAL_SLIDES).padStart(2, '0');
 
   if (slideBadgeDisplay) {
-    slideBadgeDisplay.textContent = `${curNum} / ${totNum} — ${slideTitle}`;
+    slideBadgeDisplay.textContent = `${curNum} / ${totNum} | ${slideTitle}`;
   }
 
   if (progressBar) {

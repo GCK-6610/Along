@@ -64,6 +64,10 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -239,6 +243,102 @@ body::before {
   max-width: 540px;
   margin: 0 auto;
   line-height: 1.6;
+.nav-partner-link {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-partner-link:hover {
+  color: var(--primary);
+  border-color: var(--border-accent);
+}
+
+.hero-tagline {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-top: 14px;
+  margin-bottom: 8px;
+}
+
+.hero-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 36px;
+  text-align: left;
+}
+
+.hero-feature-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-feature-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-accent);
+}
+
+.hfc-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.hfc-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.hfc-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.mobile-app-banner {
+  margin-top: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  box-shadow: var(--card-shadow);
+}
+
+.mobile-app-banner .dot-live {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 10px #10B981;
+}
+
+.partner-jump-section {
+  margin: 60px 0 24px;
+  text-align: center;
+  padding-top: 24px;
+  border-top: 1px dashed var(--border-subtle);
 }
 
 /* Venue Card & Form */
