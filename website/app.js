@@ -56,12 +56,14 @@ function initFormHandler() {
     submitBtn.innerText = 'Submitting Application...';
 
     const formData = new FormData(form);
+    const emailValue = formData.get('contact_email');
     const payload = {
       venue_name: formData.get('venue_name'),
       category: formData.get('category'),
       city_area: formData.get('city_area'),
       contact_name: formData.get('contact_name'),
       contact_phone: formData.get('contact_phone'),
+      contact_email: emailValue && emailValue.trim() ? emailValue.trim() : null,
       proposed_perk: formData.get('proposed_perk') || null,
       status: 'pending'
     };

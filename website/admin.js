@@ -412,6 +412,7 @@ function renderApplicationsTable(apps) {
         <td style="font-size: 12px;">
           <div style="font-weight: 700;">${escapeHtml(app.contact_name)}</div>
           <div style="color: var(--amber); font-size: 11px;">📞 ${escapeHtml(app.contact_phone)}</div>
+          ${app.contact_email ? `<div style="color: var(--text-dim); font-size: 11px;">✉️ ${escapeHtml(app.contact_email)}</div>` : ''}
         </td>
         <td style="max-width: 200px; font-size: 12px; color: #FFD32A;">
           ${escapeHtml(app.proposed_perk || 'None specified')}

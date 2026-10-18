@@ -43,15 +43,6 @@ export default function OnboardingScreen() {
   const [selfieAsset, setSelfieAsset] = useState<IdAsset | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Guard: if unauthenticated, cannot onboard
-  if (!authLoading && !session) {
-    return <Redirect href="/(auth)/login" />;
-  }
-
-  // Guard: if already completed profile, go to main feed
-  if (!authLoading && session && hasProfile) {
-    return <Redirect href="/(tabs)" />;
-  }
   const [avatar, setAvatar] = useState(ALL_AVATARS[0]?.url || '');
   const [isModalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,6 +56,16 @@ export default function OnboardingScreen() {
   const [locationQuery, setLocationQuery] = useState('');
   const [locationResults, setLocationResults] = useState<any[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+
+  // Guard: if unauthenticated, cannot onboard
+  if (!authLoading && !session) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  // Guard: if already completed profile, go to main feed
+  if (!authLoading && session && hasProfile) {
+    return <Redirect href="/(tabs)" />;
+  }
 
   const searchLocation = async () => {
     if (!locationQuery.trim()) return;
