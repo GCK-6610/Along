@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
-import { ArrowLeft, Bell, Users, MapPin, Info } from 'lucide-react-native';
+import { ArrowLeft, Bell, Users, MapPin, Info, CheckCircle2 } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -47,7 +47,6 @@ export default function NotificationsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchNotifications();
-      // Mark as read after 2 seconds of being on this screen
       const timer = setTimeout(() => {
         if (user) {
           supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false).then();
@@ -65,8 +64,10 @@ export default function NotificationsScreen() {
   const renderIcon = (type: string) => {
     switch (type) {
       case 'join_request': return <Users size={20} color={theme.colors.primary} />;
+      case 'join_approved': return <CheckCircle2 size={20} color="#10B981" />;
+      case 'join_rejected': return <Info size={20} color={theme.colors.mutedForeground} />;
       case 'plan_update': return <MapPin size={20} color="#1D9BF0" />;
-      default: return <Info size={20} color={theme.colors.mutedForeground} />;
+      default: return <Bell size={20} color={theme.colors.primary} />;
     }
   };
 
@@ -95,12 +96,16 @@ export default function NotificationsScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
           contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 40 }}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', marginTop: 100 }}>
-              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Bell size={40} color={theme.colors.mutedForeground} />
+            <View style={{ alignItems: 'center', marginTop: 80, paddingHorizontal: 32 }}>
+              <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: theme.colors.border }}>
+                <Bell size={40} color={theme.colors.primary} />
               </View>
-              <Text style={{ fontFamily: theme.typography.fontFamily.bold, fontSize: 18, color: theme.colors.foreground, marginBottom: 8 }}>All caught up!</Text>
-              <Text style={{ fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground }}>No new notifications at the moment.</Text>
+              <Text style={{ fontFamily: theme.typography.fontFamily.bold, fontSize: 20, color: theme.colors.foreground, marginBottom: 8, textAlign: 'center' }}>
+                You're all caught up! ✨
+              </Text>
+              <Text style={{ fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground, textAlign: 'center', lineHeight: 22 }}>
+                Join requests from members, hangout approvals, and activity updates will pop up right here.
+              </Text>
             </View>
           }
           renderItem={({ item }) => (

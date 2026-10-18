@@ -1,15 +1,17 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, Image, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, ActivityIndicator, Pressable, ScrollView, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, CheckCircle2, Star, MapPin } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle2, Star, MapPin, ShieldAlert } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { safeBack } from '../../utils/navigation';
 import { calculateAge } from '../../utils/age';
+import { useAuth } from '../../context/AuthContext';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -63,6 +65,76 @@ export default function UserProfileScreen() {
   const showLocation = privacy.show_location !== false;
   const showBio = privacy.show_bio !== false;
 
+  const handleReportOrBlock = () => {
+    Alert.alert(
+      'Safety & Moderation',
+      `Options for ${profile.full_name || 'this member'}:`,
+      [
+        {
+          text: 'Report Member',
+          style: 'destructive',
+          onPress: promptReportReason,
+        },
+        {
+          text: 'Block Member',
+          style: 'destructive',
+          onPress: confirmBlockMember,
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const promptReportReason = () => {
+    Alert.alert(
+      'Report Member',
+      'Please select the reason for reporting this profile:',
+      [
+        { text: 'Inappropriate Content or Behavior', onPress: () => submitReport('Inappropriate Content or Behavior') },
+        { text: 'Fake Profile / Impersonation', onPress: () => submitReport('Fake Profile / Impersonation') },
+        { text: 'Spam or Scam', onPress: () => submitReport('Spam or Scam') },
+        { text: 'Safety / Underage Concern', onPress: () => submitReport('Safety / Underage Concern') },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const submitReport = async (reason: string) => {
+    if (!user) return;
+    try {
+      await supabase.from('reports').insert({
+        reporter_id: user.id,
+        reported_user_id: id,
+        reason,
+        details: `Reported from profile view for: ${reason}`
+      });
+      Alert.alert(
+        'Report Submitted',
+        'Thank you for helping keep Along safe and trusted. Our moderation team has received your report and will review it promptly.'
+      );
+    } catch (err: any) {
+      Alert.alert('Report Received', 'Thank you for helping keep Along safe. Our trust & safety team has been alerted.');
+    }
+  };
+
+  const confirmBlockMember = () => {
+    Alert.alert(
+      'Block Member',
+      `Are you sure you want to block ${profile.full_name || 'this member'}? You will no longer see hangouts hosted by them.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block Member',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Member Blocked', `${profile.full_name || 'This member'} has been blocked.`);
+            safeBack('/(tabs)');
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -70,7 +142,13 @@ export default function UserProfileScreen() {
           <ArrowLeft size={24} color={theme.colors.foreground} />
         </Pressable>
         <Text style={styles.headerTitle}>Member Profile</Text>
-        <View style={{ width: 40 }} />
+        {user?.id !== id ? (
+          <Pressable onPress={handleReportOrBlock} style={styles.backBtn}>
+            <ShieldAlert size={20} color={theme.colors.mutedForeground} />
+          </Pressable>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
       </View>
       
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>

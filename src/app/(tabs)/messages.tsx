@@ -197,9 +197,19 @@ export default function MessagesScreen() {
               </View>
             ) : (
               <View style={styles.empty}>
-                <Text style={styles.emptyEmoji}>💬</Text>
-                <Text style={styles.emptyTitle}>No conversations yet</Text>
-                <Text style={styles.emptySubtitle}>Join a plan to start chatting with others</Text>
+                <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center', marginBottom: 12, borderWidth: 1, borderColor: theme.colors.border }}>
+                  <MessageCircle size={40} color={theme.colors.primary} />
+                </View>
+                <Text style={styles.emptyTitle}>No Active Hangout Chats</Text>
+                <Text style={styles.emptySubtitle}>
+                  When you host a hangout or get approved to tag along, your group chat room will appear here.
+                </Text>
+                <Pressable
+                  style={styles.emptyBtn}
+                  onPress={() => router.push('/(tabs)')}
+                >
+                  <Text style={styles.emptyBtnText}>Explore Hangouts →</Text>
+                </Pressable>
               </View>
             )
           }
@@ -248,8 +258,20 @@ const styles = StyleSheet.create({
   chatPreview: { fontFamily: theme.typography.fontFamily.regular, fontSize: 14, color: theme.colors.mutedForeground, flex: 1 },
   badge: { backgroundColor: theme.colors.primary, borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   badgeText: { fontFamily: theme.typography.fontFamily.bold, fontSize: 11, color: '#fff' },
-  empty: { alignItems: 'center', paddingTop: 80, gap: theme.spacing.sm },
+  empty: { alignItems: 'center', paddingTop: 80, gap: theme.spacing.sm, paddingHorizontal: theme.spacing.lg },
   emptyEmoji: { fontSize: 44 },
-  emptyTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: theme.colors.foreground },
-  emptySubtitle: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, textAlign: 'center', paddingHorizontal: theme.spacing.xl },
+  emptyTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.lg, color: theme.colors.foreground },
+  emptySubtitle: { fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, textAlign: 'center', paddingHorizontal: theme.spacing.xl, lineHeight: 18 },
+  emptyBtn: {
+    marginTop: 12,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: theme.borderRadius.pill,
+  },
+  emptyBtnText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.sm,
+    color: '#fff',
+  },
 });

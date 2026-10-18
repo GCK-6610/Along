@@ -2,16 +2,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Pressable, Switch, Alert, Linking
-
+  Pressable, Switch, Alert, Linking, ActivityIndicator
 } from 'react-native';
 import { router } from 'expo-router';
 import {
   ArrowLeft, User, Phone, Shield, Bell, MapPin,
-  HelpCircle, LogOut, ChevronRight, CheckCircle2
+  HelpCircle, LogOut, ChevronRight, CheckCircle2, Trash2
 } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { safeBack } from '../utils/navigation';
 
 export default function SettingsScreen() {
@@ -20,6 +20,7 @@ export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [chatAlertsEnabled, setChatAlertsEnabled] = useState(true);
   const [locationEnabled, setLocationEnabled] = useState(true);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -33,6 +34,33 @@ export default function SettingsScreen() {
           onPress: async () => {
             await signOut();
             router.replace('/(auth)/login');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account Permanently?',
+      'Are you sure you want to permanently delete your Along account? All your profile information, created plans, and messages will be permanently erased. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Forever',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeletingAccount(true);
+            try {
+              const { error } = await supabase.rpc('delete_user_account');
+              if (error) throw error;
+              await signOut();
+              router.replace('/(auth)/login');
+            } catch (err: any) {
+              Alert.alert('Deletion Failed', err.message || 'Could not delete your account. Please try again.');
+            } finally {
+              setIsDeletingAccount(false);
+            }
           },
         },
       ]
@@ -187,6 +215,28 @@ export default function SettingsScreen() {
           <Text style={styles.logoutText}>Sign Out</Text>
         </Pressable>
 
+        {/* Section 6: Danger Zone */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionHeader, { color: theme.colors.destructive }]}>DANGER ZONE</Text>
+          <Pressable
+            style={styles.deleteAccountBtn}
+            onPress={handleDeleteAccount}
+            disabled={isDeletingAccount}
+          >
+            {isDeletingAccount ? (
+              <ActivityIndicator color={theme.colors.destructive} />
+            ) : (
+              <>
+                <Trash2 size={16} color={theme.colors.destructive} />
+                <Text style={styles.deleteAccountText}>Delete Account Permanently</Text>
+              </>
+            )}
+          </Pressable>
+          <Text style={styles.deleteAccountHint}>
+            Permanently erases your profile, created hangouts, and messages.
+          </Text>
+        </View>
+
         <Text style={styles.versionText}>Along v1.0.0 • Build 2026.08</Text>
       </ScrollView>
     </SafeAreaView>
@@ -226,5 +276,28 @@ const styles = StyleSheet.create({
     paddingVertical: 14, borderWidth: 1, borderColor: theme.colors.primary,
   },
   logoutText: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: theme.colors.primary },
+  deleteAccountBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  deleteAccountText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.sm,
+    color: theme.colors.destructive,
+  },
+  deleteAccountHint: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.mutedForeground,
+    textAlign: 'center',
+    marginTop: 4,
+  },
   versionText: { textAlign: 'center', fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, marginTop: 8 },
 });

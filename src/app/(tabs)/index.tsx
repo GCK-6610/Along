@@ -225,11 +225,13 @@ export default function HomeScreen() {
           </View>
         ) : plans.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyEmoji}>📍</Text>
+            <View style={styles.emptyIconRing}>
+              <Compass size={32} color={theme.colors.primary} />
+            </View>
             <Text style={styles.emptyTitle}>No plans nearby yet</Text>
-            <Text style={styles.emptySubtitle}>Be the first to create a hangout or explore trending hotspots!</Text>
+            <Text style={styles.emptySubtitle}>Be the first to create a hangout or explore trending hotspots nearby!</Text>
             <Pressable style={styles.emptyBtn} onPress={() => router.push('/create')}>
-              <Text style={styles.emptyBtnText}>Create a Plan</Text>
+              <Text style={styles.emptyBtnText}>Host a Hangout 🚀</Text>
             </Pressable>
           </View>
         ) : (
@@ -447,13 +449,23 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 48,
+    paddingVertical: 44,
     paddingHorizontal: theme.spacing.xl,
-    gap: theme.spacing.sm,
+    marginHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    gap: theme.spacing.xs,
   },
-  emptyEmoji: {
-    fontSize: 40,
-    marginBottom: 4,
+  emptyIconRing: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 71, 87, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   emptyTitle: {
     fontFamily: theme.typography.fontFamily.bold,
@@ -467,12 +479,13 @@ const styles = StyleSheet.create({
     color: theme.colors.mutedForeground,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 6,
   },
   emptyBtn: {
-    marginTop: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
     borderRadius: theme.borderRadius.pill,
   },
   emptyBtnText: {
