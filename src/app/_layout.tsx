@@ -1,5 +1,5 @@
 import 'react-native-url-polyfill/auto';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Stack, router, useSegments, useRootNavigationState } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -37,6 +37,7 @@ function RootNavigator() {
   const { session, loading, hasProfile } = useAuth();
   const segments = useSegments();
   const navigationState = useRootNavigationState();
+  const lastTargetRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Only navigate once root navigation container is mounted and ready
@@ -47,17 +48,20 @@ function RootNavigator() {
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboarding = segments[0] === 'onboarding';
 
+    let target: string | null = null;
     if (!session) {
-      // If not logged in and not already in auth group, go to login
-      if (!inAuthGroup) router.replace('/(auth)/login');
+      if (!inAuthGroup) target = '/(auth)/login';
     } else if (!hasProfile) {
-      // If logged in but no profile, go to onboarding
-      if (!inOnboarding) router.replace('/onboarding');
+      if (!inOnboarding) target = '/onboarding';
     } else {
-      // If logged in and has profile, and we are on an auth or onboarding screen, send to tabs
       if (inAuthGroup || inOnboarding) {
-        router.replace('/(tabs)');
+        target = '/(tabs)';
       }
+    }
+
+    if (target && target !== lastTargetRef.current) {
+      lastTargetRef.current = target;
+      router.replace(target as any);
     }
   }, [session, loading, hasProfile, segments, navigationState?.key]);
 

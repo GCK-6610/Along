@@ -32,18 +32,77 @@ const TRENDING_TAGS = [
 ];
 
 export default function ExploreScreen() {
+  const { user } = useAuth();
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
+  const [mapCenter, setMapCenter] = useState<{lat: number, lon: number} | null>(null);
   const mapRef = useRef<MapView>(null);
-  const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans(userLocation?.lat, userLocation?.lon);
+  const regionTimer = useRef<any>(null);
+
+  const activeLat = mapCenter?.lat ?? userLocation?.lat;
+  const activeLon = mapCenter?.lon ?? userLocation?.lon;
+  const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans(activeLat, activeLon);
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      let location = await Location.getCurrentPositionAsync({});
-      setUserLocation({ lat: location.coords.latitude, lon: location.coords.longitude });
+      // 1. Sync immediately with user profile base location so map centers in their city
+      if (user) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('base_latitude, base_longitude')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (prof?.base_latitude && prof?.base_longitude) {
+          const loc = { lat: prof.base_latitude, lon: prof.base_longitude };
+          setUserLocation(prev => prev || loc);
+          setMapCenter(prev => prev || loc);
+        }
+      }
+
+      // 2. Query live GPS
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          if (location?.coords) {
+            const gpsLoc = { lat: location.coords.latitude, lon: location.coords.longitude };
+            setUserLocation(gpsLoc);
+            setMapCenter(prev => prev || gpsLoc);
+          }
+        }
+      } catch (err) {
+        console.warn('GPS location error in explore:', err);
+      }
     })();
-  }, []);
+  }, [user]);
+
+  const handleRegionChangeComplete = (region: any) => {
+    if (regionTimer.current) clearTimeout(regionTimer.current);
+    regionTimer.current = setTimeout(() => {
+      setMapCenter({ lat: region.latitude, lon: region.longitude });
+    }, 400);
+  };
+
+  const handleRecenter = async () => {
+    let target = userLocation;
+    if (!target) {
+      try {
+        let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (location?.coords) {
+          target = { lat: location.coords.latitude, lon: location.coords.longitude };
+          setUserLocation(target);
+        }
+      } catch {}
+    }
+    if (target && mapRef.current) {
+      setMapCenter(target);
+      mapRef.current.animateToRegion({
+        latitude: target.lat,
+        longitude: target.lon,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }, 500);
+    }
+  };
 
   const darkMapStyle = [
     {
@@ -299,14 +358,15 @@ export default function ExploreScreen() {
             style={styles.mapGraphic}
             provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
             showsUserLocation={true}
-            showsMyLocationButton={true}
+            showsMyLocationButton={false}
             zoomEnabled={true}
             scrollEnabled={true}
+            onRegionChangeComplete={handleRegionChangeComplete}
             initialRegion={{
-              latitude: userLocation?.lat || 28.5921,
-              longitude: userLocation?.lon || 77.2250,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
+              latitude: userLocation?.lat || 17.4375,
+              longitude: userLocation?.lon || 78.3845,
+              latitudeDelta: 0.08,
+              longitudeDelta: 0.08,
             }}
             // Apple Maps (iOS default) dark mode
             userInterfaceStyle="dark"
@@ -411,6 +471,17 @@ export default function ExploreScreen() {
               </Pressable>
             </>
           )}
+
+          {/* Recenter / My Location FAB */}
+          <Pressable
+            style={[
+              styles.recenterFab,
+              Boolean(selectedPlan && !showVenues) && styles.recenterFabShifted
+            ]}
+            onPress={handleRecenter}
+          >
+            <Navigation size={18} color={theme.colors.primary} />
+          </Pressable>
         </View>
       ) : (
         showVenues ? (
@@ -547,6 +618,28 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4
   },
   floatingVibeText: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm, color: theme.colors.primary },
+  recenterFab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 80,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
+    zIndex: 10,
+  },
+  recenterFabShifted: {
+    bottom: 240,
+  },
   noVibeContainer: {
     backgroundColor: theme.colors.secondary, borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg, marginTop: theme.spacing.xl, alignItems: 'center', gap: theme.spacing.sm

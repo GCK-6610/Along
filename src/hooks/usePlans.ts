@@ -41,8 +41,12 @@ export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: nu
 
       if (error) throw error;
       
-      const now = new Date().toISOString();
-      const activePlans = ((data as any) || []).filter((p: any) => p.scheduled_at > now);
+      const fourHoursAgo = new Date(Date.now() - 4 * 3600 * 1000).toISOString();
+      const activePlans = ((data as any) || []).filter((p: any) => {
+        if (p.status && p.status !== 'active') return false;
+        if (!p.scheduled_at) return true;
+        return p.scheduled_at >= fourHoursAgo;
+      });
       
       return (activePlans.length > 0 ? activePlans : EMPTY_PLANS) as Plan[];
     }

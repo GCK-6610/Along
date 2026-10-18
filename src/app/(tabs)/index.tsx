@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, FlatList, StatusBar, Image, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
-import { Compass, Flame, Bell } from 'lucide-react-native';
+import { Compass, Flame, Bell, MapPin } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import * as Location from 'expo-location';
 
@@ -29,6 +29,7 @@ function getGreeting() {
 export default function HomeScreen() {
   const { user } = useAuth();
   const [firstName, setFirstName] = useState(user?.user_metadata?.full_name?.split(' ')[0] || 'Explorer');
+  const [locationName, setLocationName] = useState('Nearby');
   const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -38,24 +39,55 @@ export default function HomeScreen() {
   const { hotspots, isLoading: hotspotsLoading, refetch: refetchHotspots } = useHotspots();
 
   const fetchLiveLocation = async () => {
+    // 1. First sync with profile base location so coordinates and city are instantly available
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, base_location_name, base_latitude, base_longitude')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile?.full_name) {
+        setFirstName(profile.full_name.split(' ')[0]);
+      }
+      if (profile?.base_location_name) {
+        const parts = profile.base_location_name.split(',');
+        const formatted = parts.length > 1 ? `${parts[0].trim()}, ${parts[1].trim()}` : profile.base_location_name.trim();
+        setLocationName(formatted);
+      }
+      if (profile?.base_latitude && profile?.base_longitude) {
+        setUserLocation(prev => prev || { lat: profile.base_latitude, lon: profile.base_longitude });
+      }
+    }
+
+    // 2. Query device GPS
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         if (loc?.coords) {
           setUserLocation({ lat: loc.coords.latitude, lon: loc.coords.longitude });
-          return;
+          try {
+            const [geo] = await Location.reverseGeocodeAsync({
+              latitude: loc.coords.latitude,
+              longitude: loc.coords.longitude
+            });
+            if (geo) {
+              const locality = geo.subregion || geo.district || geo.city || geo.region;
+              const city = geo.city || geo.region;
+              if (locality && city && locality !== city) {
+                setLocationName(`${locality}, ${city}`);
+              } else if (city) {
+                setLocationName(city);
+              }
+            }
+          } catch {
+            // Keep profile locationName if reverse geocode fails
+          }
         }
       }
     } catch (e) {
       console.warn('GPS location request error:', e);
-    }
-    // Fallback to base location in profile
-    if (user) {
-      const { data } = await supabase.from('profiles').select('base_latitude, base_longitude').eq('id', user.id).maybeSingle();
-      if (data?.base_latitude && data?.base_longitude) {
-        setUserLocation({ lat: data.base_latitude, lon: data.base_longitude });
-      }
     }
   };
 
@@ -78,13 +110,6 @@ export default function HomeScreen() {
       fetchLiveLocation();
       refetchPlans();
       refetchHotspots();
-      if (user) {
-        supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle().then(({ data }) => {
-          if (data && data.full_name) {
-            setFirstName(data.full_name.split(' ')[0]);
-          }
-        });
-      }
     }, [user])
   );
 
@@ -170,8 +195,14 @@ export default function HomeScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1, paddingRight: theme.spacing.sm }}>
           <Text style={styles.headerGreeting}>{getGreeting()}, {firstName} 👋</Text>
+          <View style={styles.locationBadgeRow}>
+            <MapPin size={13} color={theme.colors.primary} />
+            <Text style={styles.locationBadgeText} numberOfLines={1}>
+              {locationName}
+            </Text>
+          </View>
         </View>
         <View style={styles.headerIcon}>
           <Pressable style={styles.notificationBtn} onPress={() => router.push('/notifications')}>
@@ -266,6 +297,17 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.sm,
   },
   headerGreeting: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm, color: theme.colors.mutedForeground, textTransform: 'uppercase', letterSpacing: 1 },
+  locationBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  locationBadgeText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.sizes.sm,
+    color: theme.colors.foreground,
+  },
   headerTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: 28, color: theme.colors.foreground, letterSpacing: -0.5, marginTop: 4 },
   headerIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border },
   notificationBtn: { position: 'relative' },
