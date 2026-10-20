@@ -397,6 +397,7 @@ export default function ExploreScreen() {
                   <Marker
                     coordinate={{ latitude: searchedVenue.latitude, longitude: searchedVenue.longitude }}
                     pinColor="red"
+                    tracksViewChanges={false}
                     onPress={() => {
                       setSelectedHotspotId(searchedVenue.id);
                       setModalHotspot(searchedVenue);
@@ -412,6 +413,7 @@ export default function ExploreScreen() {
                         longitude: hotspot.longitude || 77.2250,
                       }}
                       pinColor="gold"
+                      tracksViewChanges={false}
                       onPress={() => {
                         setSelectedHotspotId(hotspot.id);
                         setModalHotspot(hotspot);
@@ -426,6 +428,7 @@ export default function ExploreScreen() {
                 return (
                   <Marker
                     key={plan.id}
+                    tracksViewChanges={isSelected}
                     coordinate={{
                       latitude: plan.latitude || 28.5921,
                       longitude: plan.longitude || 77.2250,
@@ -442,6 +445,7 @@ export default function ExploreScreen() {
                 );
               })
             )}
+
           </MapView>
 
           {/* Floating Cards and CTAs */}

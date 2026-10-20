@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router } from 'expo-router';
@@ -28,7 +29,13 @@ export default function VenueModal({ modalHotspot, setModalHotspot }: VenueModal
 
           {modalHotspot.image_url && (
             <View style={styles.coverImageContainer}>
-              <Image source={{ uri: modalHotspot.image_url }} style={styles.coverImage} />
+              <Image
+                source={{ uri: modalHotspot.image_url }}
+                style={styles.coverImage}
+                contentFit="cover"
+                transition={200}
+                cachePolicy="memory-disk"
+              />
             </View>
           )}
           

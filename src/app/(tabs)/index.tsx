@@ -1,6 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { View, Text, StyleSheet, FlatList, StatusBar, Image, ScrollView, Pressable, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, StatusBar, ScrollView, Pressable, RefreshControl, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { Compass, Flame, Bell, MapPin } from 'lucide-react-native';
@@ -28,10 +29,12 @@ function getGreeting() {
 }
 
 export default function HomeScreen() {
-  const { user } = useAuth();
-  const [firstName, setFirstName] = useState(user?.user_metadata?.full_name?.split(' ')[0] || 'Explorer');
+  const { user, profile } = useAuth();
+  const [firstName, setFirstName] = useState(profile?.full_name?.split(' ')[0] || user?.user_metadata?.full_name?.split(' ')[0] || 'Explorer');
   const [locationName, setLocationName] = useState('Nearby');
-  const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
+  const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(
+    profile?.base_latitude && profile?.base_longitude ? { lat: profile.base_latitude, lon: profile.base_longitude } : null
+  );
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
@@ -42,29 +45,25 @@ export default function HomeScreen() {
 
   const displayedPlans = filterPlansByDate(plans, selectedDateFilter);
 
-  const fetchLiveLocation = async () => {
-    let hasProfileLocation = false;
-    // 1. First sync with profile base location so coordinates and city are instantly available
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, base_location_name, base_latitude, base_longitude')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (profile?.full_name) {
+  // Sync profile metadata instantly whenever cached profile updates
+  useEffect(() => {
+    if (profile) {
+      if (profile.full_name) {
         setFirstName(profile.full_name.split(' ')[0]);
       }
-      if (profile?.base_location_name) {
-        hasProfileLocation = true;
+      if (profile.base_location_name) {
         const parts = profile.base_location_name.split(',');
         const formatted = parts.length > 1 ? `${parts[0].trim()}, ${parts[1].trim()}` : profile.base_location_name.trim();
         setLocationName(formatted);
       }
-      if (profile?.base_latitude && profile?.base_longitude) {
-        setUserLocation(prev => prev || { lat: profile.base_latitude, lon: profile.base_longitude });
+      if (profile.base_latitude && profile.base_longitude) {
+        setUserLocation(prev => prev || { lat: profile.base_latitude!, lon: profile.base_longitude! });
       }
     }
+  }, [profile]);
+
+  const fetchLiveLocation = async () => {
+    let hasProfileLocation = Boolean(profile?.base_location_name);
 
     // 2. Query device GPS coordinates for proximity sorting
     try {
@@ -167,7 +166,13 @@ export default function HomeScreen() {
       >
         {/* Top Image Section */}
         <View style={styles.hotspotImageContainer}>
-          <Image source={{ uri: item.image_url }} style={styles.hotspotImage} resizeMode="cover" />
+          <Image
+            source={{ uri: item.image_url }}
+            style={styles.hotspotImage}
+            contentFit="cover"
+            transition={200}
+            cachePolicy="memory-disk"
+          />
           <View style={styles.hotspotGradientScrim} />
           
           {/* Top-Left Concise Badge */}
@@ -243,111 +248,120 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <FlatList
+        data={plansLoading ? [] : displayedPlans}
+        keyExtractor={(item: Plan) => item.id}
+        renderItem={({ item }: { item: Plan }) => (
+          <View style={{ marginBottom: theme.spacing.lg, paddingHorizontal: theme.spacing.lg }}>
+            <PlanCard plan={item} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: item.id } })} />
+          </View>
+        )}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.mainScroll}
+        initialNumToRender={5}
+        maxToRenderPerBatch={8}
+        windowSize={7}
+        removeClippedSubviews={Platform.OS === 'android'}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
         }
-      >
-        <View style={styles.hotspotsSection}>
-          <View style={styles.hotspotsHeader}>
-            <Flame size={16} color={theme.colors.primary} />
-            <Text style={styles.hotspotsTitle}>Trending Hotspots</Text>
-          </View>
-          {hotspotsLoading ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hotspotsList}>
-              <HotspotCardSkeleton />
-              <HotspotCardSkeleton />
-              <HotspotCardSkeleton />
-            </ScrollView>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hotspotsList}>
-              {hotspots.map(renderHotspot)}
-            </ScrollView>
-          )}
-        </View>
-
-        {/* Section Label */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>Plans Near You</Text>
-          <Text style={styles.sectionCount}>
-            {selectedDateFilter === 'all'
-              ? `${plans.length} active`
-              : `${displayedPlans.length} of ${plans.length} active`}
-          </Text>
-        </View>
-
-        {/* Date Filter Quick Chips */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.dateFilterRow}
-        >
-          {DATE_FILTER_OPTIONS.map((opt) => {
-            const isActive = selectedDateFilter === opt.id;
-            return (
-              <Pressable
-                key={opt.id}
-                style={[styles.dateFilterChip, isActive && styles.dateFilterChipActive]}
-                onPress={() => setSelectedDateFilter(opt.id)}
-              >
-                <Text style={styles.dateFilterEmoji}>{opt.emoji}</Text>
-                <Text style={[styles.dateFilterLabel, isActive && styles.dateFilterLabelActive]}>
-                  {opt.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        {/* Feed */}
-        {plansLoading ? (
-          <View style={styles.list}>
-            <PlanCardSkeleton />
-            <PlanCardSkeleton />
-            <PlanCardSkeleton />
-          </View>
-        ) : displayedPlans.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconRing}>
-              <Compass size={32} color={theme.colors.primary} />
-            </View>
-            {plans.length === 0 ? (
-              <>
-                <Text style={styles.emptyTitle}>No plans nearby yet</Text>
-                <Text style={styles.emptySubtitle}>
-                  Be the first to create a hangout or explore trending hotspots nearby!
-                </Text>
-                <Pressable style={styles.emptyBtn} onPress={() => router.push('/create')}>
-                  <Text style={styles.emptyBtnText}>Host a Hangout 🚀</Text>
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Text style={styles.emptyTitle}>
-                  No plans {selectedDateFilter === 'today' ? 'today' : selectedDateFilter === 'tomorrow' ? 'tomorrow' : selectedDateFilter === 'weekend' ? 'this weekend' : 'scheduled'}
-                </Text>
-                <Text style={styles.emptySubtitle}>
-                  There are {plans.length} other hangouts scheduled nearby. Tap below to see all upcoming plans!
-                </Text>
-                <Pressable style={styles.emptyBtn} onPress={() => setSelectedDateFilter('all')}>
-                  <Text style={styles.emptyBtnText}>View All Plans ✨</Text>
-                </Pressable>
-              </>
-            )}
-          </View>
-        ) : (
-          <View style={styles.list}>
-            {displayedPlans.map(plan => (
-              <View key={plan.id} style={{ marginBottom: theme.spacing.lg }}>
-                <PlanCard plan={plan} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: plan.id } })} />
+        ListHeaderComponent={
+          <>
+            <View style={styles.hotspotsSection}>
+              <View style={styles.hotspotsHeader}>
+                <Flame size={16} color={theme.colors.primary} />
+                <Text style={styles.hotspotsTitle}>Trending Hotspots</Text>
               </View>
-            ))}
-          </View>
-        )}
+              {hotspotsLoading ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hotspotsList}>
+                  <HotspotCardSkeleton />
+                  <HotspotCardSkeleton />
+                  <HotspotCardSkeleton />
+                </ScrollView>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hotspotsList}>
+                  {hotspots.map(renderHotspot)}
+                </ScrollView>
+              )}
+            </View>
 
-      </ScrollView>
+            {/* Section Label */}
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Plans Near You</Text>
+              <Text style={styles.sectionCount}>
+                {selectedDateFilter === 'all'
+                  ? `${plans.length} active`
+                  : `${displayedPlans.length} of ${plans.length} active`}
+              </Text>
+            </View>
+
+            {/* Date Filter Quick Chips */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.dateFilterRow}
+            >
+              {DATE_FILTER_OPTIONS.map((opt) => {
+                const isActive = selectedDateFilter === opt.id;
+                return (
+                  <Pressable
+                    key={opt.id}
+                    style={[styles.dateFilterChip, isActive && styles.dateFilterChipActive]}
+                    onPress={() => setSelectedDateFilter(opt.id)}
+                  >
+                    <Text style={styles.dateFilterEmoji}>{opt.emoji}</Text>
+                    <Text style={[styles.dateFilterLabel, isActive && styles.dateFilterLabelActive]}>
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            {/* Skeletons when loading */}
+            {plansLoading && (
+              <View style={styles.list}>
+                <PlanCardSkeleton />
+                <PlanCardSkeleton />
+                <PlanCardSkeleton />
+              </View>
+            )}
+          </>
+        }
+        ListEmptyComponent={
+          !plansLoading ? (
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconRing}>
+                <Compass size={32} color={theme.colors.primary} />
+              </View>
+              {plans.length === 0 ? (
+                <>
+                  <Text style={styles.emptyTitle}>No plans nearby yet</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Be the first to create a hangout or explore trending hotspots nearby!
+                  </Text>
+                  <Pressable style={styles.emptyBtn} onPress={() => router.push('/create')}>
+                    <Text style={styles.emptyBtnText}>Host a Hangout 🚀</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.emptyTitle}>
+                    No plans {selectedDateFilter === 'today' ? 'today' : selectedDateFilter === 'tomorrow' ? 'tomorrow' : selectedDateFilter === 'weekend' ? 'this weekend' : 'scheduled'}
+                  </Text>
+                  <Text style={styles.emptySubtitle}>
+                    There are {plans.length} other hangouts scheduled nearby. Tap below to see all upcoming plans!
+                  </Text>
+                  <Pressable style={styles.emptyBtn} onPress={() => setSelectedDateFilter('all')}>
+                    <Text style={styles.emptyBtnText}>View All Plans ✨</Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          ) : null
+        }
+      />
+
 
       {/* Venue Exploration Modal */}
       <VenueModal modalHotspot={selectedHotspot} setModalHotspot={setSelectedHotspot} />

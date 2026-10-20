@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { MapPin, Users, Calendar, CheckCircle2, Clock } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
@@ -84,8 +85,11 @@ export default function PlanCard({ plan, onPress }: PlanCardProps) {
         >
           {host?.avatar_url ? (
             <Image
-              source={{ uri: host.avatar_url, headers: { Accept: 'image/png' } }}
+              source={{ uri: host.avatar_url }}
               style={styles.avatar}
+              contentFit="cover"
+              transition={150}
+              cachePolicy="memory-disk"
             />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
@@ -168,6 +172,9 @@ export default function PlanCard({ plan, onPress }: PlanCardProps) {
                     key={p.id || i}
                     source={{ uri: avatar }}
                     style={[styles.stackAvatar, { marginLeft: i > 0 ? -10 : 0 }]}
+                    contentFit="cover"
+                    transition={150}
+                    cachePolicy="memory-disk"
                   />
                 ) : (
                   <View
