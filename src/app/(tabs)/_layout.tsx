@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, Platform } from 'react-native';
 import { theme } from '../../styles/theme';
-import { Home, Compass, PlusCircle, MessageCircle, User } from 'lucide-react-native';
+import { Home, Compass, Plus, MessageCircle, User } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { registerForPushNotificationsAsync } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
@@ -68,21 +68,26 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create"
         options={{
-          title: 'Create',
-          tabBarIcon: ({ color, focused }) => (
+          tabBarLabel: () => null,
+          tabBarIcon: ({ focused }) => (
             <View
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: focused ? theme.colors.primary : theme.colors.secondary,
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: theme.colors.primary,
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: focused ? theme.colors.primary : theme.colors.primary + '35',
+                shadowColor: theme.colors.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.35,
+                shadowRadius: 8,
+                elevation: 5,
+                marginTop: Platform.OS === 'ios' ? -6 : -8,
+                transform: [{ scale: focused ? 1.05 : 1 }],
               }}
             >
-              <PlusCircle size={18} color={focused ? '#FFF' : theme.colors.primary} />
+              <Plus size={22} color="#FFFFFF" strokeWidth={2.8} />
             </View>
           ),
         }}

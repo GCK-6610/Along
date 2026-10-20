@@ -18,6 +18,7 @@ import PlanCard from '../../components/features/PlanCard';
 import { PlanCardSkeleton, HotspotCardSkeleton } from '../../components/features/Skeletons';
 import VenueModal from '../../components/features/VenueModal';
 import { Plan, Hotspot } from '../../types';
+import { filterPlansByDate, DATE_FILTER_OPTIONS, DateFilterPreset } from '../../lib/dateFilters';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -34,9 +35,12 @@ export default function HomeScreen() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
+  const [selectedDateFilter, setSelectedDateFilter] = useState<DateFilterPreset>('all');
 
   const { plans, isLoading: plansLoading, refetch: refetchPlans } = usePlans(userLocation?.lat, userLocation?.lon);
   const { hotspots, isLoading: hotspotsLoading, refetch: refetchHotspots } = useHotspots();
+
+  const displayedPlans = filterPlansByDate(plans, selectedDateFilter);
 
   const fetchLiveLocation = async () => {
     let hasProfileLocation = false;
@@ -69,7 +73,10 @@ export default function HomeScreen() {
         // Fast path: read cached location instantly without blocking hardware GPS
         let loc = await Location.getLastKnownPositionAsync();
         if (!loc) {
-          loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          // 3.5s timeout safeguard so hardware GPS fix never stalls the UI
+          const gpsPromise = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500));
+          loc = await Promise.race([gpsPromise, timeoutPromise]);
         }
         if (loc?.coords) {
           setUserLocation(prev => {
@@ -264,8 +271,35 @@ export default function HomeScreen() {
         {/* Section Label */}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>Plans Near You</Text>
-          <Text style={styles.sectionCount}>{plans.length} active</Text>
+          <Text style={styles.sectionCount}>
+            {selectedDateFilter === 'all'
+              ? `${plans.length} active`
+              : `${displayedPlans.length} of ${plans.length} active`}
+          </Text>
         </View>
+
+        {/* Date Filter Quick Chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dateFilterRow}
+        >
+          {DATE_FILTER_OPTIONS.map((opt) => {
+            const isActive = selectedDateFilter === opt.id;
+            return (
+              <Pressable
+                key={opt.id}
+                style={[styles.dateFilterChip, isActive && styles.dateFilterChipActive]}
+                onPress={() => setSelectedDateFilter(opt.id)}
+              >
+                <Text style={styles.dateFilterEmoji}>{opt.emoji}</Text>
+                <Text style={[styles.dateFilterLabel, isActive && styles.dateFilterLabelActive]}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
         {/* Feed */}
         {plansLoading ? (
@@ -274,20 +308,38 @@ export default function HomeScreen() {
             <PlanCardSkeleton />
             <PlanCardSkeleton />
           </View>
-        ) : plans.length === 0 ? (
+        ) : displayedPlans.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconRing}>
               <Compass size={32} color={theme.colors.primary} />
             </View>
-            <Text style={styles.emptyTitle}>No plans nearby yet</Text>
-            <Text style={styles.emptySubtitle}>Be the first to create a hangout or explore trending hotspots nearby!</Text>
-            <Pressable style={styles.emptyBtn} onPress={() => router.push('/create')}>
-              <Text style={styles.emptyBtnText}>Host a Hangout 🚀</Text>
-            </Pressable>
+            {plans.length === 0 ? (
+              <>
+                <Text style={styles.emptyTitle}>No plans nearby yet</Text>
+                <Text style={styles.emptySubtitle}>
+                  Be the first to create a hangout or explore trending hotspots nearby!
+                </Text>
+                <Pressable style={styles.emptyBtn} onPress={() => router.push('/create')}>
+                  <Text style={styles.emptyBtnText}>Host a Hangout 🚀</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Text style={styles.emptyTitle}>
+                  No plans {selectedDateFilter === 'today' ? 'today' : selectedDateFilter === 'tomorrow' ? 'tomorrow' : selectedDateFilter === 'weekend' ? 'this weekend' : 'scheduled'}
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  There are {plans.length} other hangouts scheduled nearby. Tap below to see all upcoming plans!
+                </Text>
+                <Pressable style={styles.emptyBtn} onPress={() => setSelectedDateFilter('all')}>
+                  <Text style={styles.emptyBtnText}>View All Plans ✨</Text>
+                </Pressable>
+              </>
+            )}
           </View>
         ) : (
           <View style={styles.list}>
-            {plans.map(plan => (
+            {displayedPlans.map(plan => (
               <View key={plan.id} style={{ marginBottom: theme.spacing.lg }}>
                 <PlanCard plan={plan} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: plan.id } })} />
               </View>
@@ -554,5 +606,37 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.bold,
     fontSize: theme.typography.sizes.sm,
     color: '#FFF',
+  },
+  dateFilterRow: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    gap: 8,
+  },
+  dateFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  dateFilterChipActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  dateFilterEmoji: {
+    fontSize: 13,
+  },
+  dateFilterLabel: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.mutedForeground,
+  },
+  dateFilterLabelActive: {
+    color: '#FFFFFF',
+    fontFamily: theme.typography.fontFamily.bold,
   },
 });

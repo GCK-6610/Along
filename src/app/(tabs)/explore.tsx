@@ -200,7 +200,15 @@ export default function ExploreScreen() {
     }
   }, [showVenues, viewMode, activeCategory, HOTSPOTS.length]);
 
-  const selectedPlan = plans.find(p => p.id === selectedPinId) || filtered[0] || plans[0];
+  // Derive selectedPlan strictly from the filtered plans
+  const selectedPlan = (selectedPinId ? filtered.find(p => p.id === selectedPinId) : null) || filtered[0] || null;
+
+  // Clear selectedPinId if the currently selected pin is filtered out by category or search
+  useEffect(() => {
+    if (selectedPinId && !filtered.some(p => p.id === selectedPinId)) {
+      setSelectedPinId(null);
+    }
+  }, [activeCategory, searchQuery, filtered.length, selectedPinId]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -463,14 +471,27 @@ export default function ExploreScreen() {
              </View>
            ) : (
             <>
-              {selectedPlan && (
+              {selectedPlan ? (
                 <View style={styles.hotspotContainer}>
                   <PlanCard
                     plan={selectedPlan}
                     onPress={() => router.push({ pathname: '/plan/[id]', params: { id: selectedPlan.id } })}
                   />
                 </View>
-              )}
+              ) : filtered.length === 0 && !showVenues ? (
+                <View style={styles.hotspotContainer}>
+                  <View style={styles.emptyFilterCard}>
+                    <Text style={styles.emptyFilterText}>
+                      No {activeCategory !== 'all' ? activeCategory : ''} hangouts on the map
+                    </Text>
+                    {activeCategory !== 'all' && (
+                      <Pressable style={styles.clearFilterBtn} onPress={() => setActiveCategory('all')}>
+                        <Text style={styles.clearFilterText}>Show All</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                </View>
+              ) : null}
               {/* Find Venues Floating CTA */}
               <Pressable style={styles.floatingVibeBtn} onPress={() => setShowVenues(true)}>
                  <Text style={styles.floatingVibeText}>Find Venues 🔍</Text>
@@ -741,5 +762,40 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: theme.typography.fontFamily.bold,
     fontSize: theme.typography.sizes.base,
+  },
+  emptyFilterCard: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  emptyFilterText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.mutedForeground,
+    textTransform: 'capitalize',
+  },
+  clearFilterBtn: {
+    backgroundColor: theme.colors.secondary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.pill,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  clearFilterText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 10,
+    color: theme.colors.primary,
   },
 });
