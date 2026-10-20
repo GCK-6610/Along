@@ -2,8 +2,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  Pressable, Image, Alert, Modal, TextInput, Linking, Platform, Share, KeyboardAvoidingView
+  Pressable, Alert, Modal, TextInput, Linking, Platform, Share, KeyboardAvoidingView
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle, Star } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
@@ -246,13 +247,18 @@ export default function PlanDetailsScreen() {
           )}
           <Pressable style={styles.iconBtn} onPress={async () => {
             try {
-              const url = `along://plan/${id}`;
+              const deepLink = `along://plan/${id}`;
+              const webFallback = `https://alonghangouts.app/p/${id}`;
               const shareDate = new Date(scheduled_at).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
               const shareTime = new Date(scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-              const shareMessage = `Hey! Join our hangout for "${title}" on Along! 🚀\n\n📍 Venue: ${venue}\n📅 When: ${shareDate} at ${shareTime}\n👥 Spots: ${current_participants}/${capacity || 4} joined\n\nTap to tag along with us:\n${url}`;
+              const remainingSpots = (capacity || 4) - current_participants;
+              const spotsText = remainingSpots > 0 ? `${remainingSpots} spot${remainingSpots > 1 ? 's' : ''} left` : 'Full capacity';
+
+              const shareMessage = `Hey! Join our hangout for "${title}" on Along! 🚀\n\n📍 Venue: ${venue}\n📅 When: ${shareDate} at ${shareTime}\n👥 Attendees: ${current_participants}/${capacity || 4} (${spotsText})\n\nTap to join or view details:\n${webFallback}\n\n(Already on Along? Open directly: ${deepLink})`;
+
               await Share.share({
                 message: shareMessage,
-                url: url, // iOS only
+                url: webFallback,
                 title: `Join ${title} on Along`
               });
             } catch (error: any) {
@@ -269,7 +275,13 @@ export default function PlanDetailsScreen() {
         <View style={styles.hostCard}>
           <Pressable style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: theme.spacing.sm }} onPress={() => host?.id && router.push({ pathname: '/user/[id]', params: { id: host.id } })}>
             {host?.avatar_url ? (
-              <Image source={{ uri: host.avatar_url }} style={styles.avatar} />
+              <Image
+                source={{ uri: host.avatar_url }}
+                style={styles.avatar}
+                contentFit="cover"
+                transition={150}
+                cachePolicy="memory-disk"
+              />
             ) : (
               <View style={[styles.avatar, { backgroundColor: theme.colors.muted }]} />
             )}
@@ -446,7 +458,13 @@ export default function PlanDetailsScreen() {
                 <View key={idx} style={styles.requestCard}>
                   <Pressable style={styles.requestHeader} onPress={() => router.push({ pathname: '/user/[id]', params: { id: p.id } })}>
                     {p.avatar_url ? (
-                      <Image source={{ uri: p.avatar_url, headers: { 'Accept': 'image/png' } }} style={styles.attendeeAvatar} />
+                      <Image
+                        source={{ uri: p.avatar_url }}
+                        style={styles.attendeeAvatar}
+                        contentFit="cover"
+                        transition={150}
+                        cachePolicy="memory-disk"
+                      />
                     ) : (
                       <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
                     )}
@@ -483,7 +501,13 @@ export default function PlanDetailsScreen() {
             <View key={idx} style={styles.attendeeRow}>
               <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, flex: 1 }} onPress={() => p.id && router.push({ pathname: '/user/[id]', params: { id: p.id } })}>
                 {p.avatar_url ? (
-                  <Image source={{ uri: p.avatar_url, headers: { 'Accept': 'image/png' } }} style={styles.attendeeAvatar} />
+                  <Image
+                    source={{ uri: p.avatar_url }}
+                    style={styles.attendeeAvatar}
+                    contentFit="cover"
+                    transition={150}
+                    cachePolicy="memory-disk"
+                  />
                 ) : (
                   <View style={[styles.attendeeAvatar, { backgroundColor: theme.colors.muted }]} />
                 )}

@@ -2,8 +2,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
-  TextInput, Pressable, Image, KeyboardAvoidingView, Platform, ActivityIndicator
+  TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Send, Lock } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
@@ -63,7 +64,13 @@ export default function PlanChatRoomScreen() {
     return (
       <View style={styles.msgRow}>
         {item.user?.avatar_url ? (
-          <Image source={{ uri: item.user.avatar_url }} style={styles.avatar} />
+          <Image
+            source={{ uri: item.user.avatar_url }}
+            style={styles.avatar}
+            contentFit="cover"
+            transition={150}
+            cachePolicy="memory-disk"
+          />
         ) : (
           <View style={[styles.avatar, { backgroundColor: theme.colors.muted }]} />
         )}

@@ -1,7 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useEffect } from 'react';
 
-import { View, Text, StyleSheet, ScrollView, Pressable, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { CheckCircle2, LogOut, Settings, Star, Shield, Edit2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
@@ -56,7 +57,13 @@ export default function ProfileScreen() {
         {/* Avatar & Info */}
         <View style={styles.profileCard}>
           {profile?.avatar_url ? (
-            <Image source={{ uri: profile.avatar_url }} style={styles.avatarRing} />
+            <Image
+              source={{ uri: profile.avatar_url }}
+              style={styles.avatarRing}
+              contentFit="cover"
+              transition={150}
+              cachePolicy="memory-disk"
+            />
           ) : (
             <View style={styles.avatarRing}>
               <Text style={styles.avatarEmoji}>🧑</Text>

@@ -1,5 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, Image, ActivityIndicator, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Pressable, ScrollView, Alert } from 'react-native';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, CheckCircle2, Star, MapPin, ShieldAlert } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
@@ -153,7 +154,13 @@ export default function UserProfileScreen() {
       
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {profile.avatar_url ? (
-          <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+          <Image
+            source={{ uri: profile.avatar_url }}
+            style={styles.avatar}
+            contentFit="cover"
+            transition={150}
+            cachePolicy="memory-disk"
+          />
         ) : (
           <View style={[styles.avatar, { backgroundColor: theme.colors.muted, alignItems: 'center', justifyContent: 'center' }]}>
             <Text style={{ fontSize: 44 }}>👤</Text>
