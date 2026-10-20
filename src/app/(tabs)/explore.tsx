@@ -547,6 +547,10 @@ export default function ExploreScreen() {
             )}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
+            initialNumToRender={6}
+            maxToRenderPerBatch={8}
+            windowSize={5}
+            removeClippedSubviews={Platform.OS === 'android'}
             ListFooterComponent={
               <View style={styles.noVibeContainer}>
                 <Text style={styles.noVibeTitle}>Didn't find the vibe?</Text>

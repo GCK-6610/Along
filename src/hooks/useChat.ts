@@ -51,16 +51,19 @@ export function useChat(planId: string) {
         user:profiles(full_name, avatar_url)
       `)
       .eq('plan_id', planId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: false })
+      .limit(60);
 
     if (!error && data) {
+      // Reverse descending fetch to restore chronological order (oldest to newest)
+      const chronological = (data as ChatMessage[]).reverse();
       // Seed profile cache with returned authors
-      (data as ChatMessage[]).forEach((m) => {
+      chronological.forEach((m) => {
         if (m.user && m.user_id) {
           profileCache.current.set(m.user_id, m.user);
         }
       });
-      setMessages(data as ChatMessage[]);
+      setMessages(chronological);
     }
     setIsLoading(false);
   };

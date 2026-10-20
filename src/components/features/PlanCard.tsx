@@ -50,7 +50,7 @@ function formatPlanSchedule(dateStr: string) {
   };
 }
 
-export default function PlanCard({ plan, onPress }: PlanCardProps) {
+function PlanCardComponent({ plan, onPress }: PlanCardProps) {
   const { host, title, tags, venue, capacity, scheduled_at, participants_list } = plan;
   
   const approvedList = (participants_list || []).filter((p: any) => p.join_status === 'approved');
@@ -426,3 +426,21 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
 });
+
+function arePlanCardPropsEqual(prevProps: PlanCardProps, nextProps: PlanCardProps) {
+  if (prevProps.plan.id !== nextProps.plan.id) return false;
+  if (prevProps.plan.status !== nextProps.plan.status) return false;
+  if (prevProps.plan.capacity !== nextProps.plan.capacity) return false;
+  if (prevProps.plan.current_participants !== nextProps.plan.current_participants) return false;
+  if (prevProps.plan.scheduled_at !== nextProps.plan.scheduled_at) return false;
+  if (prevProps.plan.title !== nextProps.plan.title) return false;
+  if (prevProps.plan.venue !== nextProps.plan.venue) return false;
+  if (prevProps.plan.host?.id !== nextProps.plan.host?.id) return false;
+  if (prevProps.plan.host?.rating_avg !== nextProps.plan.host?.rating_avg) return false;
+  if (prevProps.plan.host?.rating_count !== nextProps.plan.host?.rating_count) return false;
+  if (prevProps.plan.host?.is_verified !== nextProps.plan.host?.is_verified) return false;
+  if ((prevProps.plan.participants_list?.length || 0) !== (nextProps.plan.participants_list?.length || 0)) return false;
+  return true;
+}
+
+export default React.memo(PlanCardComponent, arePlanCardPropsEqual);
