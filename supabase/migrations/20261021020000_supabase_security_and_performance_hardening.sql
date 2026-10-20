@@ -10,13 +10,19 @@
 -- ============================================================================
 -- 1. SPATIAL REFERENCE SYSTEM RLS
 -- ============================================================================
-ALTER TABLE IF EXISTS public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  ALTER TABLE IF EXISTS public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Allow read-only access to spatial_ref_sys" ON public.spatial_ref_sys;
-CREATE POLICY "Allow read-only access to spatial_ref_sys"
-  ON public.spatial_ref_sys
-  FOR SELECT
-  USING (true);
+  DROP POLICY IF EXISTS "Allow read-only access to spatial_ref_sys" ON public.spatial_ref_sys;
+  CREATE POLICY "Allow read-only access to spatial_ref_sys"
+    ON public.spatial_ref_sys
+    FOR SELECT
+    USING (true);
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Skipping spatial_ref_sys RLS: %', SQLERRM;
+END $$;
 
 -- ============================================================================
 -- 2. CLOSE OPEN UPDATE POLICY ON PLANS

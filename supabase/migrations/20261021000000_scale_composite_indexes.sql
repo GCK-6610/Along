@@ -21,6 +21,6 @@ ON public.notifications (user_id, is_read, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ratings_plan_rater 
 ON public.ratings (plan_id, rater_id);
 
--- 6. Venue Ratings: eliminate sequential scans when checking venue review status
-CREATE INDEX IF NOT EXISTS idx_venue_ratings_plan_rater 
-ON public.venue_ratings (plan_id, rater_id);
+-- 6. Venue Ratings: eliminate sequential scans when checking venue review status by user
+CREATE INDEX IF NOT EXISTS idx_venue_ratings_user_id 
+ON public.venue_ratings (user_id);
