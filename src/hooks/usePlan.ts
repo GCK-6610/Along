@@ -50,7 +50,7 @@ export function usePlan(planId: string) {
       await refetchPlan();
       queryClient.invalidateQueries({ queryKey: ['my_plans'] });
       queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error requesting to join:', err);
       throw err;
     }
@@ -65,7 +65,7 @@ export function usePlan(planId: string) {
       await refetchPlan();
       queryClient.invalidateQueries({ queryKey: ['my_plans'] });
       queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error leaving plan:', err);
       throw err;
     }
@@ -81,7 +81,7 @@ export function usePlan(planId: string) {
       await refetchPlan();
       queryClient.invalidateQueries({ queryKey: ['my_plans'] });
       queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error updating join request:', err);
       throw err;
     }

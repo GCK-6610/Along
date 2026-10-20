@@ -2,6 +2,20 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Plan } from '../types';
 
+interface RawParticipantJoin {
+  user_id: string;
+  join_status?: 'pending' | 'approved' | 'rejected';
+  intro_message?: string;
+  attendance_status?: 'pending' | 'attended' | 'absent';
+  profiles?: Record<string, unknown>;
+}
+
+interface RawParticipantPlanRow {
+  plan_id: string;
+  join_status: string;
+  plans: (Plan & { participants_list?: RawParticipantJoin[] }) | null;
+}
+
 const EMPTY_PLANS: Plan[] = [];
 
 export function useMyPlans() {
@@ -45,39 +59,39 @@ export function useMyPlans() {
       if (participantError) throw participantError;
 
       // Format hosted
-      const formattedHosted = (hostedData || []).map(p => ({
+      const formattedHosted = (hostedData || []).map((p) => ({
         ...p,
-        participants_list: p.participants_list?.map((pp: any) => ({
+        participants_list: (p.participants_list as RawParticipantJoin[] | undefined)?.map((pp) => ({
           ...pp,
           ...pp.profiles,
-          id: pp.user_id
-        }))
+          id: pp.user_id,
+        })) as unknown as Plan['participants_list'],
       }));
 
-      const formatParticipantPlan = (jp: any) => {
+      const formatParticipantPlan = (jp: RawParticipantPlanRow): Plan | null => {
         const p = jp.plans;
         if (!p || p.host_id === userId) return null;
         return {
           ...p,
-          participants_list: p.participants_list?.map((pp: any) => ({
+          participants_list: (p.participants_list as RawParticipantJoin[] | undefined)?.map((pp) => ({
             ...pp,
             ...pp.profiles,
-            id: pp.user_id
-          }))
+            id: pp.user_id,
+          })) as unknown as Plan['participants_list'],
         };
       };
 
       // Filter approved vs pending
-      const formattedJoined = (participantData || [])
-        .filter(jp => jp.join_status === 'approved')
+      const formattedJoined = ((participantData as unknown as RawParticipantPlanRow[]) || [])
+        .filter((jp) => jp.join_status === 'approved')
         .map(formatParticipantPlan)
-        .filter((p): p is Plan => Boolean(p))
+        .filter((p): p is Plan => p !== null)
         .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
-      const formattedRequested = (participantData || [])
-        .filter(jp => jp.join_status === 'pending')
+      const formattedRequested = ((participantData as unknown as RawParticipantPlanRow[]) || [])
+        .filter((jp) => jp.join_status === 'pending')
         .map(formatParticipantPlan)
-        .filter((p): p is Plan => Boolean(p))
+        .filter((p): p is Plan => p !== null)
         .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
       return {

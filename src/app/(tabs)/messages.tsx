@@ -1,23 +1,68 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState, useEffect } from 'react';
-
 import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { MessageCircle, Users, Lock, Trash2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { useMyPlans } from '../../hooks/useMyPlans';
 import { supabase } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  getChatLastReadTimestamps,
+  subscribeToChatReadEvents,
+  ChatReceiptsMap,
+  ChatMessageRecord,
+} from '../../lib/chatReceipts';
 
-const EMPTY_CHATS: any[] = [];
+export interface ChatListItem {
+  id: string;
+  planTitle: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  members: number;
+  isArchived: boolean;
+}
+
+interface ParticipantRecord {
+  id: string;
+  join_status: string;
+}
+
+const EMPTY_CHATS: ChatListItem[] = [];
 const DISMISSED_CHATS_STORAGE_KEY = '@along:dismissed_archived_chats';
 
 export default function MessagesScreen() {
   const { user } = useAuth();
   const { hostedPlans, joinedPlans, isLoading, refetch: refetchPlans } = useMyPlans();
   const [latestMessages, setLatestMessages] = useState<Record<string, { content: string; sender: string; time: string }>>({});
+  const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
+  const [readTimestamps, setReadTimestamps] = useState<ChatReceiptsMap>({});
+  const [rawMessages, setRawMessages] = useState<ChatMessageRecord[]>([]);
   const [dismissedChatIds, setDismissedChatIds] = useState<string[]>([]);
+
+  // Load chat read timestamps
+  const loadTimestamps = useCallback(async () => {
+    const timestamps = await getChatLastReadTimestamps();
+    setReadTimestamps(timestamps);
+  }, []);
+
+  // Reload timestamps on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      loadTimestamps();
+    }, [loadTimestamps])
+  );
+
+  // Subscribe to real-time mark-as-read events
+  useEffect(() => {
+    loadTimestamps();
+    const unsubscribe = subscribeToChatReadEvents(() => {
+      loadTimestamps();
+    });
+    return unsubscribe;
+  }, [loadTimestamps]);
 
   const fetchLatestMessages = useCallback(async (planIds: string[]) => {
     if (planIds.length === 0) return;
@@ -25,19 +70,24 @@ export default function MessagesScreen() {
       const { data } = await supabase
         .from('chat_messages')
         .select(`
+          id,
           plan_id,
           content,
           created_at,
+          user_id,
           user:profiles(full_name)
         `)
         .in('plan_id', planIds)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (data) {
+        setRawMessages(data as ChatMessageRecord[]);
         const msgMap: Record<string, { content: string; sender: string; time: string }> = {};
         for (const msg of data) {
           if (!msgMap[msg.plan_id]) {
-            const senderName = (msg.user as any)?.full_name?.split(' ')[0] || 'Someone';
+            const senderName =
+              (msg.user as { full_name?: string } | null)?.full_name?.split(' ')[0] || 'Someone';
             msgMap[msg.plan_id] = {
               content: msg.content,
               sender: senderName,
@@ -52,6 +102,24 @@ export default function MessagesScreen() {
     }
   }, []);
 
+  // Recalculate unread map whenever raw messages, read timestamps, or current user change
+  useEffect(() => {
+    if (rawMessages.length === 0) {
+      setUnreadMap({});
+      return;
+    }
+
+    const nextUnread: Record<string, number> = {};
+    for (const msg of rawMessages) {
+      if (user?.id && msg.user_id === user.id) continue;
+      const lastRead = readTimestamps[msg.plan_id] || 0;
+      const msgTime = new Date(msg.created_at).getTime();
+      if (!isNaN(msgTime) && msgTime > lastRead) {
+        nextUnread[msg.plan_id] = (nextUnread[msg.plan_id] || 0) + 1;
+      }
+    }
+    setUnreadMap(nextUnread);
+  }, [rawMessages, readTimestamps, user?.id]);
 
   useEffect(() => {
     AsyncStorage.getItem(DISMISSED_CHATS_STORAGE_KEY).then(val => {
@@ -118,12 +186,12 @@ export default function MessagesScreen() {
           planTitle: p.title,
           lastMessage: latest ? `${latest.sender}: ${latest.content}` : `📍 ${p.venue || 'No location set'}`,
           time: latest?.time || new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
-          unread: 0,
-          members: 1 + (p.participants_list || []).filter((u: any) => u.join_status === 'approved' && u.id !== p.host_id).length,
+          unread: unreadMap[p.id] || 0,
+          members: 1 + (p.participants_list || []).filter((u: ParticipantRecord) => u.join_status === 'approved' && u.id !== p.host_id).length,
           isArchived: p.status === 'completed' || (new Date(p.scheduled_at).getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000),
         };
       });
-  }, [user, hostedPlans, joinedPlans, latestMessages, dismissedChatIds]);
+  }, [user, hostedPlans, joinedPlans, latestMessages, unreadMap, dismissedChatIds]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

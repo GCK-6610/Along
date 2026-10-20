@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { registerForPushNotificationsAsync } from '../../lib/notifications';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { useTotalUnreadMessages } from '../../hooks/useTotalUnreadMessages';
 
 export const unstable_settings = {
   initialRouteName: 'index',
@@ -13,6 +14,7 @@ export const unstable_settings = {
 
 export default function TabLayout() {
   const { user } = useAuth();
+  const totalUnread = useTotalUnreadMessages();
 
   useEffect(() => {
     if (user) {
@@ -89,6 +91,13 @@ export default function TabLayout() {
         name="messages"
         options={{
           title: 'Chat',
+          tabBarBadge: totalUnread > 0 ? (totalUnread > 99 ? '99+' : totalUnread) : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: theme.colors.primary,
+            color: '#FFFFFF',
+            fontSize: 10,
+            fontFamily: theme.typography.fontFamily.bold,
+          },
           tabBarIcon: ({ color, size }) => <MessageCircle size={22} color={color} />,
         }}
       />

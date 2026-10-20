@@ -1,9 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
   TextInput, Pressable, Image, KeyboardAvoidingView, Platform, ActivityIndicator
-
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, Send, Lock } from 'lucide-react-native';
@@ -12,12 +11,20 @@ import { useChat, ChatMessage } from '../../hooks/useChat';
 import { useAuth } from '../../context/AuthContext';
 import { usePlan } from '../../hooks/usePlan';
 import { safeBack } from '../../utils/navigation';
+import { markChatAsRead } from '../../lib/chatReceipts';
+import { PlanParticipant } from '../../types';
 
 export default function PlanChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { plan, isLoading: planLoading } = usePlan(id);
   const { messages, isLoading: chatLoading, sendMessage } = useChat(id);
   const { session } = useAuth();
+  
+  useEffect(() => {
+    if (id) {
+      markChatAsRead(id);
+    }
+  }, [id, messages.length]);
   
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
@@ -77,7 +84,7 @@ export default function PlanChatRoomScreen() {
   };
 
   const approvedAttendees = (plan?.participants_list || []).filter(
-    (p: any) => p.join_status === 'approved' && p.id !== plan?.host_id
+    (p: PlanParticipant) => p.join_status === 'approved' && p.id !== plan?.host_id
   );
   const memberCount = 1 + approvedAttendees.length;
 

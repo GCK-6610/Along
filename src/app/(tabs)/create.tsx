@@ -166,7 +166,7 @@ export default function CreateScreen() {
       resetForm();
       
       router.push({ pathname: '/plan/[id]', params: { id: newPlan.id } });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error creating plan:', err);
       Alert.alert(
         'Unable to Create Hangout',

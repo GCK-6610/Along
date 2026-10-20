@@ -6,3 +6,7 @@ process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY = 'mock-places-key';
 import WebSocket from 'ws';
 (global as any).WebSocket = WebSocket;
 
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+

@@ -105,3 +105,29 @@ export function triggerRequestSentNotification() {
     body: `Your request to join the plan has been sent to the host.`,
   });
 }
+
+/**
+ * Invokes the send-push-notification Edge Function to dispatch a remote push alert
+ */
+export async function dispatchRemotePushNotification(
+  userId: string,
+  title: string,
+  body: string,
+  data?: Record<string, unknown>
+): Promise<void> {
+  if (!userId) return;
+
+  try {
+    const { supabase } = await import('./supabase');
+    await supabase.functions.invoke('send-push-notification', {
+      body: {
+        user_id: userId,
+        title,
+        body,
+        data: data || {},
+      },
+    });
+  } catch (err) {
+    console.warn('[Notification] Failed to invoke remote push function:', err);
+  }
+}

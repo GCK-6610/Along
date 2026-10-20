@@ -12,7 +12,7 @@
       "config": {
         "googleMapsApiKey": "AIzaSyAJm7VOQbEPU8pzQWV2H-lcOo0sW9jBqzo"
       },
-      "bundleIdentifier": "com.anonymous.along"
+      "bundleIdentifier": "com.alonghangouts.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +27,7 @@
           "apiKey": "AIzaSyAJm7VOQbEPU8pzQWV2H-lcOo0sW9jBqzo"
         }
       },
-      "package": "com.anonymous.along"
+      "package": "com.alonghangouts.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -55,7 +55,7 @@ export function useChat(planId: string) {
 
     if (!error && data) {
       // Seed profile cache with returned authors
-      data.forEach((m: any) => {
+      (data as ChatMessage[]).forEach((m) => {
         if (m.user && m.user_id) {
           profileCache.current.set(m.user_id, m.user);
         }
@@ -97,7 +97,7 @@ export function useChat(planId: string) {
             let authorProfile = profileCache.current.get(payload.new.user_id);
 
             const serverMsg: ChatMessage = {
-              ...(payload.new as any),
+              ...(payload.new as ChatMessage),
               user: authorProfile,
             };
 
