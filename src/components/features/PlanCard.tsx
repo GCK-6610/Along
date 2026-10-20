@@ -12,14 +12,22 @@ interface PlanCardProps {
 
 const CATEGORY_THEMES: Record<string, { bg: string; text: string; border: string }> = {
   coffee: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A' },
+  cafes: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A' },
   fitness: { bg: '#D1FAE5', text: '#047857', border: '#A7F3D0' },
+  active: { bg: '#D1FAE5', text: '#047857', border: '#A7F3D0' },
   art: { bg: '#EDE9FE', text: '#6D28D9', border: '#DDD6FE' },
+  creative: { bg: '#EDE9FE', text: '#6D28D9', border: '#DDD6FE' },
+  painting: { bg: '#EDE9FE', text: '#6D28D9', border: '#DDD6FE' },
   networking: { bg: '#E0E7FF', text: '#4338CA', border: '#C7D2FE' },
+  tech: { bg: '#E0E7FF', text: '#4338CA', border: '#C7D2FE' },
   outdoors: { bg: '#DCFCE7', text: '#15803D', border: '#BBF7D0' },
   chill: { bg: '#E0F2FE', text: '#0369A1', border: '#BAE6FD' },
+  games: { bg: '#FEE2E2', text: '#B91C1C', border: '#FECACA' },
   food: { bg: '#FFEDD5', text: '#C2410C', border: '#FED7AA' },
   drinks: { bg: '#FCE7F3', text: '#BE185D', border: '#FBCFE8' },
   sports: { bg: '#CCFBF1', text: '#0F766E', border: '#99F6E4' },
+  padel: { bg: '#CCFBF1', text: '#0F766E', border: '#99F6E4' },
+  badminton: { bg: '#CCFBF1', text: '#0F766E', border: '#99F6E4' },
 };
 
 function formatPlanSchedule(dateStr: string) {
