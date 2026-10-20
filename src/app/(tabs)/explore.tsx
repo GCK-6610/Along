@@ -20,6 +20,7 @@ import { Plan } from '../../types';
 import { useEffect } from 'react';
 import * as Location from 'expo-location';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { getGoogleMapsApiKey } from '../../lib/places';
 const ACTIVITY_CLUSTERS = [
   { id: 'all', label: 'All Plans', emoji: '✨' },
   { id: 'active', label: 'Sports & Active', emoji: '🏃' },
@@ -368,7 +369,7 @@ export default function ExploreScreen() {
                 }
               }}
               query={{
-                key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+                key: getGoogleMapsApiKey(),
                 language: 'en',
                 ...(userLocation ? { location: `${userLocation.lat},${userLocation.lon}`, radius: '10000' } : {})
               }}

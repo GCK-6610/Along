@@ -59,16 +59,41 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   }
 }
 
+// Configure foreground notification behavior to show native banners
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    priority: Notifications.AndroidNotificationPriority.HIGH,
+  }),
+});
+
 /**
- * Triggers a local notification alert when someone joins a plan or sends a message.
+ * Triggers a local heads-up notification banner when an event occurs
  */
-export function sendPlanActivityNotification(payload: NotificationPayload) {
-  console.log(`[Push Notification] Triggered: ${payload.title} - ${payload.body}`);
+export async function sendPlanActivityNotification(payload: NotificationPayload) {
+  console.log(`[Notification] Triggered: ${payload.title} - ${payload.body}`);
   if (Platform.OS === 'web') {
-    // In web preview mode, show alert banner
     return;
   }
-  Alert.alert(`🔔 ${payload.title}`, payload.body);
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: `🔔 ${payload.title}`,
+        body: payload.body,
+        data: payload.data || {},
+        sound: true,
+      },
+      trigger: null, // immediate delivery
+    });
+  } catch (err) {
+    console.warn('Failed to dispatch local banner, falling back to Alert:', err);
+    Alert.alert(`🔔 ${payload.title}`, payload.body);
+  }
 }
 
 /**

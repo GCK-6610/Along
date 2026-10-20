@@ -12,6 +12,7 @@ import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
 
 import Fuse from 'fuse.js';
 import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
+import { searchPlaces, fetchPlaceDetails, PlacePrediction } from '../lib/places';
 
 const ALL_AVATARS = AVATAR_CATALOG.flatMap(c => c.items);
 const fuse = new Fuse(ALL_AVATARS, {
@@ -55,16 +56,8 @@ export default function EditProfileScreen() {
     if (!locationQuery.trim()) return;
     setIsSearchingLocation(true);
     try {
-      const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-      if (!apiKey) {
-        setLocationResults([]);
-        return;
-      }
-      const res = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(locationQuery)}&key=${apiKey}&components=country:in`);
-      const data = await res.json();
-      if (data.predictions) setLocationResults(data.predictions);
-    } catch (e) {
-      console.log('Location search error', e);
+      const predictions = await searchPlaces(locationQuery);
+      setLocationResults(predictions);
     } finally {
       setIsSearchingLocation(false);
     }
@@ -78,16 +71,10 @@ export default function EditProfileScreen() {
     if (placeId === '1') { setBaseLatitude(19.0596); setBaseLongitude(72.8295); return; }
     if (placeId === '2') { setBaseLatitude(17.4614); setBaseLongitude(78.3639); return; }
 
-    try {
-      const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-      const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${apiKey}`);
-      const data = await res.json();
-      if (data.result?.geometry?.location) {
-        setBaseLatitude(data.result.geometry.location.lat);
-        setBaseLongitude(data.result.geometry.location.lng);
-      }
-    } catch (e) {
-      console.log('Details fetch error', e);
+    const details = await fetchPlaceDetails(placeId);
+    if (details) {
+      setBaseLatitude(details.latitude);
+      setBaseLongitude(details.longitude);
     }
   };
 

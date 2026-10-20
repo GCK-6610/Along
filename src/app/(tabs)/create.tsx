@@ -16,6 +16,7 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import * as Location from 'expo-location';
 import { useQueryClient } from '@tanstack/react-query';
 import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
+import { getGoogleMapsApiKey } from '../../lib/places';
 
 export default function CreateScreen() {
   const { user } = useAuth();
@@ -400,7 +401,7 @@ export default function CreateScreen() {
                   }
                 }}
                 query={{
-                  key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+                  key: getGoogleMapsApiKey(),
                   language: 'en',
                   ...(userLocation ? { location: `${userLocation.lat},${userLocation.lon}`, radius: '10000' } : {})
                 }}

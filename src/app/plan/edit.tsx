@@ -13,10 +13,11 @@ import { parsePlanWithAI } from '../../lib/aiParser';
 import { supabase } from '../../lib/supabase';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as Location from 'expo-location';
 import { safeBack } from '../../utils/navigation';
 import { useQueryClient } from '@tanstack/react-query';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { searchPlaces, fetchPlaceDetails, getGoogleMapsApiKey } from '../../lib/places';
 
 export default function EditPlanScreen() {
   const { user } = useAuth();
@@ -93,19 +94,8 @@ export default function EditPlanScreen() {
     if (!locationQuery.trim()) return;
     setIsSearchingLocation(true);
     try {
-      const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-      if (!apiKey) {
-        setLocationResults([]);
-        return;
-      }
-
-      const res = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(locationQuery)}&key=${apiKey}&components=country:in`);
-      const data = await res.json();
-      if (data.predictions) {
-        setLocationResults(data.predictions);
-      }
-    } catch (e) {
-      console.log('Location search error', e);
+      const predictions = await searchPlaces(locationQuery);
+      setLocationResults(predictions);
     } finally {
       setIsSearchingLocation(false);
     }
@@ -413,9 +403,16 @@ export default function EditPlanScreen() {
             contentContainerStyle={{ padding: theme.spacing.md }}
             ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: theme.colors.border }} />}
             renderItem={({ item }) => (
-              <Pressable style={styles.locationResult} onPress={() => {
-                setVenue(item.structured_formatting?.main_text || item.display_name?.split(',')[0] || locationQuery);
+              <Pressable style={styles.locationResult} onPress={async () => {
+                const venueName = item.structured_formatting?.main_text || item.display_name?.split(',')[0] || locationQuery;
+                setVenue(venueName);
                 setLocationModalVisible(false);
+                if (item.place_id) {
+                  const details = await fetchPlaceDetails(item.place_id);
+                  if (details) {
+                    setMapCoordinate({ latitude: details.latitude, longitude: details.longitude });
+                  }
+                }
               }}>
                 <MapPin size={18} color={theme.colors.mutedForeground} />
                 <View style={{ flex: 1 }}>
@@ -479,7 +476,7 @@ export default function EditPlanScreen() {
                 }
               }}
               query={{
-                key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+                key: getGoogleMapsApiKey(),
                 language: 'en',
               }}
               styles={{
