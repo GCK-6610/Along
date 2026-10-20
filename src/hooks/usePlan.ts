@@ -26,7 +26,21 @@ export function usePlan(planId: string) {
         .single();
 
       if (error) throw error;
-      return data as any as Plan;
+      const planData = data as any as Plan;
+
+      // Privacy safeguard: Mask secret location details unless user is host or approved attendee
+      const isHost = Boolean(user?.id && planData.host_id === user.id);
+      const isApproved = Boolean(
+        user?.id && planData.participants_list?.some(
+          (p: any) => p.id === user.id && p.join_status === 'approved'
+        )
+      );
+
+      if (!isHost && !isApproved) {
+        planData.secret_location_details = undefined;
+      }
+
+      return planData;
     },
     enabled: !!planId,
     staleTime: 1000 * 60 * 1, // 1 minute warm cache

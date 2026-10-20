@@ -126,6 +126,8 @@ export default function PlanChatRoomScreen() {
           renderItem={renderMessage}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={
             !chatLoading ? (
@@ -167,6 +169,7 @@ export default function PlanChatRoomScreen() {
               value={inputText}
               onChangeText={setInputText}
               onSubmitEditing={handleSend}
+              maxLength={1000}
             />
             <Pressable
               style={[styles.sendBtn, !inputText.trim() && styles.sendBtnDisabled]}
