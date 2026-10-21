@@ -47,6 +47,7 @@ export interface Plan {
   distance_km?: number;
   secret_location_details?: string;
   participants_list?: PlanParticipant[];
+  my_attendance_status?: 'pending' | 'attended' | 'absent';
   status: 'active' | 'cancelled' | 'completed';
 }
 

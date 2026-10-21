@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
-import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle, Star } from 'lucide-react-native';
+import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle, Star, Clock } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 
 import { ActivityIndicator } from 'react-native';
@@ -20,6 +20,12 @@ import VenueRatingModal from '../../components/features/VenueRatingModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { PlanParticipant } from '../../types';
 import { safeBack } from '../../utils/navigation';
+import {
+  hasHangoutStarted,
+  isHangoutInProgress,
+  canWrapUpHangout,
+  getApprovedAttendeeCount
+} from '../../utils/hangoutLifecycle';
 
 export default function PlanDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -181,15 +187,16 @@ export default function PlanDetailsScreen() {
   const formattedTime = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const formattedDate = dateObj.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 
-  // Host is inherently a participant, plus any approved participants
-  const approvedCount = (participants_list || []).filter(p => p.join_status === 'approved').length;
-  const current_participants = Math.max(1, approvedCount);
+  // Host is inherently a participant, plus any approved guest participants
+  const approvedCount = getApprovedAttendeeCount(participants_list, host?.id);
+  const current_participants = 1 + approvedCount;
 
-  const isPast = dateObj.getTime() < Date.now();
+  const hasStarted = hasHangoutStarted(scheduled_at);
+  const isInProgress = isHangoutInProgress(scheduled_at, status, isHost);
+  const canMarkCompleted = canWrapUpHangout(scheduled_at, status, isHost);
   const isOver10Days = dateObj.getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000;
   const isCompleted = status === 'completed' || isOver10Days;
   const isCancelled = status === 'cancelled';
-  const canMarkCompleted = isHost && isPast && !isCompleted && !isCancelled && !isOver10Days;
 
   const handleMarkCompleted = async () => {
     if (approvedCount === 0) {
@@ -557,7 +564,7 @@ export default function PlanDetailsScreen() {
       </ScrollView>
 
       {/* Sticky Bottom Join CTA Bar */}
-      {!isHost && !isCompleted && !isPast && (
+      {!isHost && !isCompleted && !hasStarted && (
         <View style={styles.bottomBar}>
           <View style={styles.bottomInfo}>
             <Users size={16} color={theme.colors.mutedForeground} />
@@ -582,12 +589,31 @@ export default function PlanDetailsScreen() {
         </View>
       )}
 
+      {/* In-Progress Pill (During the initial 1-hour grace window) */}
+      {isInProgress && (
+        <View style={styles.bottomBar}>
+          <View style={styles.inProgressPill}>
+            <Clock size={16} color={theme.colors.primary} />
+            <Text style={styles.inProgressText}>
+              Hangout in progress • Wrap-up unlocks 1 hr after start
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* Wrap-up CTA (After 1-hour grace window) */}
       {canMarkCompleted && (
         <View style={styles.bottomBar}>
-          <Pressable style={styles.markCompleteBtn} onPress={handleMarkCompleted}>
-            <CheckCircle2 size={20} color="#fff" />
-            <Text style={styles.joinBtnText}>
-              {approvedCount > 0 ? 'Mark Event Completed & Rate' : 'Reschedule or Archive Hangout'}
+          <Pressable
+            style={[
+              styles.markCompleteBtn,
+              approvedCount === 0 && styles.concludeBtn
+            ]}
+            onPress={handleMarkCompleted}
+          >
+            <CheckCircle2 size={20} color={approvedCount === 0 ? theme.colors.foreground : '#fff'} />
+            <Text style={[styles.joinBtnText, approvedCount === 0 && styles.concludeBtnText]}>
+              {approvedCount > 0 ? 'Mark Event Completed & Rate' : 'Conclude Hangout (0 Joins)'}
             </Text>
           </Pressable>
         </View>
@@ -836,6 +862,26 @@ const styles = StyleSheet.create({
   joinBtnTextActive: { color: theme.colors.primary },
   joinBtnTextPending: { color: theme.colors.mutedForeground },
   markCompleteBtn: { flex: 1, backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  concludeBtn: { backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border },
+  concludeBtnText: { color: theme.colors.foreground },
+  inProgressPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.colors.secondary,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(235, 94, 65, 0.2)',
+  },
+  inProgressText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.sizes.xs,
+    color: theme.colors.primary,
+  },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: theme.colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 36 : 24 },

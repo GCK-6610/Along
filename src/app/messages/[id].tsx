@@ -14,6 +14,7 @@ import { usePlan } from '../../hooks/usePlan';
 import { safeBack } from '../../utils/navigation';
 import { markChatAsRead } from '../../lib/chatReceipts';
 import { PlanParticipant } from '../../types';
+import { canWrapUpHangout, getApprovedAttendeeCount } from '../../utils/hangoutLifecycle';
 
 export default function PlanChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,11 +31,12 @@ export default function PlanChatRoomScreen() {
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
-  const isPast10Days = plan?.scheduled_at ? new Date(plan.scheduled_at).getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000 : false;
-  const isPast = plan?.scheduled_at ? new Date(plan.scheduled_at).getTime() < Date.now() : false;
-  const isArchived = plan?.status === 'completed' || plan?.status === 'cancelled' || isPast10Days;
+  const scheduledTime = plan?.scheduled_at ? new Date(plan.scheduled_at).getTime() : 0;
+  const isPast10Days = scheduledTime > 0 ? scheduledTime < Date.now() - 10 * 24 * 60 * 60 * 1000 : false;
   const isCurrentUserHost = Boolean(session?.user?.id && plan?.host_id === session.user.id);
-  const approvedCount = (plan?.participants_list || []).filter((p: any) => p.join_status === 'approved').length;
+  const canWrapUp = plan?.scheduled_at ? canWrapUpHangout(plan.scheduled_at, plan.status, isCurrentUserHost) : false;
+  const isArchived = plan?.status === 'completed' || plan?.status === 'cancelled' || isPast10Days;
+  const approvedCount = getApprovedAttendeeCount(plan?.participants_list, plan?.host_id);
 
   const handleSend = () => {
     if (isArchived || !inputText.trim()) return;
@@ -121,16 +123,16 @@ export default function PlanChatRoomScreen() {
           </Pressable>
         </View>
         
-        {/* Post-Hangout Prompt Banner for Host */}
-        {Boolean(isCurrentUserHost && isPast && plan?.status === 'active') && (
+        {/* Post-Hangout Prompt Banner for Host (Appears only after 1-hour grace window) */}
+        {Boolean(isCurrentUserHost && canWrapUp && plan?.status === 'active') && (
           <View style={styles.hostPromptBanner}>
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={styles.hostPromptTitle}>
-                {approvedCount > 0 ? 'Hangout Ended • Rate Attendees 🎉' : 'Hangout Ended • 0 Joins'}
+                {approvedCount > 0 ? 'Hangout Wrap-up • Rate Attendees 🎉' : 'Hangout Concluded • 0 Joins'}
               </Text>
               <Text style={styles.hostPromptSub}>
                 {approvedCount > 0
-                  ? 'Complete your hangout and rate attendees to archive the chat.'
+                  ? 'Hangout has been underway for over an hour. When finished, rate attendees to complete.'
                   : 'No attendees joined before start time. Reschedule or archive.'}
               </Text>
             </View>

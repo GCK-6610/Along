@@ -11,6 +11,7 @@ import { useMyPlans } from '../../hooks/useMyPlans';
 import { supabase } from '../../lib/supabase';
 import PlanCard from '../../components/features/PlanCard';
 import { calculateAge } from '../../utils/age';
+import { isVerifiedCompletedHangout } from '../../utils/hangoutLifecycle';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -43,10 +44,8 @@ export default function ProfileScreen() {
 
   // Completed Hangouts (Only real, verified completed events where user attended or successfully hosted with guests)
   const completedHangouts = [
-    // Hosted plans that completed with at least 1 guest
-    ...hostedPlans.filter(p => p.status === 'completed' && (p.participants_list || []).some((pp: any) => pp.join_status === 'approved')),
-    // Attended plans that were marked completed
-    ...joinedPlans.filter(p => p.status === 'completed'),
+    ...hostedPlans.filter(p => isVerifiedCompletedHangout(p, user?.id || '')),
+    ...joinedPlans.filter(p => isVerifiedCompletedHangout(p, user?.id || '')),
   ].sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
   return (

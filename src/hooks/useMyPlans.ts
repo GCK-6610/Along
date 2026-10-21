@@ -13,6 +13,7 @@ interface RawParticipantJoin {
 interface RawParticipantPlanRow {
   plan_id: string;
   join_status: string;
+  attendance_status?: 'pending' | 'attended' | 'absent';
   plans: (Plan & { participants_list?: RawParticipantJoin[] }) | null;
 }
 
@@ -46,6 +47,7 @@ export function useMyPlans() {
         .select(`
           plan_id,
           join_status,
+          attendance_status,
           plans:plan_id (
             *,
             host:profiles!plans_host_id_fkey(*),
@@ -73,6 +75,7 @@ export function useMyPlans() {
         if (!p || p.host_id === userId) return null;
         return {
           ...p,
+          my_attendance_status: jp.attendance_status,
           participants_list: (p.participants_list as RawParticipantJoin[] | undefined)?.map((pp) => ({
             ...pp,
             ...pp.profiles,

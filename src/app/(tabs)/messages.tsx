@@ -174,9 +174,9 @@ export default function MessagesScreen() {
 
     return uniquePlans
       .sort((a, b) => {
-        const aCompleted = a.status === 'completed';
-        const bCompleted = b.status === 'completed';
-        if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+        const aArchived = a.status === 'completed' || a.status === 'cancelled';
+        const bArchived = b.status === 'completed' || b.status === 'cancelled';
+        if (aArchived !== bArchived) return aArchived ? 1 : -1;
         return new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime();
       })
       .map(p => {
@@ -188,7 +188,7 @@ export default function MessagesScreen() {
           time: latest?.time || new Date(p.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric' }),
           unread: unreadMap[p.id] || 0,
           members: 1 + (p.participants_list || []).filter((u: ParticipantRecord) => u.join_status === 'approved' && u.id !== p.host_id).length,
-          isArchived: p.status === 'completed' || (new Date(p.scheduled_at).getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000),
+          isArchived: p.status === 'completed' || p.status === 'cancelled' || (new Date(p.scheduled_at).getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000),
         };
       });
   }, [user, hostedPlans, joinedPlans, latestMessages, unreadMap, dismissedChatIds]);
