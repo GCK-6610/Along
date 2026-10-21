@@ -7,7 +7,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { CheckCircle2, LogOut, Settings, Star, Shield, Edit2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { useAuth } from '../../context/AuthContext';
-import { usePlans } from '../../hooks/usePlans';
+import { useMyPlans } from '../../hooks/useMyPlans';
 import { supabase } from '../../lib/supabase';
 import PlanCard from '../../components/features/PlanCard';
 import { calculateAge } from '../../utils/age';
@@ -17,10 +17,11 @@ export default function ProfileScreen() {
   
   const [profile, setProfile] = useState<any>({});
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const { plans } = usePlans();
+  const { hostedPlans, joinedPlans, refetch: refetchMyPlans } = useMyPlans();
 
   useFocusEffect(
     useCallback(() => {
+      refetchMyPlans();
       if (user) {
         supabase.from('profiles').select('*').eq('id', user.id).single().then(({ data }) => {
           if (data) {
@@ -34,8 +35,19 @@ export default function ProfileScreen() {
     }, [user])
   );
 
-  const hostedPlans = plans.filter(p => p.host_id === user?.id);
-  const joinedPlans = plans.filter(p => p.host_id !== user?.id && p.participants_list?.some(u => u.id === user?.id && u.join_status === 'approved'));
+  // Upcoming Hangouts (Hosted or Attending that are still active)
+  const upcomingHangouts = [
+    ...hostedPlans.filter(p => p.status === 'active'),
+    ...joinedPlans.filter(p => p.status === 'active'),
+  ].sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+
+  // Completed Hangouts (Only real, verified completed events where user attended or successfully hosted with guests)
+  const completedHangouts = [
+    // Hosted plans that completed with at least 1 guest
+    ...hostedPlans.filter(p => p.status === 'completed' && (p.participants_list || []).some((pp: any) => pp.join_status === 'approved')),
+    // Attended plans that were marked completed
+    ...joinedPlans.filter(p => p.status === 'completed'),
+  ].sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -121,12 +133,17 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Hosted Plans */}
-        {hostedPlans.length > 0 && (
+        {/* Upcoming Hangouts */}
+        {upcomingHangouts.length > 0 && (
           <View style={{ marginTop: theme.spacing.sm }}>
-            <Text style={[styles.menuTitle, { marginBottom: 8 }]}>My Hosted Plans</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingHorizontal: theme.spacing.xs }}>
+              <Text style={styles.menuTitle}>Upcoming Hangouts</Text>
+              <Text style={{ fontFamily: theme.typography.fontFamily.medium, fontSize: 12, color: theme.colors.primary }}>
+                {upcomingHangouts.length} active
+              </Text>
+            </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 10 }}>
-              {hostedPlans.map(p => (
+              {upcomingHangouts.map(p => (
                 <View key={p.id} style={{ width: 280 }}>
                   <PlanCard plan={p as any} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: p.id } })} />
                 </View>
@@ -135,17 +152,41 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Joined Plans */}
-        {joinedPlans.length > 0 && (
+        {/* Completed Hangouts (Real Verified Events Attended/Hosted) */}
+        {completedHangouts.length > 0 && (
           <View style={{ marginTop: theme.spacing.sm }}>
-            <Text style={[styles.menuTitle, { marginBottom: 8 }]}>Plans I'm Attending</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingHorizontal: theme.spacing.xs }}>
+              <Text style={styles.menuTitle}>Completed Hangouts ✓</Text>
+              <Text style={{ fontFamily: theme.typography.fontFamily.medium, fontSize: 12, color: '#047857' }}>
+                {completedHangouts.length} verified
+              </Text>
+            </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 10 }}>
-              {joinedPlans.map(p => (
+              {completedHangouts.map(p => (
                 <View key={p.id} style={{ width: 280 }}>
                   <PlanCard plan={p as any} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: p.id } })} />
                 </View>
               ))}
             </ScrollView>
+          </View>
+        )}
+
+        {upcomingHangouts.length === 0 && completedHangouts.length === 0 && (
+          <View style={{ marginTop: theme.spacing.md, backgroundColor: theme.colors.card, padding: 16, borderRadius: theme.borderRadius.lg, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border }}>
+            <Text style={{ fontFamily: theme.typography.fontFamily.bold, fontSize: 14, color: theme.colors.foreground }}>
+              No completed hangouts yet
+            </Text>
+            <Text style={{ fontFamily: theme.typography.fontFamily.regular, fontSize: 12, color: theme.colors.mutedForeground, textAlign: 'center', marginTop: 4 }}>
+              Join or host a hangout to build your verified attendee reputation!
+            </Text>
+            <Pressable
+              style={{ marginTop: 12, backgroundColor: theme.colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: theme.borderRadius.pill }}
+              onPress={() => router.push('/(tabs)')}
+            >
+              <Text style={{ color: '#fff', fontFamily: theme.typography.fontFamily.bold, fontSize: 12 }}>
+                Explore Nearby Hangouts 🚀
+              </Text>
+            </Pressable>
           </View>
         )}
 

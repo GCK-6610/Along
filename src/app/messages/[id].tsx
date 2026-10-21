@@ -31,7 +31,10 @@ export default function PlanChatRoomScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const isPast10Days = plan?.scheduled_at ? new Date(plan.scheduled_at).getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000 : false;
-  const isArchived = plan?.status === 'completed' || isPast10Days;
+  const isPast = plan?.scheduled_at ? new Date(plan.scheduled_at).getTime() < Date.now() : false;
+  const isArchived = plan?.status === 'completed' || plan?.status === 'cancelled' || isPast10Days;
+  const isCurrentUserHost = Boolean(session?.user?.id && plan?.host_id === session.user.id);
+  const approvedCount = (plan?.participants_list || []).filter((p: any) => p.join_status === 'approved').length;
 
   const handleSend = () => {
     if (isArchived || !inputText.trim()) return;
@@ -117,6 +120,30 @@ export default function PlanChatRoomScreen() {
             <Text style={styles.viewPlanText}>View Plan</Text>
           </Pressable>
         </View>
+        
+        {/* Post-Hangout Prompt Banner for Host */}
+        {Boolean(isCurrentUserHost && isPast && plan?.status === 'active') && (
+          <View style={styles.hostPromptBanner}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.hostPromptTitle}>
+                {approvedCount > 0 ? 'Hangout Ended • Rate Attendees 🎉' : 'Hangout Ended • 0 Joins'}
+              </Text>
+              <Text style={styles.hostPromptSub}>
+                {approvedCount > 0
+                  ? 'Complete your hangout and rate attendees to archive the chat.'
+                  : 'No attendees joined before start time. Reschedule or archive.'}
+              </Text>
+            </View>
+            <Pressable
+              style={styles.hostPromptActionBtn}
+              onPress={() => router.push({ pathname: '/plan/[id]', params: { id } })}
+            >
+              <Text style={styles.hostPromptActionText}>
+                {approvedCount > 0 ? 'Complete' : 'Manage'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* Messages List */}
         <FlatList
@@ -150,15 +177,19 @@ export default function PlanChatRoomScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
               <Lock size={15} color={theme.colors.mutedForeground} />
               <Text style={styles.archivedBarText} numberOfLines={1}>
-                Hangout concluded. Chat is archived.
+                {plan?.status === 'cancelled'
+                  ? 'Hangout archived with 0 joins. Chat closed.'
+                  : 'Hangout concluded. Chat is archived.'}
               </Text>
             </View>
-            <Pressable 
-              style={styles.rateHostChatBtn} 
-              onPress={() => router.navigate({ pathname: '/plan/[id]', params: { id } })}
-            >
-              <Text style={styles.rateHostChatText}>Rate Host ⭐</Text>
-            </Pressable>
+            {!isCurrentUserHost && plan?.status === 'completed' && (
+              <Pressable 
+                style={styles.rateHostChatBtn} 
+                onPress={() => router.navigate({ pathname: '/plan/[id]', params: { id } })}
+              >
+                <Text style={styles.rateHostChatText}>Rate Host ⭐</Text>
+              </Pressable>
+            )}
           </View>
         ) : (
           <View style={styles.inputBar}>
@@ -286,5 +317,37 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.bold,
     fontSize: 11,
     color: theme.colors.primary,
+  },
+  hostPromptBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFBEB',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#FDE68A',
+    gap: 12,
+  },
+  hostPromptTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.sm,
+    color: '#92400E',
+  },
+  hostPromptSub: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.xs,
+    color: '#B45309',
+  },
+  hostPromptActionBtn: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: theme.borderRadius.pill,
+  },
+  hostPromptActionText: {
+    color: '#fff',
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 12,
   },
 });

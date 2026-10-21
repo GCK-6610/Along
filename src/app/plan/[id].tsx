@@ -17,12 +17,14 @@ import { supabase } from '../../lib/supabase';
 import AttendanceModal from '../../components/features/AttendanceModal';
 import RatingsModal from '../../components/features/RatingsModal';
 import VenueRatingModal from '../../components/features/VenueRatingModal';
+import { useQueryClient } from '@tanstack/react-query';
 import { PlanParticipant } from '../../types';
 import { safeBack } from '../../utils/navigation';
 
 export default function PlanDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   
   const { plan, isLoading, requestToJoin, leavePlan, updateJoinRequest } = usePlan(id as string);
   const [isJoinModalVisible, setJoinModalVisible] = useState(false);
@@ -186,28 +188,46 @@ export default function PlanDetailsScreen() {
   const isPast = dateObj.getTime() < Date.now();
   const isOver10Days = dateObj.getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000;
   const isCompleted = status === 'completed' || isOver10Days;
-  const canMarkCompleted = isHost && isPast && !isCompleted && !isOver10Days;
-
+  const isCancelled = status === 'cancelled';
+  const canMarkCompleted = isHost && isPast && !isCompleted && !isCancelled && !isOver10Days;
 
   const handleMarkCompleted = async () => {
-    if (current_participants <= 1) {
-      // Just the host, no one else joined. Archive it silently.
-      try {
-        const { error } = await supabase.rpc('mark_plan_completed_and_attendance', {
-          p_plan_id: id,
-          p_host_id: user?.id,
-          p_attendees: [],
-          p_absentees: []
-        });
-        if (error) throw error;
-        Alert.alert('Event Archived', 'No attendees were present, so this event was archived.');
-        safeBack('/(tabs)');
-      } catch (err: any) {
-        Alert.alert('Error', err.message);
-      }
-    } else {
-      setAttendanceVisible(true);
+    if (approvedCount === 0) {
+      Alert.alert(
+        'Hangout Concluded (0 Joins)',
+        'No one tagged along for this hangout before its start time. Would you like to reschedule it for a new date or archive it?',
+        [
+          {
+            text: 'Reschedule',
+            onPress: () => router.push({ pathname: '/plan/edit', params: { id } }),
+          },
+          {
+            text: 'Archive Hangout',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                const { error } = await supabase
+                  .from('plans')
+                  .update({ status: 'cancelled' })
+                  .eq('id', id);
+                if (error) throw error;
+                queryClient.invalidateQueries({ queryKey: ['plan', id] });
+                queryClient.invalidateQueries({ queryKey: ['my_plans'] });
+                queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
+                Alert.alert('Hangout Archived', 'This hangout has been archived.');
+                safeBack('/(tabs)');
+              } catch (err: any) {
+                Alert.alert('Error', err.message);
+              }
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+      return;
     }
+
+    setAttendanceVisible(true);
   };
 
   const onAttendanceCompleted = (presentIds: string[]) => {
@@ -566,7 +586,9 @@ export default function PlanDetailsScreen() {
         <View style={styles.bottomBar}>
           <Pressable style={styles.markCompleteBtn} onPress={handleMarkCompleted}>
             <CheckCircle2 size={20} color="#fff" />
-            <Text style={styles.joinBtnText}>Mark Event Completed</Text>
+            <Text style={styles.joinBtnText}>
+              {approvedCount > 0 ? 'Mark Event Completed & Rate' : 'Reschedule or Archive Hangout'}
+            </Text>
           </Pressable>
         </View>
       )}
