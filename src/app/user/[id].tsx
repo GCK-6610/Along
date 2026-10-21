@@ -9,10 +9,13 @@ import { supabase } from '../../lib/supabase';
 import { safeBack } from '../../utils/navigation';
 import { calculateAge } from '../../utils/age';
 import { useAuth } from '../../context/AuthContext';
+import { useBlockedUsers } from '../../hooks/useBlockedUsers';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
+  const { isBlocked, blockUser, unblockUser } = useBlockedUsers();
+  const currentlyBlocked = isBlocked(id);
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -76,11 +79,16 @@ export default function UserProfileScreen() {
           style: 'destructive',
           onPress: promptReportReason,
         },
-        {
-          text: 'Block Member',
-          style: 'destructive',
-          onPress: confirmBlockMember,
-        },
+        currentlyBlocked
+          ? {
+              text: 'Unblock Member',
+              onPress: confirmUnblockMember,
+            }
+          : {
+              text: 'Block Member',
+              style: 'destructive',
+              onPress: confirmBlockMember,
+            },
         { text: 'Cancel', style: 'cancel' },
       ]
     );
@@ -109,10 +117,34 @@ export default function UserProfileScreen() {
         reason,
         details: `Reported from profile view for: ${reason}`
       });
-      Alert.alert(
-        'Report Submitted',
-        'Thank you for helping keep Along safe and trusted. Our moderation team has received your report and will review it promptly.'
-      );
+
+      if (!currentlyBlocked) {
+        Alert.alert(
+          'Report Submitted',
+          'Thank you for keeping Along safe. Would you also like to block this member so you never encounter them again?',
+          [
+            {
+              text: 'Block Member',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  await blockUser(id);
+                  Alert.alert('Member Blocked', `${profile.full_name || 'This member'} has been blocked.`);
+                  safeBack('/(tabs)');
+                } catch (err: any) {
+                  Alert.alert('Error', err.message || 'Could not block this member.');
+                }
+              },
+            },
+            { text: 'Not Now', style: 'default' },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Report Submitted',
+          'Thank you for helping keep Along safe and trusted. Our moderation team has received your report and will review it promptly.'
+        );
+      }
     } catch (err: any) {
       Alert.alert('Report Received', 'Thank you for helping keep Along safe. Our trust & safety team has been alerted.');
     }
@@ -121,15 +153,41 @@ export default function UserProfileScreen() {
   const confirmBlockMember = () => {
     Alert.alert(
       'Block Member',
-      `Are you sure you want to block ${profile.full_name || 'this member'}? You will no longer see hangouts hosted by them.`,
+      `Are you sure you want to block ${profile.full_name || 'this member'}? You will no longer see hangouts hosted by them, and they cannot join your hangouts.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Block Member',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Member Blocked', `${profile.full_name || 'This member'} has been blocked.`);
-            safeBack('/(tabs)');
+          onPress: async () => {
+            try {
+              await blockUser(id);
+              Alert.alert('Member Blocked', `${profile.full_name || 'This member'} has been blocked.`);
+              safeBack('/(tabs)');
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Could not block this member.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const confirmUnblockMember = () => {
+    Alert.alert(
+      'Unblock Member',
+      `Unblock ${profile.full_name || 'this member'}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unblock',
+          onPress: async () => {
+            try {
+              await unblockUser(id);
+              Alert.alert('Member Unblocked', `${profile.full_name || 'This member'} has been unblocked.`);
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Could not unblock this member.');
+            }
           },
         },
       ]

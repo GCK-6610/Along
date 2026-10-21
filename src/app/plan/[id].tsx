@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
-import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle, Star, Clock } from 'lucide-react-native';
+import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle, Star, Clock, ShieldAlert } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 
 import { ActivityIndicator } from 'react-native';
@@ -20,6 +20,7 @@ import VenueRatingModal from '../../components/features/VenueRatingModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { PlanParticipant } from '../../types';
 import { safeBack } from '../../utils/navigation';
+import { useBlockedUsers } from '../../hooks/useBlockedUsers';
 import {
   hasHangoutStarted,
   isHangoutInProgress,
@@ -31,6 +32,7 @@ export default function PlanDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { isBlocked, blockUser, unblockUser } = useBlockedUsers();
   
   const { plan, isLoading, requestToJoin, leavePlan, updateJoinRequest } = usePlan(id as string);
   const [isJoinModalVisible, setJoinModalVisible] = useState(false);
@@ -253,6 +255,130 @@ export default function PlanDetailsScreen() {
     }
   };
 
+  const isHostBlocked = host?.id ? isBlocked(host.id) : false;
+
+  const handleSafetyOptions = () => {
+    Alert.alert(
+      'Safety & Moderation',
+      'What would you like to do?',
+      [
+        {
+          text: 'Report This Hangout',
+          style: 'destructive',
+          onPress: promptReportPlanReason,
+        },
+        host?.id
+          ? {
+              text: isHostBlocked ? 'Unblock Host' : 'Block Host',
+              style: isHostBlocked ? 'default' : 'destructive',
+              onPress: isHostBlocked ? confirmUnblockHost : confirmBlockHost,
+            }
+          : undefined,
+        { text: 'Cancel', style: 'cancel' },
+      ].filter(Boolean) as any
+    );
+  };
+
+  const promptReportPlanReason = () => {
+    Alert.alert(
+      'Report Hangout',
+      'Please select the reason for reporting this hangout:',
+      [
+        { text: 'Inappropriate Content or Behavior', onPress: () => submitPlanReport('Inappropriate Content or Behavior') },
+        { text: 'Misleading Location or Scam', onPress: () => submitPlanReport('Misleading Location or Scam') },
+        { text: 'Safety or Harassment Concern', onPress: () => submitPlanReport('Safety or Harassment Concern') },
+        { text: 'Spam or Commercial Promotion', onPress: () => submitPlanReport('Spam or Commercial Promotion') },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const submitPlanReport = async (reason: string) => {
+    if (!user) return;
+    try {
+      await supabase.from('reports').insert({
+        reporter_id: user.id,
+        reported_user_id: host?.id,
+        plan_id: id,
+        reason,
+        details: `Reported hangout "${title}" for: ${reason}`,
+      });
+
+      if (host?.id && !isHostBlocked) {
+        Alert.alert(
+          'Report Received',
+          'Thank you for keeping Along safe. Would you also like to block the host of this hangout?',
+          [
+            {
+              text: 'Block Host',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  await blockUser(host.id);
+                  Alert.alert('Host Blocked', 'The host has been blocked.');
+                  safeBack('/(tabs)');
+                } catch (err: any) {
+                  Alert.alert('Error', err.message);
+                }
+              },
+            },
+            { text: 'Not Now', style: 'default' },
+          ]
+        );
+      } else {
+        Alert.alert('Report Received', 'Thank you for reporting. Our moderation team has been notified.');
+      }
+    } catch (err: any) {
+      Alert.alert('Report Received', 'Thank you for keeping Along safe. Our trust & safety team has been alerted.');
+    }
+  };
+
+  const confirmBlockHost = () => {
+    if (!host?.id) return;
+    Alert.alert(
+      'Block Host',
+      `Block ${host.full_name || 'this host'}? You will no longer see their hangouts, and they cannot join yours.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block Host',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(host.id);
+              Alert.alert('Host Blocked', `${host.full_name || 'The host'} has been blocked.`);
+              safeBack('/(tabs)');
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Could not block host.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const confirmUnblockHost = () => {
+    if (!host?.id) return;
+    Alert.alert(
+      'Unblock Host',
+      `Unblock ${host.full_name || 'this host'}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unblock',
+          onPress: async () => {
+            try {
+              await unblockUser(host.id);
+              Alert.alert('Host Unblocked', `${host.full_name || 'The host'} has been unblocked.`);
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Could not unblock host.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Top Header Bar */}
@@ -270,6 +396,11 @@ export default function PlanDetailsScreen() {
           {(isHost || isJoined) && (
             <Pressable style={styles.iconBtn} onPress={() => router.navigate({ pathname: '/messages/[id]', params: { id } })}>
               <MessageCircle size={18} color={theme.colors.foreground} />
+            </Pressable>
+          )}
+          {!isHost && (
+            <Pressable style={styles.iconBtn} onPress={handleSafetyOptions}>
+              <ShieldAlert size={18} color={theme.colors.mutedForeground} />
             </Pressable>
           )}
           <Pressable style={styles.iconBtn} onPress={async () => {

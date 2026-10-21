@@ -7,7 +7,7 @@ import {
 import { router } from 'expo-router';
 import {
   ArrowLeft, User, Phone, Shield, Bell, MapPin,
-  HelpCircle, LogOut, ChevronRight, CheckCircle2, Trash2
+  HelpCircle, LogOut, ChevronRight, CheckCircle2, Trash2, UserX
 } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
@@ -133,6 +133,17 @@ export default function SettingsScreen() {
             <View style={styles.rowBody}>
               <Text style={styles.rowTitle}>Public Profile & Privacy</Text>
               <Text style={styles.rowSub}>Stats, ratings, location & bio visibility</Text>
+            </View>
+            <ChevronRight size={16} color={theme.colors.mutedForeground} />
+          </Pressable>
+
+          <Pressable style={styles.row} onPress={() => router.push('/blocked-users')}>
+            <View style={styles.iconWrap}>
+              <UserX size={16} color={theme.colors.primary} />
+            </View>
+            <View style={styles.rowBody}>
+              <Text style={styles.rowTitle}>Blocked Members</Text>
+              <Text style={styles.rowSub}>View and unblock accounts</Text>
             </View>
             <ChevronRight size={16} color={theme.colors.mutedForeground} />
           </Pressable>

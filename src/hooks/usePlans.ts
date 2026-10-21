@@ -1,12 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useBlockedUsers } from './useBlockedUsers';
+import { filterPlansByBlockedUsers } from '../utils/blockFilters';
 import { Plan } from '../types';
 
 const EMPTY_PLANS: Plan[] = [];
 
 export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: number[]) {
   const { user, profile: authProfile } = useAuth();
+  const { blockedUserIds } = useBlockedUsers();
 
   // Quantize coordinates to ~200m spatial grid so micro-drifts and minor pans hit cache
   const gridLat = userLat != null ? Math.round(userLat * 500) / 500 : null;
@@ -50,9 +54,6 @@ export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: nu
           match_count: 50
         });
 
-      
-      console.log('Fetched plans count:', data?.length);
-
       if (error) throw error;
       
       const fourHoursAgo = new Date(Date.now() - 4 * 3600 * 1000).toISOString();
@@ -66,8 +67,13 @@ export function usePlans(userLat?: number, userLon?: number, queryEmbedding?: nu
     }
   });
 
+  const filteredPlans = useMemo(() => {
+    const raw = queryResult.data ?? EMPTY_PLANS;
+    return filterPlansByBlockedUsers(raw, blockedUserIds);
+  }, [queryResult.data, blockedUserIds]);
+
   return { 
-    plans: queryResult.data ?? EMPTY_PLANS, 
+    plans: filteredPlans, 
     isLoading: queryResult.isLoading, 
     error: queryResult.error?.message || null, 
     refetch: queryResult.refetch 
