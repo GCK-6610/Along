@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 
-import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Calendar } from 'lucide-react-native';
 import { theme } from '../styles/theme';
@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { useMyPlans } from '../hooks/useMyPlans';
 import PlanCard from '../components/features/PlanCard';
 import { safeBack } from '../utils/navigation';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 export default function MyPlansScreen() {
   const { user } = useAuth();
@@ -72,7 +73,7 @@ export default function MyPlansScreen() {
         ListEmptyComponent={
           isLoading ? (
             <View style={{ alignItems: 'center', marginTop: 80 }}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <BrandLoader size="lg" message="Loading your plans..." />
             </View>
           ) : (
             <View style={styles.empty}>

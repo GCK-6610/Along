@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { safeBack } from '../utils/navigation';
 import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult, IdAsset } from '../lib/idVerification';
 import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 export default function VerificationScreen() {
   const { user } = useAuth();
@@ -118,7 +119,7 @@ export default function VerificationScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <BrandLoader size="lg" message="Checking verification status..." />
         </View>
       </SafeAreaView>
     );
@@ -283,7 +284,7 @@ export default function VerificationScreen() {
             {/* Verification Button / Indicator */}
             {isVerifying ? (
               <View style={styles.processingCard}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <BrandLoader size="md" />
                 <Text style={styles.processingTitle}>Verifying Identity...</Text>
                 <Text style={styles.processingSub}>{verificationStepText}</Text>
               </View>

@@ -7,6 +7,7 @@ import { safeBack } from '../utils/navigation';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { PrivacySettings } from '../types';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 export default function PrivacyScreen() {
   const { user } = useAuth();
@@ -80,7 +81,7 @@ export default function PrivacyScreen() {
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <BrandLoader size="lg" message="Loading privacy settings..." />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

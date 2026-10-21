@@ -15,6 +15,7 @@ import { safeBack } from '../../utils/navigation';
 import { markChatAsRead } from '../../lib/chatReceipts';
 import { PlanParticipant } from '../../types';
 import { canWrapUpHangout, getApprovedAttendeeCount } from '../../utils/hangoutLifecycle';
+import { BrandLoader } from '../../components/common/BrandLoader';
 
 export default function PlanChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -168,7 +169,7 @@ export default function PlanChatRoomScreen() {
                 </Text>
               </View>
             ) : (
-              <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 40 }} />
+              <BrandLoader size="md" message="Loading messages..." style={{ marginTop: 40 }} />
             )
           }
         />

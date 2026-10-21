@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
 import { useState, useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Bell, Users, MapPin, Info, CheckCircle2, X } from 'lucide-react-native';
@@ -7,6 +7,7 @@ import { theme } from '../styles/theme';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { safeBack } from '../utils/navigation';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 type Notification = {
   id: string;
@@ -136,7 +137,7 @@ export default function NotificationsScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 40 }} />
+        <BrandLoader size="lg" message="Loading notifications..." style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={notifications}

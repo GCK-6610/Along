@@ -9,9 +9,10 @@ import {
   Outfit_700Bold
 } from '@expo-google-fonts/outfit';
 import { AuthProvider, useAuth } from '../context/AuthContext';
-import { LogBox, View, ActivityIndicator } from 'react-native';
+import { LogBox, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { theme } from '../styles/theme';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,11 +95,7 @@ export default function RootLayout() {
   }, []);
 
   if (!loaded && !error) {
-    return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
+    return <BrandLoader fullScreen size="lg" />;
   }
 
   return (

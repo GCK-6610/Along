@@ -1,10 +1,11 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { ArrowLeft, UserX, CheckCircle2 } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useBlockedUsers, BlockedUserRecord } from '../hooks/useBlockedUsers';
 import { safeBack } from '../utils/navigation';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 export default function BlockedUsersScreen() {
   const { blockedUsers, isLoading, unblockUser, isUnblocking } = useBlockedUsers();
@@ -82,7 +83,7 @@ export default function BlockedUsersScreen() {
 
       {isLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <BrandLoader size="lg" message="Loading blocked members..." />
         </View>
       ) : (
         <FlatList

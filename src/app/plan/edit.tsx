@@ -18,6 +18,7 @@ import { safeBack } from '../../utils/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { searchPlaces, fetchPlaceDetails, getGoogleMapsApiKey } from '../../lib/places';
+import { BrandLoader } from '../../components/common/BrandLoader';
 
 export default function EditPlanScreen() {
   const { user } = useAuth();
@@ -185,7 +186,7 @@ export default function EditPlanScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <BrandLoader size="lg" message="Loading plan..." />
       </SafeAreaView>
     );
   }

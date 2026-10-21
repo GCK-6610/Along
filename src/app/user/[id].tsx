@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, ActivityIndicator, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ArrowLeft, CheckCircle2, Star, MapPin, ShieldAlert } from 'lucide-react-native';
@@ -10,6 +10,7 @@ import { safeBack } from '../../utils/navigation';
 import { calculateAge } from '../../utils/age';
 import { useAuth } from '../../context/AuthContext';
 import { useBlockedUsers } from '../../hooks/useBlockedUsers';
+import { BrandLoader } from '../../components/common/BrandLoader';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,7 +37,7 @@ export default function UserProfileScreen() {
   if (isLoading || !id) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <BrandLoader size="lg" message="Loading profile..." />
       </SafeAreaView>
     );
   }

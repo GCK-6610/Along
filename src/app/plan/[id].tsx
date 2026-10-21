@@ -8,6 +8,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { MapPin, Calendar, Users, CheckCircle2, Shield, ArrowLeft, Share2, Check, X, Edit2, MessageCircle, Star, Clock, ShieldAlert } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
+import { BrandLoader } from '../../components/common/BrandLoader';
 
 import { ActivityIndicator } from 'react-native';
 import { triggerRequestSentNotification } from '../../lib/notifications';
@@ -89,7 +90,7 @@ export default function PlanDetailsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <BrandLoader size="lg" message="Loading plan details..." />
       </SafeAreaView>
     );
   }

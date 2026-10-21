@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, Alert, RefreshControl } from 'react-native';
 import { MessageCircle, Users, Lock, Trash2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router, useFocusEffect } from 'expo-router';
@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useMyPlans } from '../../hooks/useMyPlans';
 import { supabase } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BrandLoader } from '../../components/common/BrandLoader';
 import {
   getChatLastReadTimestamps,
   subscribeToChatReadEvents,
@@ -263,7 +264,7 @@ export default function MessagesScreen() {
           ListEmptyComponent={
             isLoading ? (
               <View style={{ alignItems: 'center', marginTop: 80 }}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <BrandLoader size="lg" message="Loading conversations..." />
               </View>
             ) : (
               <View style={styles.empty}>

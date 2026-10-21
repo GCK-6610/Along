@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { safeBack } from '../utils/navigation';
 import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 import Fuse from 'fuse.js';
 import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
@@ -182,7 +183,7 @@ export default function EditProfileScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safeArea, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <BrandLoader size="lg" message="Loading profile..." />
       </SafeAreaView>
     );
   }
