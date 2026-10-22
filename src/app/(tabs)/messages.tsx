@@ -250,6 +250,58 @@ export default function MessagesScreen() {
       });
   }, [user, hostedPlans, joinedPlans, latestMessages, unreadMap, dismissedChatIds]);
 
+  const renderSeparator = useCallback(() => <View style={styles.separator} />, []);
+  const keyExtractor = useCallback((item: any) => item.id, []);
+
+  const renderChatItem = useCallback(({ item }: { item: any }) => (
+    <View style={styles.chatRowWrapper}>
+      <Pressable
+        style={styles.chatRowMain}
+        onPress={() => router.push({ pathname: '/messages/[id]', params: { id: item.id } })}
+      >
+        <View style={[styles.iconWrap, item.isArchived && styles.iconWrapArchived]}>
+          <MessageCircle size={22} color={item.isArchived ? theme.colors.mutedForeground : theme.colors.primary} />
+        </View>
+        <View style={styles.chatBody}>
+          <View style={styles.chatTopRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+              <Text style={[styles.chatTitle, item.isArchived && styles.chatTitleArchived]} numberOfLines={1}>{item.planTitle}</Text>
+              {item.isArchived ? (
+                <View style={styles.archivedBadge}>
+                  <Lock size={9} color={theme.colors.mutedForeground} />
+                  <Text style={styles.archivedText}>ARCHIVED</Text>
+                </View>
+              ) : (
+                <View style={styles.membersBadge}>
+                  <Users size={10} color={theme.colors.primary} />
+                  <Text style={styles.membersCount}>{item.members}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.chatTime}>{item.time}</Text>
+          </View>
+          <View style={styles.chatBottomRow}>
+            <Text style={styles.chatPreview} numberOfLines={1}>{item.lastMessage}</Text>
+            {item.unread > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{item.unread}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Pressable>
+      {item.isArchived && (
+        <Pressable
+          style={styles.deleteArchivedBtn}
+          onPress={() => handleDeleteArchivedChat(item.id, item.planTitle)}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Trash2 size={16} color={theme.colors.mutedForeground} />
+        </Pressable>
+      )}
+    </View>
+  ), [handleDeleteArchivedChat]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -259,7 +311,7 @@ export default function MessagesScreen() {
       <View style={{ flex: 1, minHeight: 2 }}>
         <FlatList
           data={chats}
-          keyExtractor={item => item.id}
+          keyExtractor={keyExtractor}
           removeClippedSubviews={Platform.OS === 'android'}
           maxToRenderPerBatch={10}
           windowSize={7}
@@ -271,55 +323,8 @@ export default function MessagesScreen() {
               tintColor={theme.colors.primary}
             />
           }
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          renderItem={({ item }) => (
-            <View style={styles.chatRowWrapper}>
-              <Pressable
-                style={styles.chatRowMain}
-                onPress={() => router.push({ pathname: '/messages/[id]', params: { id: item.id } })}
-              >
-                <View style={[styles.iconWrap, item.isArchived && styles.iconWrapArchived]}>
-                  <MessageCircle size={22} color={item.isArchived ? theme.colors.mutedForeground : theme.colors.primary} />
-                </View>
-                <View style={styles.chatBody}>
-                  <View style={styles.chatTopRow}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                      <Text style={[styles.chatTitle, item.isArchived && styles.chatTitleArchived]} numberOfLines={1}>{item.planTitle}</Text>
-                      {item.isArchived ? (
-                        <View style={styles.archivedBadge}>
-                          <Lock size={9} color={theme.colors.mutedForeground} />
-                          <Text style={styles.archivedText}>ARCHIVED</Text>
-                        </View>
-                      ) : (
-                        <View style={styles.membersBadge}>
-                          <Users size={10} color={theme.colors.primary} />
-                          <Text style={styles.membersCount}>{item.members}</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.chatTime}>{item.time}</Text>
-                  </View>
-                  <View style={styles.chatBottomRow}>
-                    <Text style={styles.chatPreview} numberOfLines={1}>{item.lastMessage}</Text>
-                    {item.unread > 0 && (
-                      <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{item.unread}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </Pressable>
-              {item.isArchived && (
-                <Pressable
-                  style={styles.deleteArchivedBtn}
-                  onPress={() => handleDeleteArchivedChat(item.id, item.planTitle)}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                >
-                  <Trash2 size={16} color={theme.colors.mutedForeground} />
-                </Pressable>
-              )}
-            </View>
-          )}
+          ItemSeparatorComponent={renderSeparator}
+          renderItem={renderChatItem}
           ListEmptyComponent={
             isLoading ? (
               <View style={{ alignItems: 'center', marginTop: 80 }}>

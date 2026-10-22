@@ -11,7 +11,7 @@ import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
 import { BrandLoader } from '../components/common/BrandLoader';
 
 export default function VerificationScreen() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   
@@ -80,6 +80,7 @@ export default function VerificationScreen() {
             .update({ is_verified: true })
             .eq('id', user.id);
           if (error) throw error;
+          await refreshProfile();
         }
 
         setVerificationResult(result);

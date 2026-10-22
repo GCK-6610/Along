@@ -145,9 +145,13 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const renderItem = ({ item }: { item: Plan }) => (
-    <PlanCard plan={item} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: item.id } })} />
-  );
+  const renderPlanItem = useCallback(({ item }: { item: Plan }) => (
+    <View style={styles.planCardItemWrapper}>
+      <PlanCard plan={item} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: item.id } })} />
+    </View>
+  ), []);
+
+  const keyExtractor = useCallback((item: Plan) => item.id, []);
 
   const renderHotspot = (item: Hotspot) => {
     const isPublicSpot = item.tags?.includes('outdoors') || item.tags?.includes('fitness') || item.name.toLowerCase().includes('park');
@@ -250,12 +254,8 @@ export default function HomeScreen() {
 
       <FlatList
         data={plansLoading ? [] : displayedPlans}
-        keyExtractor={(item: Plan) => item.id}
-        renderItem={({ item }: { item: Plan }) => (
-          <View style={{ marginBottom: theme.spacing.lg, paddingHorizontal: theme.spacing.lg }}>
-            <PlanCard plan={item} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: item.id } })} />
-          </View>
-        )}
+        keyExtractor={keyExtractor}
+        renderItem={renderPlanItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.mainScroll}
         initialNumToRender={5}
@@ -652,5 +652,9 @@ const styles = StyleSheet.create({
   dateFilterLabelActive: {
     color: '#FFFFFF',
     fontFamily: theme.typography.fontFamily.bold,
+  },
+  planCardItemWrapper: {
+    marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
   },
 });

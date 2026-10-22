@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Linking, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, HelpCircle, ChevronRight, MessageCircle } from 'lucide-react-native';
 import { theme } from '../styles/theme';
@@ -42,7 +42,15 @@ export default function HelpScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>CONTACT US</Text>
-          <Pressable style={styles.row}>
+          <Pressable style={styles.row} onPress={async () => {
+            const url = 'mailto:tag-along@org.com?subject=Along%20App%20Support';
+            const supported = await Linking.canOpenURL(url);
+            if (supported) {
+              await Linking.openURL(url);
+            } else {
+              Alert.alert('Support Email', 'Please reach out to tag-along@org.com directly from your preferred email client.');
+            }
+          }}>
             <View style={styles.iconWrap}>
               <MessageCircle size={16} color={theme.colors.primary} />
             </View>

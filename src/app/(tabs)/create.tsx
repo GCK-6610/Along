@@ -19,7 +19,7 @@ import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 import { getGoogleMapsApiKey } from '../../lib/places';
 
 export default function CreateScreen() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const params = useLocalSearchParams();
   
@@ -37,7 +37,9 @@ export default function CreateScreen() {
   const [scheduledAt, setScheduledAt] = useState(new Date(Date.now() + 86400000));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isMapModalVisible, setMapModalVisible] = useState(false);
-  const [mapCoordinate, setMapCoordinate] = useState({ latitude: 17.4375, longitude: 78.3845 });
+  const fallbackLat = profile?.base_latitude || 17.4375;
+  const fallbackLon = profile?.base_longitude || 78.3845;
+  const [mapCoordinate, setMapCoordinate] = useState({ latitude: fallbackLat, longitude: fallbackLon });
   const [mapSearchQuery, setMapSearchQuery] = useState('');
   const [isPosting, setIsPosting] = useState(false);
   const mapRef = useRef<MapView>(null);
@@ -75,7 +77,11 @@ export default function CreateScreen() {
     setNlpInput('');
     setAiSuccessBadge(false);
     setTags([]);
-    setMapCoordinate(userLocation ? { latitude: userLocation.lat, longitude: userLocation.lon } : { latitude: 17.4375, longitude: 78.3845 });
+    setMapCoordinate(
+      userLocation
+        ? { latitude: userLocation.lat, longitude: userLocation.lon }
+        : { latitude: fallbackLat, longitude: fallbackLon }
+    );
   };
 
   useFocusEffect(
@@ -265,8 +271,10 @@ export default function CreateScreen() {
                   value={scheduledAt}
                   mode="datetime"
                   display="default"
-                  onChange={undefined}
-                  onValueChange={(event, date) => { setShowDatePicker(false); if(date) setScheduledAt(date); }}
+                  onChange={(event, date) => {
+                    setShowDatePicker(false);
+                    if (date) setScheduledAt(date);
+                  }}
                 />
               )}
             </View>
@@ -519,8 +527,9 @@ export default function CreateScreen() {
                 value={scheduledAt}
                 mode="datetime"
                 display="spinner"
-                onChange={undefined}
-                onValueChange={(event, date) => { if(date) setScheduledAt(date) }}
+                onChange={(event, date) => {
+                  if (date) setScheduledAt(date);
+                }}
                 themeVariant="dark"
                 textColor={theme.colors.foreground}
               />

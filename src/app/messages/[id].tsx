@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
   TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator
@@ -31,6 +31,7 @@ export default function PlanChatRoomScreen() {
   
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
+  const isNearBottomRef = useRef(true);
 
   const scheduledTime = plan?.scheduled_at ? new Date(plan.scheduled_at).getTime() : 0;
   const isPast10Days = scheduledTime > 0 ? scheduledTime < Date.now() - 10 * 24 * 60 * 60 * 1000 : false;
@@ -39,16 +40,32 @@ export default function PlanChatRoomScreen() {
   const isArchived = plan?.status === 'completed' || plan?.status === 'cancelled' || isPast10Days;
   const approvedCount = getApprovedAttendeeCount(plan?.participants_list, plan?.host_id);
 
+  const handleScroll = useCallback((event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 80;
+    const isClose = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+    isNearBottomRef.current = isClose;
+  }, []);
+
+  const handleContentSizeChange = useCallback(() => {
+    if (isNearBottomRef.current) {
+      flatListRef.current?.scrollToEnd({ animated: false });
+    }
+  }, []);
+
   const handleSend = () => {
     if (isArchived || !inputText.trim()) return;
     sendMessage(inputText);
     setInputText('');
+    isNearBottomRef.current = true;
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 60);
   };
 
-  const renderMessage = ({ item }: { item: ChatMessage }) => {
+  const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
+
+  const renderMessage = useCallback(({ item }: { item: ChatMessage }) => {
     const isMe = item.user_id === session?.user?.id;
     const isHost = item.user_id === plan?.host_id;
 
@@ -94,7 +111,7 @@ export default function PlanChatRoomScreen() {
         </View>
       </View>
     );
-  };
+  }, [session?.user?.id, plan?.host_id]);
 
   const approvedAttendees = (plan?.participants_list || []).filter(
     (p: PlanParticipant) => p.join_status === 'approved' && p.id !== plan?.host_id
@@ -152,13 +169,15 @@ export default function PlanChatRoomScreen() {
         <FlatList
           ref={flatListRef}
           data={messages}
-          keyExtractor={item => item.id}
+          keyExtractor={keyExtractor}
           renderItem={renderMessage}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+          onScroll={handleScroll}
+          scrollEventThrottle={100}
+          onContentSizeChange={handleContentSizeChange}
           ListEmptyComponent={
             !chatLoading ? (
               <View style={styles.emptyChat}>

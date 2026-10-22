@@ -23,7 +23,7 @@ const fuse = new Fuse(ALL_AVATARS, {
 });
 
 export default function EditProfileScreen() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   
   const [fullName, setFullName] = useState('');
   const [initialFullName, setInitialFullName] = useState('');
@@ -154,6 +154,8 @@ export default function EditProfileScreen() {
 
       const { error } = await supabase.from('profiles').upsert(updatePayload);
       if (error) throw error;
+
+      await refreshProfile();
 
       if (revokeVerification) {
         Alert.alert(

@@ -629,15 +629,24 @@ export default function PlanDetailsScreen() {
         <Pressable 
           style={styles.mapCard}
           onPress={() => {
-            if (!plan?.latitude || !plan?.longitude) return;
-            const scheme = Platform.select({ ios: 'maps://0,0?q=', android: 'geo:0,0?q=' });
-            const latLng = `${plan.latitude},${plan.longitude}`;
-            const label = plan.venue;
-            const url = Platform.select({
-              ios: `http://maps.apple.com/?q=${label}&ll=${latLng}`,
-              android: `${scheme}${latLng}(${label})`
-            });
-            if (url) Linking.openURL(url);
+            const label = plan.venue || venue;
+            if (plan?.latitude && plan?.longitude) {
+              const scheme = Platform.select({ ios: 'maps://0,0?q=', android: 'geo:0,0?q=' });
+              const latLng = `${plan.latitude},${plan.longitude}`;
+              const url = Platform.select({
+                ios: `http://maps.apple.com/?q=${encodeURIComponent(label)}&ll=${latLng}`,
+                android: `${scheme}${latLng}(${encodeURIComponent(label)})`
+              });
+              if (url) Linking.openURL(url);
+            } else if (label) {
+              const url = Platform.select({
+                ios: `http://maps.apple.com/?q=${encodeURIComponent(label)}`,
+                android: `geo:0,0?q=${encodeURIComponent(label)}`
+              });
+              if (url) Linking.openURL(url);
+            } else {
+              Alert.alert('Location Unavailable', 'No location or venue specified for this hangout.');
+            }
           }}
         >
           <View style={styles.mapPlaceholder}>
