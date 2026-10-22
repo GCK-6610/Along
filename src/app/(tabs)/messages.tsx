@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCallback, useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, FlatList, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, Alert, RefreshControl, Platform } from 'react-native';
 import { MessageCircle, Users, Lock, Trash2 } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { router, useFocusEffect } from 'expo-router';
@@ -34,10 +34,17 @@ interface ParticipantRecord {
 const EMPTY_CHATS: ChatListItem[] = [];
 const DISMISSED_CHATS_STORAGE_KEY = '@along:dismissed_archived_chats';
 
+export interface LatestMessageRecord {
+  content: string;
+  sender: string;
+  time: string;
+  rawTimestamp: number;
+}
+
 export default function MessagesScreen() {
   const { user } = useAuth();
   const { hostedPlans, joinedPlans, isLoading, refetch: refetchPlans } = useMyPlans();
-  const [latestMessages, setLatestMessages] = useState<Record<string, { content: string; sender: string; time: string }>>({});
+  const [latestMessages, setLatestMessages] = useState<Record<string, LatestMessageRecord>>({});
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
   const [readTimestamps, setReadTimestamps] = useState<ChatReceiptsMap>({});
   const [rawMessages, setRawMessages] = useState<ChatMessageRecord[]>([]);
@@ -48,22 +55,6 @@ export default function MessagesScreen() {
     const timestamps = await getChatLastReadTimestamps();
     setReadTimestamps(timestamps);
   }, []);
-
-  // Reload timestamps on screen focus
-  useFocusEffect(
-    useCallback(() => {
-      loadTimestamps();
-    }, [loadTimestamps])
-  );
-
-  // Subscribe to real-time mark-as-read events
-  useEffect(() => {
-    loadTimestamps();
-    const unsubscribe = subscribeToChatReadEvents(() => {
-      loadTimestamps();
-    });
-    return unsubscribe;
-  }, [loadTimestamps]);
 
   const fetchLatestMessages = useCallback(async (planIds: string[]) => {
     if (planIds.length === 0) return;
@@ -84,15 +75,17 @@ export default function MessagesScreen() {
 
       if (data) {
         setRawMessages(data as ChatMessageRecord[]);
-        const msgMap: Record<string, { content: string; sender: string; time: string }> = {};
+        const msgMap: Record<string, LatestMessageRecord> = {};
         for (const msg of data) {
           if (!msgMap[msg.plan_id]) {
             const senderName =
               (msg.user as { full_name?: string } | null)?.full_name?.split(' ')[0] || 'Someone';
+            const msgDate = new Date(msg.created_at);
             msgMap[msg.plan_id] = {
               content: msg.content,
               sender: senderName,
-              time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              time: msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              rawTimestamp: isNaN(msgDate.getTime()) ? 0 : msgDate.getTime(),
             };
           }
         }
@@ -102,6 +95,27 @@ export default function MessagesScreen() {
       console.warn('Error fetching latest messages:', e);
     }
   }, []);
+
+  // Reload timestamps and fresh messages on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      loadTimestamps();
+      refetchPlans();
+      const allIds = [...hostedPlans, ...joinedPlans].map(p => p.id);
+      if (allIds.length > 0) {
+        fetchLatestMessages(allIds);
+      }
+    }, [loadTimestamps, refetchPlans, hostedPlans, joinedPlans, fetchLatestMessages])
+  );
+
+  // Subscribe to real-time mark-as-read events
+  useEffect(() => {
+    loadTimestamps();
+    const unsubscribe = subscribeToChatReadEvents(() => {
+      loadTimestamps();
+    });
+    return unsubscribe;
+  }, [loadTimestamps]);
 
   // Recalculate unread map whenever raw messages, read timestamps, or current user change
   useEffect(() => {
@@ -162,6 +176,34 @@ export default function MessagesScreen() {
     }
   }, [hostedPlans, joinedPlans, fetchLatestMessages]);
 
+  // Real-time listener: bump thread to top immediately on new incoming message
+  useEffect(() => {
+    const allIds = [...hostedPlans, ...joinedPlans].map(p => p.id);
+    if (allIds.length === 0) return;
+
+    const channel = supabase
+      .channel('public:chat_messages:inbox_activity')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+        },
+        (payload) => {
+          const newMsg = payload.new as any;
+          if (newMsg?.plan_id && allIds.includes(newMsg.plan_id)) {
+            fetchLatestMessages(allIds);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [hostedPlans, joinedPlans, fetchLatestMessages]);
+
   const chats = useMemo(() => {
     if (!user) return EMPTY_CHATS;
     
@@ -175,10 +217,24 @@ export default function MessagesScreen() {
 
     return uniquePlans
       .sort((a, b) => {
-        const aArchived = a.status === 'completed' || a.status === 'cancelled';
-        const bArchived = b.status === 'completed' || b.status === 'cancelled';
+        const aArchived = a.status === 'completed' || a.status === 'cancelled' || (new Date(a.scheduled_at).getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000);
+        const bArchived = b.status === 'completed' || b.status === 'cancelled' || (new Date(b.scheduled_at).getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000);
         if (aArchived !== bArchived) return aArchived ? 1 : -1;
-        return new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime();
+
+        // Sort by newest chat message activity
+        const aMsgTime = latestMessages[a.id]?.rawTimestamp || 0;
+        const bMsgTime = latestMessages[b.id]?.rawTimestamp || 0;
+
+        if (aMsgTime > 0 || bMsgTime > 0) {
+          if (aMsgTime !== bMsgTime) {
+            return bMsgTime - aMsgTime; // Most recently messaged thread jumps to top
+          }
+        }
+
+        // Fallback: newest created plan or scheduled date
+        const aFallback = new Date(a.created_at || a.scheduled_at).getTime();
+        const bFallback = new Date(b.created_at || b.scheduled_at).getTime();
+        return bFallback - aFallback;
       })
       .map(p => {
         const latest = latestMessages[p.id];
@@ -204,6 +260,9 @@ export default function MessagesScreen() {
         <FlatList
           data={chats}
           keyExtractor={item => item.id}
+          removeClippedSubviews={Platform.OS === 'android'}
+          maxToRenderPerBatch={10}
+          windowSize={7}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl

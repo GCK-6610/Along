@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 
-import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Pressable, FlatList, Platform } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Calendar } from 'lucide-react-native';
 import { theme } from '../styles/theme';
@@ -66,6 +66,9 @@ export default function MyPlansScreen() {
       <FlatList
         data={displayPlans}
         keyExtractor={item => item.id}
+        removeClippedSubviews={Platform.OS === 'android'}
+        maxToRenderPerBatch={8}
+        windowSize={5}
         renderItem={({ item }) => (
           <PlanCard plan={item} onPress={() => router.push({ pathname: '/plan/[id]', params: { id: item.id } })} />
         )}

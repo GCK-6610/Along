@@ -1,5 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl, Alert, Platform } from 'react-native';
 import { useState, useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Bell, Users, MapPin, Info, CheckCircle2, X } from 'lucide-react-native';
@@ -142,6 +142,9 @@ export default function NotificationsScreen() {
         <FlatList
           data={notifications}
           keyExtractor={item => item.id}
+          removeClippedSubviews={Platform.OS === 'android'}
+          maxToRenderPerBatch={10}
+          windowSize={7}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
           contentContainerStyle={{ padding: theme.spacing.md, paddingBottom: 40 }}
           ListEmptyComponent={

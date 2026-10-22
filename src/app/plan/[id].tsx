@@ -123,18 +123,59 @@ export default function PlanDetailsScreen() {
   const isHost = user?.id === plan.host_id;
   const pendingRequests = isHost ? (plan.participants_list?.filter(p => p.join_status === 'pending') || []) : [];
 
-  const handleRequestJoin = async () => {
+  const handleLeavePlan = () => {
     if (!user || !plan) return;
-    if (isJoined || isPending) {
-      await leavePlan();
-      Alert.alert('Left Plan', 'You have withdrawn your request or left the plan.');
-    } else {
-      if (plan.current_participants >= plan.capacity) {
-        Alert.alert('Plan Full', 'This plan has reached its maximum capacity.');
-        return;
-      }
-      setJoinModalVisible(true);
+    Alert.alert(
+      'Leave Plan',
+      'Are you sure you want to leave this hangout? You will lose your spot and leave the chat room.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave Plan',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await leavePlan();
+              Alert.alert('Left Plan', 'You have left this hangout.');
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'Could not leave plan. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleWithdrawRequest = () => {
+    if (!user || !plan) return;
+    Alert.alert(
+      'Withdraw Request',
+      'Cancel your pending request to join this hangout?',
+      [
+        { text: 'Keep Request', style: 'cancel' },
+        {
+          text: 'Withdraw',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await leavePlan();
+              Alert.alert('Request Withdrawn', 'Your request has been cancelled.');
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'Could not withdraw request.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRequestJoin = () => {
+    if (!user || !plan) return;
+    if (plan.current_participants >= plan.capacity) {
+      Alert.alert('Plan Full', 'This plan has reached its maximum capacity.');
+      return;
     }
+    setJoinModalVisible(true);
   };
 
   const submitJoinRequest = async () => {
@@ -698,26 +739,58 @@ export default function PlanDetailsScreen() {
       {/* Sticky Bottom Join CTA Bar */}
       {!isHost && !isCompleted && !hasStarted && (
         <View style={styles.bottomBar}>
-          <View style={styles.bottomInfo}>
-            <Users size={16} color={theme.colors.mutedForeground} />
-            <Text style={styles.bottomCapacityText}>{Math.max(0, (capacity || 0) - current_participants)} spots left</Text>
-          </View>
-          <Pressable
-            style={[
-              styles.joinBtn, 
-              isJoined && styles.joinBtnActive,
-              isPending && styles.joinBtnPending
-            ]}
-            onPress={handleRequestJoin}
-          >
-            <Text style={[
-              styles.joinBtnText, 
-              isJoined && styles.joinBtnTextActive,
-              isPending && styles.joinBtnTextPending
-            ]}>
-              {isJoined ? 'Joined ✓ (Leave)' : isPending ? 'Requested (Pending)' : 'Request to Join →'}
-            </Text>
-          </Pressable>
+          {isJoined ? (
+            <>
+              <Pressable
+                style={styles.leavePlanBtn}
+                onPress={handleLeavePlan}
+                accessibilityRole="button"
+                accessibilityLabel="Leave Plan"
+              >
+                <Text style={styles.leavePlanBtnText}>Leave Plan</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.openChatBtn}
+                onPress={() => router.navigate({ pathname: '/messages/[id]', params: { id } })}
+                accessibilityRole="button"
+                accessibilityLabel="Open Group Chat"
+              >
+                <MessageCircle size={18} color="#fff" />
+                <Text style={styles.openChatBtnText}>Open Chat</Text>
+              </Pressable>
+            </>
+          ) : isPending ? (
+            <>
+              <View style={styles.bottomInfo}>
+                <Clock size={16} color={theme.colors.mutedForeground} />
+                <Text style={styles.bottomCapacityText}>Requested (Pending)</Text>
+              </View>
+              <Pressable
+                style={styles.withdrawBtn}
+                onPress={handleWithdrawRequest}
+                accessibilityRole="button"
+                accessibilityLabel="Withdraw Request"
+              >
+                <Text style={styles.withdrawBtnText}>Withdraw</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <View style={styles.bottomInfo}>
+                <Users size={16} color={theme.colors.mutedForeground} />
+                <Text style={styles.bottomCapacityText}>{Math.max(0, (capacity || 0) - current_participants)} spots left</Text>
+              </View>
+              <Pressable
+                style={styles.joinBtn}
+                onPress={handleRequestJoin}
+                accessibilityRole="button"
+                accessibilityLabel="Request to Join Plan"
+              >
+                <Text style={styles.joinBtnText}>Request to Join →</Text>
+              </Pressable>
+            </>
+          )}
         </View>
       )}
 
@@ -993,6 +1066,51 @@ const styles = StyleSheet.create({
   joinBtnText: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.base, color: '#fff' },
   joinBtnTextActive: { color: theme.colors.primary },
   joinBtnTextPending: { color: theme.colors.mutedForeground },
+  leavePlanBtn: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 12,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leavePlanBtnText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.sizes.sm,
+    color: theme.colors.destructive,
+  },
+  openChatBtn: {
+    flex: 1,
+    marginLeft: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: 12,
+    paddingHorizontal: theme.spacing.md,
+  },
+  openChatBtnText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.sizes.base,
+    color: '#fff',
+  },
+  withdrawBtn: {
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 10,
+  },
+  withdrawBtnText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.sizes.sm,
+    color: theme.colors.mutedForeground,
+  },
   markCompleteBtn: { flex: 1, backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   concludeBtn: { backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border },
   concludeBtnText: { color: theme.colors.foreground },

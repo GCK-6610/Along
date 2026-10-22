@@ -190,7 +190,7 @@ export default function EditProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={styles.topBar}>
           <Pressable style={styles.iconBtn} onPress={() => safeBack('/(tabs)/profile')}>
             <ArrowLeft size={20} color={theme.colors.foreground} />

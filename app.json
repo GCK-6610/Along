@@ -7,12 +7,22 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF8F5"
+    },
     "ios": {
       "supportsTablet": true,
       "config": {
         "googleMapsApiKey": "AIzaSyAJm7VOQbEPU8pzQWV2H-lcOo0sW9jBqzo"
       },
-      "bundleIdentifier": "com.alonghangouts.app"
+      "bundleIdentifier": "com.alonghangouts.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Along uses your location to discover spontaneous hangouts and nearby venue hotspots in your immediate vicinity.",
+        "NSCameraUsageDescription": "Allow Along to access your camera to capture your ID and take a selfie for liveness check.",
+        "NSPhotoLibraryUsageDescription": "Allow Along to access your photo library for government ID verification."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +37,13 @@
           "apiKey": "AIzaSyAJm7VOQbEPU8pzQWV2H-lcOo0sW9jBqzo"
         }
       },
-      "package": "com.alonghangouts.app"
+      "package": "com.alonghangouts.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
