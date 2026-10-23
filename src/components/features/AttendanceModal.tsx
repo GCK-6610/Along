@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, Image, ScrollView, Alert } from 'react-native';
 import { Check, X, Users } from 'lucide-react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { theme } from '../../styles/theme';
 import { PlanParticipant } from '../../types';
 import { supabase } from '../../lib/supabase';
@@ -16,6 +17,7 @@ interface AttendanceModalProps {
 }
 
 export default function AttendanceModal({ visible, onClose, planId, hostId, attendees, onComplete }: AttendanceModalProps) {
+  const queryClient = useQueryClient();
   // Store the IDs of the participants marked as present
   const [presentIds, setPresentIds] = useState<Set<string>>(new Set(attendees.map(a => a.id)));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,8 +45,30 @@ export default function AttendanceModal({ visible, onClose, planId, hostId, atte
         p_absentees: absenteeIds
       });
 
-      if (error) throw error;
+      if (error) {
+        // If plan was already marked completed in database, treat as resolved
+        const isAlreadyCompleted = error.message?.toLowerCase().includes('already completed');
+        if (isAlreadyCompleted) {
+          queryClient.setQueryData(['plan', planId], (old: any) =>
+            old ? { ...old, status: 'completed' } : old
+          );
+          queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+          queryClient.invalidateQueries({ queryKey: ['my_plans'] });
+          queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
+          onComplete(attendeeIds);
+          return;
+        }
+        throw error;
+      }
       
+      // Instantly sync React Query cache to completed status
+      queryClient.setQueryData(['plan', planId], (old: any) =>
+        old ? { ...old, status: 'completed' } : old
+      );
+      queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+      queryClient.invalidateQueries({ queryKey: ['my_plans'] });
+      queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
+
       onComplete(attendeeIds);
     } catch (err: any) {
       Alert.alert(

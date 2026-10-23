@@ -181,8 +181,9 @@ export default function MessagesScreen() {
     const allIds = [...hostedPlans, ...joinedPlans].map(p => p.id);
     if (allIds.length === 0) return;
 
+    const channelId = `inbox_activity_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const channel = supabase
-      .channel('public:chat_messages:inbox_activity')
+      .channel(channelId)
       .on(
         'postgres_changes',
         {

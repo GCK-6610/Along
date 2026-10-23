@@ -49,6 +49,8 @@ export default function PlanDetailsScreen() {
 
   const [myVenueRating, setMyVenueRating] = useState<number | null>(null);
   const [isVenueRatingVisible, setVenueRatingVisible] = useState(false);
+  const [isConcludedLocally, setIsConcludedLocally] = useState(false);
+  const [isConcludingHangout, setIsConcludingHangout] = useState(false);
 
   const fetchMyRating = useCallback(async () => {
     if (!user?.id || !id) return;
@@ -236,11 +238,21 @@ export default function PlanDetailsScreen() {
   const current_participants = 1 + approvedCount;
 
   const hasStarted = hasHangoutStarted(scheduled_at);
-  const isInProgress = isHangoutInProgress(scheduled_at, status, isHost);
-  const canMarkCompleted = canWrapUpHangout(scheduled_at, status, isHost);
+  const effectiveStatus = isConcludedLocally ? 'completed' : status;
+  const isInProgress = isHangoutInProgress(scheduled_at, effectiveStatus, isHost);
+  const canMarkCompleted = !isConcludedLocally && canWrapUpHangout(scheduled_at, effectiveStatus, isHost);
   const isOver10Days = dateObj.getTime() < Date.now() - 10 * 24 * 60 * 60 * 1000;
-  const isCompleted = status === 'completed' || isOver10Days;
-  const isCancelled = status === 'cancelled';
+  const isCompleted = effectiveStatus === 'completed' || isOver10Days;
+  const isCancelled = effectiveStatus === 'cancelled';
+
+  const navigateToChatAfterConclusion = () => {
+    setIsConcludingHangout(false);
+    if (plan?.id) {
+      router.replace({ pathname: '/messages/[id]', params: { id: plan.id } });
+    } else {
+      safeBack('/(tabs)/messages');
+    }
+  };
 
   const handleMarkCompleted = async () => {
     if (approvedCount === 0) {
@@ -278,10 +290,12 @@ export default function PlanDetailsScreen() {
       return;
     }
 
+    setIsConcludingHangout(true);
     setAttendanceVisible(true);
   };
 
   const onAttendanceCompleted = (presentIds: string[]) => {
+    setIsConcludedLocally(true);
     setAttendanceVisible(false);
     // Find all participant objects that were marked present
     const presentUsers = (participants_list || []).filter(p => presentIds.includes(p.id) && p.id !== user?.id);
@@ -292,8 +306,14 @@ export default function PlanDetailsScreen() {
         setRatingsVisible(true);
       }, 500); // Wait for first modal to close
     } else {
-      Alert.alert('Plan Completed', 'Plan has been successfully marked as completed.');
-      safeBack('/(tabs)');
+      if (!myVenueRating) {
+        setTimeout(() => {
+          setVenueRatingVisible(true);
+        }, 500);
+      } else {
+        Alert.alert('Hangout Concluded', 'Hangout has been successfully marked as completed.');
+        navigateToChatAfterConclusion();
+      }
     }
   };
 
@@ -547,7 +567,10 @@ export default function PlanDetailsScreen() {
                     <Text style={styles.ratePromptTitle}>Rate {host?.full_name || 'the Host'}</Text>
                     <Text style={styles.ratePromptSub}>How was your hangout? Rate the host to help keep Along safe & trusted.</Text>
                   </View>
-                  <Pressable style={styles.rateHostBtn} onPress={() => setAttendeeRatingVisible(true)}>
+                  <Pressable style={styles.rateHostBtn} onPress={() => {
+                    setIsConcludingHangout(true);
+                    setAttendeeRatingVisible(true);
+                  }}>
                     <Star size={16} color="#fff" fill="#fff" />
                     <Text style={styles.rateHostBtnText}>Rate Host</Text>
                   </Pressable>
@@ -836,7 +859,10 @@ export default function PlanDetailsScreen() {
       {/* Sticky Bottom Bar for Rating Host */}
       {!isHost && isCompleted && isJoined && !myRating && (
         <View style={styles.bottomBar}>
-          <Pressable style={styles.rateHostStickyBtn} onPress={() => setAttendeeRatingVisible(true)}>
+          <Pressable style={styles.rateHostStickyBtn} onPress={() => {
+            setIsConcludingHangout(true);
+            setAttendeeRatingVisible(true);
+          }}>
             <Star size={18} color="#fff" fill="#fff" />
             <Text style={styles.joinBtnText}>Rate {host?.full_name || 'the Host'}</Text>
           </Pressable>
@@ -909,7 +935,10 @@ export default function PlanDetailsScreen() {
         <>
           <AttendanceModal 
             visible={isAttendanceVisible} 
-            onClose={() => setAttendanceVisible(false)} 
+            onClose={() => {
+              setAttendanceVisible(false);
+              setIsConcludingHangout(false);
+            }} 
             planId={plan.id}
             hostId={user.id}
             attendees={(participants_list || []).filter(p => p.join_status === 'approved' && p.id !== user.id)}
@@ -924,7 +953,7 @@ export default function PlanDetailsScreen() {
               if (!myVenueRating) {
                 setTimeout(() => setVenueRatingVisible(true), 400);
               } else {
-                safeBack('/(tabs)');
+                navigateToChatAfterConclusion();
               }
             }}
             planId={plan.id}
@@ -932,9 +961,7 @@ export default function PlanDetailsScreen() {
             hostId={user.id}
             ratees={ratees}
             onSuccess={() => {
-              if (!myVenueRating) {
-                setTimeout(() => setVenueRatingVisible(true), 400);
-              }
+              // Successfully submitted attendee ratings; onClose handles transition
             }}
           />
 
@@ -942,7 +969,14 @@ export default function PlanDetailsScreen() {
           {host && (
             <RatingsModal
               visible={isAttendeeRatingVisible}
-              onClose={() => setAttendeeRatingVisible(false)}
+              onClose={() => {
+                setAttendeeRatingVisible(false);
+                if (!myVenueRating) {
+                  setTimeout(() => setVenueRatingVisible(true), 400);
+                } else if (isConcludingHangout) {
+                  navigateToChatAfterConclusion();
+                }
+              }}
               planId={plan.id}
               raterId={user.id}
               hostId={user.id}
@@ -951,9 +985,6 @@ export default function PlanDetailsScreen() {
               subtitle={`How was your hangout experience with ${host.full_name || 'the host'}?`}
               onSuccess={() => {
                 fetchMyRating();
-                if (!myVenueRating) {
-                  setTimeout(() => setVenueRatingVisible(true), 400);
-                }
               }}
             />
           )}
@@ -961,11 +992,23 @@ export default function PlanDetailsScreen() {
           {/* Venue Rating Modal for Both Host & Attendees */}
           <VenueRatingModal
             visible={isVenueRatingVisible}
-            onClose={() => setVenueRatingVisible(false)}
+            onClose={() => {
+              setVenueRatingVisible(false);
+              if (isConcludingHangout) {
+                navigateToChatAfterConclusion();
+              }
+            }}
             planId={plan.id}
             venueName={plan.venue}
             userId={user.id}
-            onSuccess={fetchMyVenueRating}
+            onSuccess={() => {
+              fetchMyVenueRating();
+              if (isConcludingHangout) {
+                setTimeout(() => {
+                  navigateToChatAfterConclusion();
+                }, 400);
+              }
+            }}
           />
         </>
       )}

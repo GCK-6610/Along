@@ -5,7 +5,7 @@ import {
   TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { ArrowLeft, Send, Lock } from 'lucide-react-native';
 import { theme } from '../../styles/theme';
 import { useChat, ChatMessage } from '../../hooks/useChat';
@@ -19,7 +19,7 @@ import { BrandLoader } from '../../components/common/BrandLoader';
 
 export default function PlanChatRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { plan, isLoading: planLoading } = usePlan(id);
+  const { plan, isLoading: planLoading, refetch: refetchPlan } = usePlan(id);
   const { messages, isLoading: chatLoading, sendMessage } = useChat(id);
   const { session } = useAuth();
   
@@ -28,6 +28,14 @@ export default function PlanChatRoomScreen() {
       markChatAsRead(id);
     }
   }, [id, messages.length]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        refetchPlan();
+      }
+    }, [id, refetchPlan])
+  );
   
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);

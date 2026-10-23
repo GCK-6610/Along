@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Plan } from '../types';
@@ -46,6 +47,40 @@ export function usePlan(planId: string) {
     staleTime: 1000 * 60 * 1, // 1 minute warm cache
     gcTime: 1000 * 60 * 10,
   });
+
+  // Real-time synchronization for plan status and details
+  useEffect(() => {
+    if (!planId) return;
+
+    const channelId = `plan_sync_${planId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'plans',
+          filter: `id=eq.${planId}`,
+        },
+        (payload) => {
+          const updatedPlan = payload.new as any;
+          if (updatedPlan?.status) {
+            queryClient.setQueryData(['plan', planId], (old: any) =>
+              old ? { ...old, ...updatedPlan } : old
+            );
+            queryClient.invalidateQueries({ queryKey: ['plan', planId] });
+            queryClient.invalidateQueries({ queryKey: ['my_plans'] });
+            queryClient.invalidateQueries({ queryKey: ['nearby_plans'] });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [planId, queryClient]);
 
   const refetchPlan = async () => {
     await queryResult.refetch();
