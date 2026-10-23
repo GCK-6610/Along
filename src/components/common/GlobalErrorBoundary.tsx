@@ -1,16 +1,11 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { theme } from '../styles/theme';
-import { BrandLoader } from '../components/common/BrandLoader';
-import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
+import { router, type ErrorBoundaryProps } from 'expo-router';
+import { theme } from '../../styles/theme';
+import { BrandLoader } from './BrandLoader';
+import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 
-interface GlobalErrorProps {
-  error: Error;
-  retry: () => void;
-}
-
-export default function GlobalErrorBoundary({ error, retry }: GlobalErrorProps) {
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   const friendlyMessage = getUserFriendlyErrorMessage(
     error,
     'An unexpected glitch occurred while loading this view. You can reload or return to the home screen.'
@@ -101,7 +96,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   homeBtnText: {
-    fontFamily: theme.typography.fontFamily.medium,
+    fontFamily: theme.typography.fontFamily.bold,
     fontSize: theme.typography.sizes.base,
     color: theme.colors.foreground,
   },

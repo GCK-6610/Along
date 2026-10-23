@@ -13,6 +13,7 @@ import { LogBox, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { theme } from '../styles/theme';
 import { BrandLoader } from '../components/common/BrandLoader';
+export { ErrorBoundary } from '../components/common/GlobalErrorBoundary';
 
 const queryClient = new QueryClient({
   defaultOptions: {
