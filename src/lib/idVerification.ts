@@ -409,16 +409,7 @@ export async function verifyIdAndLiveness(
         };
       }
 
-      // 2. Verify face matches the ID photo
-      if (visionResult.faceMatched === false) {
-        return {
-          success: false,
-          isRealHuman: true,
-          faceMatched: false,
-          confidenceScore: 0,
-          errorMessage: 'The selfie photo does not match the photo on the submitted ID document.',
-        };
-      }
+      // 2. Face match is not strictly enforced for now as per product decision; we record liveness and proceed.
 
       // 3. Verify extracted name matches the profile name via 70%+ Fuzzy Matching
       const extractedName = (visionResult.extractedName || '').trim();

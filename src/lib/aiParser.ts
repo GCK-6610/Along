@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import * as Location from 'expo-location';
+import { FEATURE_FLAGS } from '../config/features';
 
 export interface ParsedPlanResult {
   title: string;
@@ -128,11 +129,12 @@ export async function parsePlanWithAI(prompt: string): Promise<ParsedPlanResult>
     };
   }
 
-  // 1. Attempt Edge Function first
-  try {
-    const { data, error } = await supabase.functions.invoke('parse-plan-text', {
-      body: { prompt },
-    });
+  // 1. Attempt Edge Function first ONLY if AI auto-fill is enabled in feature flags
+  if (FEATURE_FLAGS.ENABLE_AI_AUTOFILL) {
+    try {
+      const { data, error } = await supabase.functions.invoke('parse-plan-text', {
+        body: { prompt },
+      });
 
     if (!error && data && data.success !== false) {
       let parsedDate: Date | undefined;
@@ -155,8 +157,9 @@ export async function parsePlanWithAI(prompt: string): Promise<ParsedPlanResult>
         success: true,
       };
     }
-  } catch (err: any) {
-    console.warn('AI Edge Function unavailable, running local NLP parser:', err.message);
+    } catch (err: any) {
+      console.warn('AI Edge Function unavailable, running local NLP parser:', err.message);
+    }
   }
 
   // 2. Local NLP Fallback Engine

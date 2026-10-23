@@ -53,10 +53,9 @@ Analyze the two provided images:
 1. An official ID document (Aadhaar, Driving License, Passport, PAN card, or College/Student ID).
 2. A live selfie photograph taken by the user.
 
-Strict Security & Anti-Fraud Checks:
-- Document Authenticity: Check if image 1 is a genuine identity card or government document. Reject if it is a plain piece of paper, handwritten note, blank sheet, cartoon, random object, or photo of a computer screen.
-- Liveness & Face Presence: Check if image 2 contains a real, live human face. Reject if there is no face, multiple faces, a photo of a photo, a mask, or an inanimate object.
-- Facial Biometric Match: Compare the facial geometry in the selfie with the portrait photo printed on the identity card. Verify they belong to the same individual.
+Verification Rules:
+- Document Authenticity: Check if image 1 is an official government or college identity card. Reject if it is a plain piece of paper, handwritten note, blank sheet, cartoon, random object, or photo of a computer screen.
+- Liveness & Face Presence: Check if image 2 contains a real, live human face. Reject if there is no human face present, or if it is an inanimate object/screen.
 - Information Extraction: Extract the legal full name, gender ('male', 'female', or 'other'), date of birth (in YYYY-MM-DD or year of birth), and document type.
 
 Respond ONLY with a valid JSON object matching this schema:
@@ -79,7 +78,7 @@ Respond ONLY with a valid JSON object matching this schema:
             content: [
               {
                 type: 'text',
-                text: 'Verify the authenticity of this ID card, extract the details (name, gender, DOB, type), and verify if the selfie matches the portrait on the ID.'
+                text: 'Verify that image 1 is a valid ID card, extract the details (name, gender, DOB, type), and verify that image 2 contains a live human face.'
               },
               {
                 type: 'image_url',

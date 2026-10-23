@@ -212,7 +212,7 @@ export default function VerificationScreen() {
             <View style={styles.privacyGuaranteeCard}>
               <Shield size={16} color="#10B981" />
               <Text style={styles.privacyGuaranteeText}>
-                100% On-Device Privacy: Your ID document and selfie are verified strictly in memory on your phone. Nothing is ever uploaded, stored, or viewed by anyone.
+                Zero-Storage Privacy Guarantee: Your photos are analyzed in an ephemeral in-memory session strictly to verify liveness and confirm your name. No images are ever saved to disk, stored on servers, or retained.
               </Text>
             </View>
 
