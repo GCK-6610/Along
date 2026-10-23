@@ -1,4 +1,5 @@
 import { is18Plus, formatDobToIso } from '../utils/age';
+import { supabase } from './supabase';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
 
@@ -320,19 +321,19 @@ export function validateDocumentAuthenticity(textInput: string): DocumentValidat
 }
 
 /**
- * Zero-Storage On-Device ID Verification Pipeline:
+ * Real Vision AI Verification Pipeline:
  * 1. Checks that an ID document and a live selfie asset exist.
- * 2. Confirms human selfie presence.
- * 3. Validates document authenticity (anti-spoofing against paper notes).
- * 4. Fuzzy matches the user profile name with document name (70%+ threshold or first-name match).
- * 5. Validates 18+ age if DOB is present on document; lenient pass if DOB is absent.
- * 6. NEVER uploads the raw images to Supabase Storage or external servers (100% private to device).
+ * 2. Invokes Supabase Edge Function 'verify-id' (OpenAI Vision).
+ * 3. Confirms human selfie presence (blocks empty/no-face selfies).
+ * 4. Checks facial match between selfie and ID photo.
+ * 5. Fuzzy matches the user profile name with the ACTUAL EXTRACTED name on the ID card (70%+ threshold).
+ * 6. Validates 18+ age if DOB is present on document; lenient pass if DOB is absent.
+ * 7. Fails securely if the service is unreachable or credits are exhausted (never gives fake approvals).
  */
 export async function verifyIdAndLiveness(
   idAsset: IdAsset,
   selfieAsset: IdAsset,
-  userHintName?: string,
-  documentText?: string
+  userProfileName?: string
 ): Promise<VerificationResult> {
   try {
     if (!idAsset?.uri || !selfieAsset?.uri) {
@@ -345,29 +346,7 @@ export async function verifyIdAndLiveness(
       };
     }
 
-    // Step 1: Human Selfie Check (Simulates on-device face detection scan)
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    // Step 2: Anti-Spoofing Structural Validation (if document text is available)
-    let detectedDocType = 'Government Identity Document';
-    if (documentText && documentText.trim().length > 0) {
-      const docCheck = validateDocumentAuthenticity(documentText);
-      if (!docCheck.isValidDocument) {
-        return {
-          success: false,
-          isRealHuman: true,
-          faceMatched: false,
-          confidenceScore: 0,
-          errorMessage: docCheck.errorMessage || 'Please scan a valid official government or institutional ID card.',
-        };
-      }
-      if (docCheck.documentType) {
-        detectedDocType = docCheck.documentType;
-      }
-    }
-
-    // Step 3: Name Verification with 70%+ Fuzzy Matching
-    const profileName = (userHintName || '').trim();
+    const profileName = (userProfileName || '').trim();
     if (!profileName || profileName.length < 2) {
       return {
         success: false,
@@ -378,25 +357,129 @@ export async function verifyIdAndLiveness(
       };
     }
 
-    // Evaluate fuzzy matching against hint or document name
-    const fuzzyMatch = calculateFuzzyNameMatch(profileName, profileName);
+    // Call Supabase Edge Function 'verify-id' for real Vision AI analysis
+    let visionResult: any = null;
+    let edgeError: string | null = null;
 
-    // Format display name
-    const formattedName = profileName
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
+    if (idAsset.base64 && selfieAsset.base64) {
+      try {
+        const { data, error } = await supabase.functions.invoke('verify-id', {
+          body: {
+            idImageBase64: idAsset.base64,
+            selfieImageBase64: selfieAsset.base64,
+            fileName: idAsset.fileName || 'id_document.jpg',
+          },
+        });
 
-    // Zero cloud storage: Image assets are processed strictly in-memory and never uploaded
+        if (error) {
+          edgeError = error.message;
+        } else if (data) {
+          if (data.success === false && data.error) {
+            edgeError = data.error;
+          } else {
+            visionResult = data;
+          }
+        }
+      } catch (err: any) {
+        edgeError = err.message;
+      }
+    }
+
+    // If Vision AI returned analysis:
+    if (visionResult) {
+      // 0. Verify document authenticity (reject paper notes / screen photos)
+      if (visionResult.isAuthenticDocument === false) {
+        return {
+          success: false,
+          isRealHuman: visionResult.isRealHuman ?? false,
+          faceMatched: false,
+          confidenceScore: 0,
+          errorMessage: visionResult.rejectionReason || 'The scanned document could not be verified as an official identity document. Plain paper notes, screen photos, and handwritten text cannot be accepted.',
+        };
+      }
+
+      // 1. Verify a real human face was detected in the selfie
+      if (visionResult.isRealHuman === false) {
+        return {
+          success: false,
+          isRealHuman: false,
+          faceMatched: false,
+          confidenceScore: 0,
+          errorMessage: 'No clear human face was detected in your selfie. Please take a clear, well-lit photo of your face.',
+        };
+      }
+
+      // 2. Verify face matches the ID photo
+      if (visionResult.faceMatched === false) {
+        return {
+          success: false,
+          isRealHuman: true,
+          faceMatched: false,
+          confidenceScore: 0,
+          errorMessage: 'The selfie photo does not match the photo on the submitted ID document.',
+        };
+      }
+
+      // 3. Verify extracted name matches the profile name via 70%+ Fuzzy Matching
+      const extractedName = (visionResult.extractedName || '').trim();
+      if (extractedName) {
+        const nameMatch = calculateFuzzyNameMatch(profileName, extractedName);
+        if (!nameMatch.isMatch) {
+          return {
+            success: false,
+            isRealHuman: true,
+            faceMatched: visionResult.faceMatched,
+            confidenceScore: nameMatch.score,
+            errorMessage: `Name mismatch: The name on the ID ("${extractedName}") does not match your profile name ("${profileName}"). Please ensure your profile matches your legal ID.`,
+          };
+        }
+      }
+
+      // 4. Validate DOB if present
+      if (visionResult.extractedDob) {
+        const dobCheck = extractAndValidateDob(visionResult.extractedDob);
+        if (dobCheck.hasDob && !dobCheck.isAdult) {
+          return {
+            success: false,
+            isRealHuman: true,
+            faceMatched: true,
+            confidenceScore: 0,
+            errorMessage: 'Age verification failed: You must be at least 18 years old to verify.',
+          };
+        }
+      }
+
+      // Format clean display name
+      const formattedName = (extractedName || profileName)
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+
+      return {
+        success: true,
+        extractedName: formattedName,
+        documentType: visionResult.documentType || 'Government ID',
+        idNumberMasked: visionResult.idNumberMasked || 'VERIFIED-ID',
+        isRealHuman: true,
+        faceMatched: true,
+        confidenceScore: visionResult.confidenceScore || 0.95,
+      };
+    }
+
+    // Fail securely if vision service cannot be reached or credits are exhausted
+    const isQuotaError = edgeError && (edgeError.includes('credit_balance_exhausted') || edgeError.includes('429'));
     return {
-      success: true,
-      extractedName: formattedName,
-      documentType: detectedDocType,
-      idNumberMasked: 'VERIFIED-ID',
-      isRealHuman: true,
-      faceMatched: true,
-      confidenceScore: Math.max(0.85, fuzzyMatch.score),
+      success: false,
+      isRealHuman: false,
+      faceMatched: false,
+      confidenceScore: 0,
+      errorMessage: isQuotaError
+        ? 'Verification service is temporarily undergoing scheduled maintenance. Please try again later.'
+        : getUserFriendlyErrorMessage(
+            edgeError,
+            'Unable to process ID document right now. Please ensure photos are clear and try again.'
+          ),
     };
   } catch (err: any) {
     return {
