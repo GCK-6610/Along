@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { AppState } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,6 +21,7 @@ export function useChat(planId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const { session } = useAuth();
   const profileCache = useRef<Map<string, { full_name: string; avatar_url: string }>>(new Map());
+  const lastSendTime = useRef<number>(0);
 
   // Prime the current user's profile in cache
   useEffect(() => {
@@ -131,7 +133,15 @@ export function useChat(planId: string) {
       )
       .subscribe();
 
+    // Re-sync chat messages when app returns to foreground from background/lockscreen
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        fetchMessages();
+      }
+    });
+
     return () => {
+      appStateSub.remove();
       supabase.removeChannel(channel);
     };
   }, [planId]);
@@ -139,6 +149,11 @@ export function useChat(planId: string) {
   const sendMessage = async (content: string) => {
     const text = content.trim();
     if (!text || !session?.user?.id) return;
+
+    // Throttle rapid multi-taps (400ms cooldown)
+    const now = Date.now();
+    if (now - lastSendTime.current < 400) return;
+    lastSendTime.current = now;
 
     const currentUserId = session.user.id;
     const authorProfile = profileCache.current.get(currentUserId) || {

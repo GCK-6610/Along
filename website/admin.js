@@ -4,7 +4,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const PASSKEY = 'along2026';
+// Authentication Gate Helpers
+function getAdminSecret() {
+  return sessionStorage.getItem('along_admin_passkey') || '';
+}
+
+function isAuthorized() {
+  return Boolean(sessionStorage.getItem('along_admin_passkey'));
+}
 
 // Global State
 let allHotspots = [];
@@ -28,11 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Authentication Gate
-function isAuthorized() {
-  return sessionStorage.getItem('along_admin_auth') === 'true';
-}
-
 function initGate() {
   const gateOverlay = document.getElementById('adminGate');
   const gateForm = document.getElementById('gateForm');
@@ -46,21 +48,39 @@ function initGate() {
     gateOverlay.style.display = 'flex';
   }
 
-  gateForm.addEventListener('submit', (e) => {
+  gateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (gateInput.value.trim() === PASSKEY) {
-      sessionStorage.setItem('along_admin_auth', 'true');
-      gateOverlay.style.display = 'none';
-      gateError.style.display = 'none';
-      loadAllData();
-    } else {
+    const candidate = gateInput.value.trim();
+    if (!candidate) return;
+
+    const submitBtn = gateForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Verifying...';
+    submitBtn.disabled = true;
+
+    try {
+      const { data, error } = await supabaseClient.rpc('get_admin_reports', { admin_secret: candidate });
+      if (!error && Array.isArray(data)) {
+        sessionStorage.setItem('along_admin_passkey', candidate);
+        gateOverlay.style.display = 'none';
+        gateError.style.display = 'none';
+        gateInput.value = '';
+        loadAllData();
+      } else {
+        gateError.style.display = 'block';
+        gateInput.value = '';
+      }
+    } catch (err) {
       gateError.style.display = 'block';
       gateInput.value = '';
+    } finally {
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
     }
   });
 
   lockBtn.addEventListener('click', () => {
-    sessionStorage.removeItem('along_admin_auth');
+    sessionStorage.removeItem('along_admin_passkey');
     gateOverlay.style.display = 'flex';
   });
 }
@@ -379,7 +399,7 @@ async function fetchApplications() {
   const tbody = document.getElementById('applicationsTableBody');
   try {
     const { data, error } = await supabaseClient
-      .rpc('get_admin_partner_applications', { admin_secret: PASSKEY });
+      .rpc('get_admin_partner_applications', { admin_secret: getAdminSecret() });
 
     if (error) throw error;
     allApplications = data || [];
@@ -440,7 +460,7 @@ window.updateAppStatus = async (id, status) => {
   try {
     const { error } = await supabaseClient
       .rpc('update_admin_partner_application_status', {
-        admin_secret: PASSKEY,
+        admin_secret: getAdminSecret(),
         target_id: id,
         new_status: status
       });
@@ -629,7 +649,7 @@ async function fetchReports() {
 
   try {
     const { data, error } = await supabaseClient
-      .rpc('get_admin_reports', { admin_secret: PASSKEY });
+      .rpc('get_admin_reports', { admin_secret: getAdminSecret() });
 
     if (error) {
       // Fallback direct query if RPC is deploying
@@ -713,7 +733,7 @@ window.resolveReportAction = async (reportId, newStatus, actionType) => {
 
   try {
     const { error } = await supabaseClient.rpc('update_admin_report_status', {
-      admin_secret: PASSKEY,
+      admin_secret: getAdminSecret(),
       target_report_id: reportId,
       new_status: newStatus,
       moderation_action: actionType
