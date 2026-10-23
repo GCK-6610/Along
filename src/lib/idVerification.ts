@@ -166,7 +166,7 @@ export async function pickIdDocument(useCamera = false): Promise<IdAsset | null>
   const options = {
     mediaTypes: ['images'],
     allowsEditing: true,
-    quality: 0.85,
+    quality: 0.65,
     base64: true,
   };
 
@@ -207,7 +207,7 @@ export async function captureSelfie(useCamera = true): Promise<IdAsset | null> {
     mediaTypes: ['images'],
     allowsEditing: true,
     aspect: [1, 1],
-    quality: 0.85,
+    quality: 0.65,
     base64: true,
     cameraType: ImagePicker.CameraType?.front,
   };

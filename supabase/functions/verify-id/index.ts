@@ -98,6 +98,7 @@ Respond ONLY with a valid JSON object matching this schema:
           }
         ],
         temperature: 0.1,
+        max_tokens: 150,
         response_format: { type: 'json_object' }
       })
     });
