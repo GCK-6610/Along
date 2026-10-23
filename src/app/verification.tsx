@@ -87,6 +87,9 @@ export default function VerificationScreen() {
         setProfile((prev: any) => ({ ...prev, is_verified: true }));
         setShowReverify(false);
         setIsVerifying(false);
+        // Immediate in-memory dereference (zero storage)
+        setIdDocAsset(null);
+        setSelfieAsset(null);
 
         Alert.alert(
           '🎉 Verification Complete!',
@@ -190,7 +193,26 @@ export default function VerificationScreen() {
               </View>
               <Text style={styles.title}>Get Verified on Along</Text>
               <Text style={styles.subtitle}>
-                Scan any government ID (Aadhaar, Driving License, Passport, PAN) and take a quick selfie to earn the blue tick 🛡️
+                Scan your ID and take a quick selfie to earn the blue tick trust badge.
+              </Text>
+            </View>
+
+            {/* Optional Trust Badge Notice */}
+            <View style={styles.optionalNoticeCard}>
+              <View style={styles.optionalNoticeHeader}>
+                <Sparkles size={16} color={theme.colors.primary} />
+                <Text style={styles.optionalNoticeTitle}>Optional Trust Badge</Text>
+              </View>
+              <Text style={styles.optionalNoticeText}>
+                Verification is completely optional. You can browse, host, join, and message freely without verifying. A verified badge simply helps other members feel confident meeting up.
+              </Text>
+            </View>
+
+            {/* Zero-Storage Privacy Guarantee */}
+            <View style={styles.privacyGuaranteeCard}>
+              <Shield size={16} color="#10B981" />
+              <Text style={styles.privacyGuaranteeText}>
+                100% On-Device Privacy: Your ID document and selfie are verified strictly in memory on your phone. Nothing is ever uploaded, stored, or viewed by anyone.
               </Text>
             </View>
 
@@ -477,5 +499,37 @@ const styles = StyleSheet.create({
   reverifyBtnText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
   cancelReverifyBtn: { alignItems: 'center', paddingVertical: 10 },
   cancelReverifyText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
+
+  optionalNoticeCard: {
+    backgroundColor: 'rgba(255, 71, 87, 0.08)',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 71, 87, 0.25)',
+    marginBottom: theme.spacing.md,
+    gap: 6,
+  },
+  optionalNoticeHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  optionalNoticeTitle: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.sm, color: theme.colors.primary },
+  optionalNoticeText: { fontFamily: theme.typography.fontFamily.regular, fontSize: 12, color: theme.colors.foreground, lineHeight: 18 },
+
+  privacyGuaranteeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    marginBottom: theme.spacing.md,
+  },
+  privacyGuaranteeText: {
+    flex: 1,
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 12,
+    color: '#10B981',
+    lineHeight: 17,
+  },
 });
 

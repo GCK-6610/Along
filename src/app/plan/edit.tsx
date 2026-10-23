@@ -19,6 +19,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { searchPlaces, fetchPlaceDetails, getGoogleMapsApiKey } from '../../lib/places';
 import { BrandLoader } from '../../components/common/BrandLoader';
+import { FEATURE_FLAGS } from '../../config/features';
 
 export default function EditPlanScreen() {
   const { user } = useAuth();
@@ -103,6 +104,7 @@ export default function EditPlanScreen() {
   };
 
   const handleNLPParse = async () => {
+    if (!FEATURE_FLAGS.ENABLE_AI_AUTOFILL) return;
     if (!nlpInput.trim()) {
       Alert.alert('Empty Description', 'Please type a quick plan description first (e.g. "Morning run at Lodhi Gardens tomorrow 6am for 4 people").');
       return;
@@ -320,8 +322,9 @@ export default function EditPlanScreen() {
             </View>
           </View>
 
-          {/* NLP Input (Secondary) */}
-          <View style={styles.nlpCard}>
+          {/* NLP Input (Parked for Phase 2) */}
+          {FEATURE_FLAGS.ENABLE_AI_AUTOFILL && (
+            <View style={styles.nlpCard}>
             <View style={styles.nlpHeader}>
               <Zap size={16} color={theme.colors.primary} />
               <Text style={styles.nlpLabel}>Or use AI Auto-fill</Text>
@@ -349,7 +352,8 @@ export default function EditPlanScreen() {
                 : <Text style={styles.nlpBtnText}>✨ Auto-fill form</Text>
               }
             </Pressable>
-          </View>
+            </View>
+          )}
 
           <View style={styles.bottomBar}>
             <Pressable style={[styles.postBtn, (!title || !venue || tags.length === 0 || isPosting) && styles.btnDisabled]} onPress={handleUpdatePlan} disabled={!title || !venue || tags.length === 0 || isPosting}>

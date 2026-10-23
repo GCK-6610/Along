@@ -17,6 +17,7 @@ import * as Location from 'expo-location';
 import { useQueryClient } from '@tanstack/react-query';
 import { getUserFriendlyErrorMessage } from '../../utils/errorHandling';
 import { getGoogleMapsApiKey } from '../../lib/places';
+import { FEATURE_FLAGS } from '../../config/features';
 
 export default function CreateScreen() {
   const { user, profile } = useAuth();
@@ -93,6 +94,7 @@ export default function CreateScreen() {
   );
 
   const handleNLPParse = async () => {
+    if (!FEATURE_FLAGS.ENABLE_AI_AUTOFILL) return;
     if (!nlpInput.trim()) {
       Alert.alert('Empty Description', 'Please type a quick plan description first (e.g. "Morning coffee at Blue Tokai tomorrow 9am for 4 people").');
       return;
@@ -198,10 +200,12 @@ export default function CreateScreen() {
               <Text style={styles.subtitle}>What are we doing today?</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable onPress={() => setAiModalVisible(true)} style={styles.aiHeaderBtn}>
-                <Zap size={14} color={theme.colors.primary} />
-                <Text style={styles.aiHeaderBtnText}>Auto-fill</Text>
-              </Pressable>
+              {FEATURE_FLAGS.ENABLE_AI_AUTOFILL && (
+                <Pressable onPress={() => setAiModalVisible(true)} style={styles.aiHeaderBtn}>
+                  <Zap size={14} color={theme.colors.primary} />
+                  <Text style={styles.aiHeaderBtnText}>Auto-fill</Text>
+                </Pressable>
+              )}
               <Pressable onPress={resetForm} style={styles.clearBtn}>
                 <Text style={styles.clearBtnText}>Clear</Text>
               </Pressable>
@@ -472,8 +476,9 @@ export default function CreateScreen() {
         </View>
       </Modal>
 
-      {/* AI Auto-fill Modal */}
-      <Modal visible={isAiModalVisible} transparent animationType="slide" onRequestClose={closeAiModal}>
+      {/* AI Auto-fill Modal (Parked for Phase 2) */}
+      {FEATURE_FLAGS.ENABLE_AI_AUTOFILL && (
+        <Modal visible={isAiModalVisible} transparent animationType="slide" onRequestClose={closeAiModal}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={closeAiModal} />
           <View style={{ backgroundColor: theme.colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: theme.spacing.lg, paddingBottom: 40, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 12 }}>
@@ -511,6 +516,7 @@ export default function CreateScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      )}
 
       {/* iOS Date Picker Modal */}
       {Platform.OS === 'ios' && (

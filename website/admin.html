@@ -310,6 +310,10 @@
         <div class="stat-label">Hangouts Requiring Archive</div>
         <div id="statExpiredPlans" class="stat-value">--</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-label">Open Safety Reports</div>
+        <div id="statOpenReports" class="stat-value">--</div>
+      </div>
     </div>
 
     <!-- Tab Navigation -->
@@ -322,6 +326,9 @@
       </button>
       <button class="admin-tab-btn" data-tab="archiveTab">
         ⏳ 10-Day Hangouts Archiver
+      </button>
+      <button class="admin-tab-btn" data-tab="reportsTab">
+        🛡️ Reports & Moderation (<span id="reportsCountBadge">0</span>)
       </button>
     </div>
 
@@ -521,6 +528,38 @@
           <tbody id="expiredPlansTableBody">
             <tr>
               <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-dim);">Loading expired hangouts...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 4: Reports & Moderation -->
+    <section id="reportsTab" class="tab-content" style="display: none;">
+      <div style="margin-bottom: 20px;">
+        <h2 style="font-family: var(--font-display); font-size: 20px; font-weight: 800;">User Reports & Community Safety</h2>
+        <p style="color: var(--text-muted); font-size: 13px;">
+          Review member-submitted complaints, no-shows, harassment flags, and take administrative action.
+        </p>
+      </div>
+
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Reported User</th>
+              <th>Reporter</th>
+              <th>Associated Hangout</th>
+              <th>Reason</th>
+              <th>Details</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="reportsTableBody">
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-dim);">Loading safety reports...</td>
             </tr>
           </tbody>
         </table>

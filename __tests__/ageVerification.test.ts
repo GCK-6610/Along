@@ -1,4 +1,5 @@
 import { calculateAge, is18Plus, formatDobToIso, getTimeUntil18 } from '../src/utils/age';
+import { calculateFuzzyNameMatch, extractAndValidateDob, validateDocumentAuthenticity } from '../src/lib/idVerification';
 
 describe('18+ Age Verification & Privacy Rules', () => {
   it('correctly calculates age for adult over 18', () => {
@@ -87,5 +88,93 @@ describe('18+ Age Verification & Privacy Rules', () => {
     expect(Object.keys(defaultSettings)).not.toContain('age');
     expect(restrictedSettings.show_stats).toBe(false);
     expect(restrictedSettings.show_ratings).toBe(false);
+  });
+
+  describe('Fuzzy Name Matching & Lenient DOB Verification', () => {
+    it('matches exact names with 1.0 score', () => {
+      const res = calculateFuzzyNameMatch('Gopal Choudhary', 'Gopal Choudhary');
+      expect(res.isMatch).toBe(true);
+      expect(res.score).toBe(1.0);
+    });
+
+    it('matches names when first name is identical even with initials', () => {
+      const res = calculateFuzzyNameMatch('Gopal Choudhary', 'Gopal C');
+      expect(res.isMatch).toBe(true);
+      expect(res.score).toBeGreaterThanOrEqual(0.85);
+    });
+
+    it('tolerates minor OCR typos via 70%+ fuzzy score', () => {
+      const res = calculateFuzzyNameMatch('Rohan Sharma', 'Rohan Sharman');
+      expect(res.isMatch).toBe(true);
+      expect(res.score).toBeGreaterThanOrEqual(0.70);
+    });
+
+    it('rejects completely distinct names below 70%', () => {
+      const res = calculateFuzzyNameMatch('Alice Smith', 'Bob Jones');
+      expect(res.isMatch).toBe(false);
+      expect(res.score).toBeLessThan(0.70);
+    });
+
+    it('validates 18+ adult when DOB is present on ID', () => {
+      const res = extractAndValidateDob('GOVERNMENT OF INDIA DOB: 14/08/1998 MALE');
+      expect(res.hasDob).toBe(true);
+      expect(res.isAdult).toBe(true);
+      expect(res.dobString).toBe('1998-08-14');
+    });
+
+    it('detects minors when DOB is present on ID', () => {
+      const res = extractAndValidateDob('STUDENT ID CARD DOB: 14/08/2014 MALE');
+      expect(res.hasDob).toBe(true);
+      expect(res.isAdult).toBe(false);
+    });
+
+    it('leniently allows verification when DOB is absent on document', () => {
+      const res = extractAndValidateDob('GOVERNMENT OF INDIA AADHAAR CARD ROHAN SHARMA');
+      expect(res.hasDob).toBe(false);
+      expect(res.isAdult).toBe(true); // Lenient: does not block
+    });
+  });
+
+  describe('Anti-Spoofing & Document Authenticity Validation', () => {
+    it('blocks plain paper handwritten notes with name and DOB', () => {
+      const plainPaper = 'Rohan Sharma DOB: 15/05/2000';
+      const res = validateDocumentAuthenticity(plainPaper);
+      expect(res.isValidDocument).toBe(false);
+      expect(res.errorMessage).toContain('Plain paper notes or handwritten text cannot be accepted');
+    });
+
+    it('blocks random text notes or scribble attempts', () => {
+      const scribble = 'My name is Gopal and I am 22 years old';
+      const res = validateDocumentAuthenticity(scribble);
+      expect(res.isValidDocument).toBe(false);
+    });
+
+    it('authenticates valid Aadhaar card text', () => {
+      const aadhaarText = 'GOVERNMENT OF INDIA UNIQUE IDENTIFICATION AUTHORITY OF INDIA 9876 5432 1098 ROHAN SHARMA';
+      const res = validateDocumentAuthenticity(aadhaarText);
+      expect(res.isValidDocument).toBe(true);
+      expect(res.documentType).toBe('Aadhaar Card');
+    });
+
+    it('authenticates valid PAN card text', () => {
+      const panText = 'INCOME TAX DEPARTMENT GOVT OF INDIA PERMANENT ACCOUNT NUMBER ABCDE1234F';
+      const res = validateDocumentAuthenticity(panText);
+      expect(res.isValidDocument).toBe(true);
+      expect(res.documentType).toBe('PAN Card');
+    });
+
+    it('authenticates valid Driving License text', () => {
+      const dlText = 'UNION OF INDIA DRIVING LICENCE TRANSPORT DEPARTMENT DL NO DL-0420110012345';
+      const res = validateDocumentAuthenticity(dlText);
+      expect(res.isValidDocument).toBe(true);
+      expect(res.documentType).toBe('Driving License');
+    });
+
+    it('authenticates valid Student / College ID text', () => {
+      const studentText = 'NATIONAL INSTITUTE OF TECHNOLOGY STUDENT IDENTITY CARD ROLL NO: 2021CS04';
+      const res = validateDocumentAuthenticity(studentText);
+      expect(res.isValidDocument).toBe(true);
+      expect(res.documentType).toBe('Student / College ID');
+    });
   });
 });

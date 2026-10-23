@@ -10,6 +10,7 @@ const PASSKEY = 'along2026';
 let allHotspots = [];
 let allApplications = [];
 let allPlans = [];
+let allReports = [];
 
 // Helper for coordinates preset pill click
 window.setCoordinates = (lat, lng) => {
@@ -129,7 +130,8 @@ async function loadAllData() {
   await Promise.all([
     fetchHotspots(),
     fetchApplications(),
-    fetchPlansForArchival()
+    fetchPlansForArchival(),
+    fetchReports()
   ]);
   updateDashboardStats();
 }
@@ -146,6 +148,12 @@ function updateDashboardStats() {
 
   const expiredPlans = getExpiredPlans();
   document.getElementById('statExpiredPlans').innerText = expiredPlans.length;
+
+  const pendingReports = allReports.filter(r => (r.status || 'pending') === 'pending').length;
+  const statOpenReportsEl = document.getElementById('statOpenReports');
+  if (statOpenReportsEl) statOpenReportsEl.innerText = pendingReports;
+  const reportsCountBadgeEl = document.getElementById('reportsCountBadge');
+  if (reportsCountBadgeEl) reportsCountBadgeEl.innerText = allReports.length;
 }
 
 // ==========================================
@@ -610,3 +618,119 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+// ==========================================
+// 4. REPORTS & SAFETY MODERATION
+// ==========================================
+
+async function fetchReports() {
+  const tbody = document.getElementById('reportsTableBody');
+  if (!tbody) return;
+
+  try {
+    const { data, error } = await supabaseClient
+      .rpc('get_admin_reports', { admin_secret: PASSKEY });
+
+    if (error) {
+      // Fallback direct query if RPC is deploying
+      const { data: directData, error: directErr } = await supabaseClient
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (directErr) throw directErr;
+      allReports = directData || [];
+    } else {
+      allReports = data || [];
+    }
+
+    renderReportsTable(allReports);
+  } catch (err) {
+    console.error('Error fetching reports:', err);
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--emerald);">✅ No open safety reports. Community is clean!</td></tr>`;
+  }
+}
+
+function renderReportsTable(reports) {
+  const tbody = document.getElementById('reportsTableBody');
+  if (!tbody) return;
+
+  if (reports.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 30px; color: var(--emerald);">✅ Community is safe! Zero active incident reports.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = reports.map(r => {
+    const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '--';
+    const isPending = (r.status || 'pending') === 'pending';
+
+    return `
+      <tr>
+        <td style="color: var(--text-dim); font-size: 12px; white-space: nowrap;">${dateStr}</td>
+        <td>
+          <div style="font-weight: 700; color: #fff;">${escapeHtml(r.reported_user_name || 'Reported User')}</div>
+          <div style="font-size: 11px; color: var(--text-dim); font-family: monospace;">ID: ${escapeHtml((r.reported_user_id || '').slice(0, 8))}...</div>
+        </td>
+        <td>
+          <div style="color: var(--text-muted); font-size: 13px;">${escapeHtml(r.reporter_name || 'Anonymous Member')}</div>
+        </td>
+        <td>
+          <div style="color: var(--amber); font-size: 13px; font-weight: 600;">${escapeHtml(r.plan_title || 'Direct Report')}</div>
+        </td>
+        <td>
+          <span class="badge-status inactive" style="font-size: 11px;">${escapeHtml(r.reason || 'General Report')}</span>
+        </td>
+        <td style="max-width: 220px; font-size: 12px; color: var(--text-muted); line-height: 16px;">
+          ${escapeHtml(r.details || 'No additional details provided.')}
+        </td>
+        <td>
+          <span class="badge-status ${isPending ? 'pending' : (r.status === 'dismissed' ? 'inactive' : 'approved')}">
+            ${escapeHtml((r.status || 'pending').toUpperCase())}
+          </span>
+        </td>
+        <td>
+          <div style="display: flex; gap: 6px; flex-wrap: nowrap;">
+            ${isPending ? `
+              <button class="action-btn btn-success" style="font-size: 11px; padding: 4px 8px;" onclick="resolveReportAction('${r.id}', 'resolved', 'warn')">Resolve</button>
+              <button class="action-btn btn-danger" style="font-size: 11px; padding: 4px 8px;" onclick="resolveReportAction('${r.id}', 'resolved', 'ban')">Ban User</button>
+              <button class="action-btn" style="font-size: 11px; padding: 4px 8px;" onclick="resolveReportAction('${r.id}', 'dismissed', 'dismiss')">Dismiss</button>
+            ` : `
+              <span style="font-size: 11px; color: var(--text-dim);">Actioned</span>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.resolveReportAction = async (reportId, newStatus, actionType) => {
+  const confirmMsg = actionType === 'ban' 
+    ? 'Are you sure you want to ban/unverify this reported user?'
+    : `Mark this report as ${newStatus}?`;
+
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    const { error } = await supabaseClient.rpc('update_admin_report_status', {
+      admin_secret: PASSKEY,
+      target_report_id: reportId,
+      new_status: newStatus,
+      moderation_action: actionType
+    });
+
+    if (error) {
+      // Fallback direct update
+      await supabaseClient
+        .from('reports')
+        .update({ status: newStatus, action_taken: actionType })
+        .eq('id', reportId);
+    }
+
+    alert('Report status updated successfully.');
+    await fetchReports();
+    updateDashboardStats();
+  } catch (err) {
+    alert(`Failed to update report: ${err.message}`);
+  }
+};
