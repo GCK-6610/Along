@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
-import { ArrowLeft, CheckCircle2, Shield, Camera, Upload, Sparkles, RefreshCw, FileText, Check, UserCheck } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle2, Shield, Camera, Upload, Sparkles, RefreshCw, FileText, Check, UserCheck, Lock } from 'lucide-react-native';
 import { theme } from '../styles/theme';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -20,7 +20,6 @@ export default function VerificationScreen() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStepText, setVerificationStepText] = useState('Verifying credentials...');
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
-  const [showReverify, setShowReverify] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -85,7 +84,6 @@ export default function VerificationScreen() {
 
         setVerificationResult(result);
         setProfile((prev: any) => ({ ...prev, is_verified: true }));
-        setShowReverify(false);
         setIsVerifying(false);
         // Immediate in-memory dereference (zero storage)
         setIdDocAsset(null);
@@ -129,7 +127,7 @@ export default function VerificationScreen() {
     );
   }
 
-  const isAlreadyVerified = profile?.is_verified && !showReverify;
+  const isAlreadyVerified = Boolean(profile?.is_verified);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -176,10 +174,12 @@ export default function VerificationScreen() {
               </View>
             </View>
 
-            <Pressable style={styles.reverifyBtn} onPress={() => setShowReverify(true)}>
-              <RefreshCw size={15} color={theme.colors.mutedForeground} />
-              <Text style={styles.reverifyBtnText}>Re-verify with a new document</Text>
-            </Pressable>
+            <View style={styles.permanentLockBox}>
+              <Lock size={15} color="#10B981" />
+              <Text style={styles.permanentLockText}>
+                Your identity verification is confirmed and permanent. Your legal name and 18+ adult age are locked.
+              </Text>
+            </View>
           </View>
         ) : (
           <>
@@ -322,12 +322,6 @@ export default function VerificationScreen() {
               >
                 <Sparkles size={18} color="#fff" />
                 <Text style={styles.submitBtnText}>Verify & Get Blue Tick ⚡</Text>
-              </Pressable>
-            )}
-
-            {showReverify && (
-              <Pressable style={styles.cancelReverifyBtn} onPress={() => setShowReverify(false)}>
-                <Text style={styles.cancelReverifyText}>Cancel and keep current verification</Text>
               </Pressable>
             )}
           </>
@@ -495,10 +489,24 @@ const styles = StyleSheet.create({
   verifiedDetailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   verifiedDetailLabel: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground, width: 110 },
   verifiedDetailVal: { fontFamily: theme.typography.fontFamily.bold, fontSize: theme.typography.sizes.xs, color: theme.colors.foreground, flex: 1 },
-  reverifyBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, marginTop: 4 },
-  reverifyBtnText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
-  cancelReverifyBtn: { alignItems: 'center', paddingVertical: 10 },
-  cancelReverifyText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.xs, color: theme.colors.mutedForeground },
+  permanentLockBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderRadius: theme.borderRadius.md,
+    padding: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  permanentLockText: {
+    flex: 1,
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 12,
+    color: '#10B981',
+    lineHeight: 16,
+  },
 
   optionalNoticeCard: {
     backgroundColor: 'rgba(255, 71, 87, 0.08)',

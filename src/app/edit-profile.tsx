@@ -107,27 +107,9 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!user) return;
-    const trimmedName = fullName.trim();
+    const trimmedName = initialIsVerified ? initialFullName : fullName.trim();
     if (trimmedName.length < 2) {
       Alert.alert('Invalid Name', 'Full name must be at least 2 characters.');
-      return;
-    }
-
-    const isNameChanged = trimmedName.toLowerCase() !== initialFullName.trim().toLowerCase();
-
-    if (initialIsVerified && isNameChanged) {
-      Alert.alert(
-        'Revoke Verification Badge?',
-        'Changing your verified name will remove your Blue Tick verification badge. You will need to submit your government ID to re-verify under your new name. Do you want to proceed?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Change Name & Revoke',
-            style: 'destructive',
-            onPress: () => performSave(true, trimmedName)
-          }
-        ]
-      );
       return;
     }
 
@@ -279,14 +261,28 @@ export default function EditProfileScreen() {
           </Modal>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Full Name</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.label}>Full Name</Text>
+              {initialIsVerified && (
+                <View style={styles.lockedBadge}>
+                  <Lock size={12} color={theme.colors.mutedForeground} />
+                  <Text style={styles.lockedBadgeText}>Verified Legal Name</Text>
+                </View>
+              )}
+            </View>
             <TextInput
-              style={styles.input}
-              value={fullName}
-              onChangeText={setFullName}
+              style={[styles.input, initialIsVerified && styles.lockedInput]}
+              value={initialIsVerified ? initialFullName : fullName}
+              onChangeText={initialIsVerified ? undefined : setFullName}
+              editable={!initialIsVerified}
               placeholder="Your name"
               placeholderTextColor={theme.colors.mutedForeground}
             />
+            {initialIsVerified && (
+              <Text style={styles.lockedHelperText}>
+                Your legal name is permanently locked because your identity is verified with your official ID.
+              </Text>
+            )}
           </View>
 
           <View style={styles.field}>
@@ -507,6 +503,11 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: theme.colors.border,
     paddingHorizontal: 16, paddingVertical: 12,
     fontFamily: theme.typography.fontFamily.regular, fontSize: theme.typography.sizes.base, color: theme.colors.foreground,
+  },
+  lockedInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    opacity: 0.85,
   },
   saveBtn: {
     backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md,

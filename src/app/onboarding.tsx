@@ -3,22 +3,25 @@ import { useState } from 'react';
 import {
   View, Text, TextInput, StyleSheet, Pressable,
   KeyboardAvoidingView, Platform, 
-  ActivityIndicator, Alert, ScrollView, FlatList
-
+  ActivityIndicator, Alert, ScrollView, FlatList, Image, Modal
 } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../styles/theme';
-import { Image, Modal } from 'react-native';
-import { Edit2, X, MapPin, Shield, CheckCircle2, Camera, Upload, Sparkles, RefreshCw, Calendar } from 'lucide-react-native';
+import { Edit2, X, MapPin, Calendar } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { pickIdDocument, captureSelfie, verifyIdAndLiveness, VerificationResult, IdAsset } from '../lib/idVerification';
 import Fuse from 'fuse.js';
-import { AVATAR_CATALOG, AvatarOption } from '../lib/avatarCatalog';
+import { AVATAR_CATALOG } from '../lib/avatarCatalog';
 import { calculateAge, is18Plus, formatDobToIso, getTimeUntil18 } from '../utils/age';
 import { getUserFriendlyErrorMessage } from '../utils/errorHandling';
 import { searchPlaces, fetchPlaceDetails } from '../lib/places';
+
+const getMaxAdultDate = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d;
+};
 
 const ALL_AVATARS = AVATAR_CATALOG.flatMap(c => c.items);
 const fuse = new Fuse(ALL_AVATARS, {
@@ -34,21 +37,13 @@ const GENDERS = [
 ];
 
 export default function OnboardingScreen() {
-  const { user, session, loading: authLoading, hasProfile, setHasProfile } = useAuth();
+  const { user, setHasProfile } = useAuth();
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<string | null>(null);
   const [dob, setDob] = useState<Date | null>(null);
   const [dobInputText, setDobInputText] = useState('');
   const [showDobPicker, setShowDobPicker] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // ID Verification state
-  const [isVerified, setIsVerified] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
-  const [isVerificationModalVisible, setVerificationModalVisible] = useState(false);
-  const [idDocAsset, setIdDocAsset] = useState<IdAsset | null>(null);
-  const [selfieAsset, setSelfieAsset] = useState<IdAsset | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
 
   const [avatar, setAvatar] = useState(ALL_AVATARS[0]?.url || '');
   const [isModalVisible, setModalVisible] = useState(false);
@@ -63,8 +58,6 @@ export default function OnboardingScreen() {
   const [locationQuery, setLocationQuery] = useState('');
   const [locationResults, setLocationResults] = useState<any[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
-
-
 
   const searchLocation = async () => {
     if (!locationQuery.trim()) return;
@@ -99,66 +92,6 @@ export default function OnboardingScreen() {
       ? ALL_AVATARS 
       : AVATAR_CATALOG.find(c => c.category === activeTab)?.items || [];
 
-  const handleSelectIdDoc = async () => {
-    try {
-      const asset = await pickIdDocument(false);
-      if (asset) setIdDocAsset(asset);
-    } catch (e: any) {
-      Alert.alert('Permission Needed', getUserFriendlyErrorMessage(e, 'Photo library access is needed to select your ID.'));
-    }
-  };
-
-  const handleCaptureSelfie = async () => {
-    try {
-      const asset = await captureSelfie(true);
-      if (asset) setSelfieAsset(asset);
-    } catch (e: any) {
-      Alert.alert('Permission Needed', getUserFriendlyErrorMessage(e, 'Camera access is needed to take a selfie.'));
-    }
-  };
-
-  const handleRunVerification = async () => {
-    if (!idDocAsset || !selfieAsset) {
-      Alert.alert('Incomplete Verification', 'Please upload your ID document and take a quick selfie to verify.');
-      return;
-    }
-
-    setIsVerifying(true);
-    const result = await verifyIdAndLiveness(idDocAsset, selfieAsset, fullName);
-    setIsVerifying(false);
-
-    if (result.success && result.isRealHuman) {
-      setIsVerified(true);
-      setVerificationResult(result);
-      if (result.extractedName) {
-        setFullName(result.extractedName);
-      }
-      if (result.extractedGender) {
-        setGender(result.extractedGender);
-      }
-      if (result.extractedDob) {
-        const parsed = new Date(result.extractedDob);
-        if (!isNaN(parsed.getTime())) {
-          setDob(parsed);
-          setDobInputText(result.extractedDob);
-        }
-      }
-      setVerificationModalVisible(false);
-      Alert.alert(
-        '🎉 Identity Verified!',
-        `Welcome, ${result.extractedName}! Your profile details have been auto-filled from your ${result.documentType} and verified with a live selfie check.`
-      );
-    } else {
-      Alert.alert(
-        'Verification Unavailable',
-        getUserFriendlyErrorMessage(
-          result.errorMessage,
-          'We could not verify your document automatically right now. Please enter your name directly on the form or try again later.'
-        )
-      );
-    }
-  };
-
   const handleSubmit = async () => {
     if (!fullName.trim()) {
       Alert.alert('Missing Name', 'Please enter your name.');
@@ -186,9 +119,11 @@ export default function OnboardingScreen() {
       return;
     }
 
-    const timeInfo = getTimeUntil18(selectedDob);
-    if (!timeInfo.isAdult) {
-      Alert.alert(timeInfo.coolAlertTitle, timeInfo.coolMessage);
+    if (!is18Plus(selectedDob)) {
+      Alert.alert(
+        '18+ Requirement',
+        'Along is exclusively for individuals 18 years of age and older. You must be at least 18 to create an account.'
+      );
       return;
     }
 
@@ -211,7 +146,7 @@ export default function OnboardingScreen() {
       base_location_name: baseLocationName,
       base_latitude: baseLatitude,
       base_longitude: baseLongitude,
-      is_verified: isVerified,
+      is_verified: false,
     });
     setLoading(false);
 
@@ -232,10 +167,14 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.inner} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.inner}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.wave}>👋</Text>
@@ -314,65 +253,9 @@ export default function OnboardingScreen() {
             </View>
           </Modal>
 
-          {/* Fast-Track ID Verification Banner (Optional) */}
-          <View style={[styles.idVerificationCard, isVerified && styles.idVerificationCardVerified]}>
-            <View style={styles.idCardHeader}>
-              <View style={[styles.idShieldIcon, isVerified && { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-                {isVerified ? (
-                  <CheckCircle2 size={22} color="#10B981" />
-                ) : (
-                  <Shield size={22} color="#1D9BF0" />
-                )}
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={styles.idCardTitle}>
-                    {isVerified ? 'ID Verified Member' : 'Fast-Track with ID Scan'}
-                  </Text>
-                  {isVerified && <CheckCircle2 size={16} color="#1D9BF0" />}
-                </View>
-                <Text style={styles.idCardSubtitle}>
-                  {isVerified
-                    ? `Auto-filled & verified via ${verificationResult?.documentType || 'Official ID'}`
-                    : 'Scan ID to auto-fill details & get a verified blue tick 🛡️'}
-                </Text>
-              </View>
-              <View style={[styles.optionalPill, isVerified && styles.verifiedPill]}>
-                <Text style={[styles.optionalPillText, isVerified && styles.verifiedPillText]}>
-                  {isVerified ? 'VERIFIED ✓' : 'OPTIONAL'}
-                </Text>
-              </View>
-            </View>
-
-            {isVerified ? (
-              <Pressable
-                style={styles.reVerifyBtn}
-                onPress={() => setVerificationModalVisible(true)}
-              >
-                <RefreshCw size={12} color={theme.colors.mutedForeground} />
-                <Text style={styles.reVerifyBtnText}>Change or Re-scan ID</Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                style={styles.scanIdBtn}
-                onPress={() => setVerificationModalVisible(true)}
-              >
-                <Sparkles size={16} color="#fff" />
-                <Text style={styles.scanIdBtnText}>Scan ID & Auto-Fill Details ⚡</Text>
-              </Pressable>
-            )}
-          </View>
-
           {/* Name Input */}
           <View style={styles.field}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={styles.label}>Your Name</Text>
-              {isVerified && (
-                <Text style={{ fontSize: 11, color: '#10B981', fontFamily: theme.typography.fontFamily.bold }}>
-                  ✓ Auto-filled from ID
-                </Text>
-              )}
-            </View>
+            <Text style={styles.label}>Your Name</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g. Rahul Sharma"
@@ -412,7 +295,7 @@ export default function OnboardingScreen() {
               {dob && (
                 <View style={[styles.dobBadge, !is18Plus(dob) && { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
                   <Text style={[styles.dobBadgeText, !is18Plus(dob) && { color: '#EF4444' }]}>
-                    {is18Plus(dob) ? `${calculateAge(dob)} yrs` : `⏳ 18 in ${getTimeUntil18(dob).totalDays} days`}
+                    {is18Plus(dob) ? `${calculateAge(dob)} yrs` : `Under 18`}
                   </Text>
                 </View>
               )}
@@ -426,7 +309,7 @@ export default function OnboardingScreen() {
               </Text>
             </Pressable>
             <Text style={styles.genderHint}>
-              🔒 Used for 18+ verification and community safety.
+              🔒 Along is strictly 18+. Used for adult age verification and safety.
             </Text>
           </View>
 
@@ -450,27 +333,27 @@ export default function OnboardingScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Let's Go 🚀</Text>
+              <Text style={styles.buttonText}>Start Exploring Along →</Text>
             )}
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Location Modal */}
-      <Modal visible={isLocationModalVisible} animationType="slide" transparent={false}>
-        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-          <View style={[styles.modalHeader, { paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingHorizontal: 20 }]}>
-            <Text style={styles.modalTitle}>Search Location</Text>
-            <Pressable onPress={() => setLocationModalVisible(false)} style={styles.closeBtn}>
-              <X size={20} color={theme.colors.foreground} />
-            </Pressable>
-          </View>
-          <View style={{ paddingHorizontal: 20 }}>
-            <View style={[styles.inputRow, { marginBottom: 16 }]}>
-              <MapPin size={18} color={theme.colors.mutedForeground} />
+      {/* Location Picker Modal */}
+      <Modal visible={isLocationModalVisible} animationType="slide" transparent={true} onRequestClose={() => setLocationModalVisible(false)}>
+        <View style={styles.locationModalOverlay}>
+          <View style={styles.locationModalContent}>
+            <View style={styles.locationModalHeader}>
+              <Text style={styles.locationModalTitle}>Select Your Location</Text>
+              <Pressable onPress={() => setLocationModalVisible(false)} style={styles.closeBtn}>
+                <X size={20} color={theme.colors.foreground} />
+              </Pressable>
+            </View>
+            <View style={styles.locationSearchWrap}>
+              <MapPin size={18} color={theme.colors.primary} />
               <TextInput
-                style={styles.inputFlex}
-                placeholder="Search neighborhood or city..."
+                style={styles.locationInput}
+                placeholder="Search area, neighborhood, city..."
                 placeholderTextColor={theme.colors.mutedForeground}
                 value={locationQuery}
                 onChangeText={(text) => {
@@ -509,13 +392,17 @@ export default function OnboardingScreen() {
                 </Pressable>
               </View>
               <DateTimePicker
-                value={dob || new Date(2000, 0, 1)}
+                value={dob || getMaxAdultDate()}
                 mode="date"
                 display="spinner"
-                maximumDate={new Date()}
+                maximumDate={getMaxAdultDate()}
                 minimumDate={new Date(1920, 0, 1)}
                 onChange={(event, date) => {
                   if (date) {
+                    if (!is18Plus(date)) {
+                      Alert.alert('18+ Requirement', 'Along is exclusively for adults 18 and older. Please choose a valid birth date.');
+                      return;
+                    }
                     setDob(date);
                     setDobInputText(date.toISOString().split('T')[0]);
                   }
@@ -531,14 +418,18 @@ export default function OnboardingScreen() {
       {/* Date Picker for Android */}
       {Platform.OS === 'android' && showDobPicker && (
         <DateTimePicker
-          value={dob || new Date(2000, 0, 1)}
+          value={dob || getMaxAdultDate()}
           mode="date"
           display="default"
-          maximumDate={new Date()}
+          maximumDate={getMaxAdultDate()}
           minimumDate={new Date(1920, 0, 1)}
           onChange={(event, date) => {
             setShowDobPicker(false);
             if (date) {
+              if (!is18Plus(date)) {
+                Alert.alert('18+ Requirement', 'Along is exclusively for adults 18 and older. Please choose a valid birth date.');
+                return;
+              }
               setDob(date);
               setDobInputText(date.toISOString().split('T')[0]);
             }
@@ -566,7 +457,9 @@ export default function OnboardingScreen() {
                   setDobInputText(text);
                   const parsed = new Date(text);
                   if (!isNaN(parsed.getTime())) {
-                    setDob(parsed);
+                    if (is18Plus(parsed)) {
+                      setDob(parsed);
+                    }
                   }
                 }}
               />
@@ -574,120 +467,6 @@ export default function OnboardingScreen() {
           </View>
         </Modal>
       )}
-
-      {/* ID Verification & Auto-Fill Modal */}
-      <Modal
-        visible={isVerificationModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setVerificationModalVisible(false)}
-      >
-        <View style={styles.verifyModalOverlay}>
-          <View style={styles.verifyModalContent}>
-            <View style={styles.modalHeaderDrag} />
-            <Pressable
-              style={styles.verifyModalCloseBtn}
-              onPress={() => setVerificationModalVisible(false)}
-            >
-              <X size={20} color={theme.colors.foreground} />
-            </Pressable>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <Shield size={28} color="#1D9BF0" />
-              <View>
-                <Text style={styles.verifyModalTitle}>ID Verification</Text>
-                <Text style={styles.verifyModalSubtitle}>Auto-fills profile & awards verified checkmark</Text>
-              </View>
-            </View>
-
-            {/* Step 1: Upload ID */}
-            <View style={styles.verifyStepBox}>
-              <View style={styles.verifyStepHeader}>
-                <Text style={styles.verifyStepNum}>1</Text>
-                <Text style={styles.verifyStepTitle}>Digital ID / ID Proof</Text>
-              </View>
-              <Text style={styles.verifyStepDesc}>
-                Aadhaar, Driving License, PAN Card, Student ID, or Passport
-              </Text>
-
-              {idDocAsset ? (
-                <View style={styles.docPreviewRow}>
-                  <Image source={{ uri: idDocAsset.uri }} style={styles.docThumbnail} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.docSelectedText} numberOfLines={1}>
-                      ✓ Document selected
-                    </Text>
-                    <Pressable onPress={handleSelectIdDoc}>
-                      <Text style={styles.docReSelectText}>Change document</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              ) : (
-                <Pressable style={styles.uploadDocBtn} onPress={handleSelectIdDoc}>
-                  <Upload size={16} color={theme.colors.primary} />
-                  <Text style={styles.uploadDocBtnText}>Select or Upload ID Document</Text>
-                </Pressable>
-              )}
-            </View>
-
-            {/* Step 2: Live Selfie Check */}
-            <View style={styles.verifyStepBox}>
-              <View style={styles.verifyStepHeader}>
-                <Text style={styles.verifyStepNum}>2</Text>
-                <Text style={styles.verifyStepTitle}>Real-Human Selfie Check</Text>
-              </View>
-              <Text style={styles.verifyStepDesc}>
-                Front-camera selfie to verify a real human & match with ID
-              </Text>
-
-              {selfieAsset ? (
-                <View style={styles.docPreviewRow}>
-                  <Image source={{ uri: selfieAsset.uri }} style={styles.selfieThumbnail} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.docSelectedText}>✓ Live selfie captured</Text>
-                    <Pressable onPress={handleCaptureSelfie}>
-                      <Text style={styles.docReSelectText}>Retake selfie</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              ) : (
-                <Pressable style={styles.uploadDocBtn} onPress={handleCaptureSelfie}>
-                  <Camera size={16} color={theme.colors.primary} />
-                  <Text style={styles.uploadDocBtnText}>Take Live Selfie</Text>
-                </Pressable>
-              )}
-            </View>
-
-            {/* Verification Action */}
-            <Pressable
-              style={[
-                styles.runVerifyBtn,
-                (!idDocAsset || !selfieAsset || isVerifying) && styles.runVerifyBtnDisabled
-              ]}
-              onPress={handleRunVerification}
-              disabled={!idDocAsset || !selfieAsset || isVerifying}
-            >
-              {isVerifying ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <ActivityIndicator color="#fff" />
-                  <Text style={styles.runVerifyBtnText}>Scanning ID & Matching Face...</Text>
-                </View>
-              ) : (
-                <Text style={styles.runVerifyBtnText}>Verify & Auto-Fill Profile ⚡</Text>
-              )}
-            </Pressable>
-
-            <Pressable
-              style={{ alignItems: 'center', marginTop: 14 }}
-              onPress={() => setVerificationModalVisible(false)}
-            >
-              <Text style={{ fontSize: 13, color: theme.colors.mutedForeground }}>
-                Skip for now (I will fill manually)
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
 
     </SafeAreaView>
   );
@@ -751,77 +530,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: theme.colors.background,
   },
   avatarLabel: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: theme.typography.sizes.sm,
-    color: theme.colors.mutedForeground,
-  },
-  searchInput: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.sizes.base,
-    color: theme.colors.foreground,
-  },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: {
-    backgroundColor: theme.colors.card,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    height: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  modalTitle: {
     fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.sizes.lg,
-    color: theme.colors.foreground,
+    fontSize: 13,
+    color: theme.colors.primary,
   },
-  closeBtn: {
-    padding: 8,
-    backgroundColor: theme.colors.background,
-    borderRadius: 20,
-  },
-  avatarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 16,
-    gap: 16,
-    justifyContent: 'center',
-  },
-  avatarOption: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.background,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  avatarSelected: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primary + '10',
-  },
-  tabBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: theme.colors.card, borderWidth: 1, borderColor: theme.colors.border },
-  tabBtnActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
-  tabBtnText: { fontFamily: theme.typography.fontFamily.medium, fontSize: theme.typography.sizes.sm, color: theme.colors.mutedForeground },
-  tabBtnTextActive: { color: '#fff', fontFamily: theme.typography.fontFamily.bold },
   field: {
-    gap: 6,
-    width: '100%',
-    maxWidth: '100%',
+    gap: 8,
   },
   label: {
     fontFamily: theme.typography.fontFamily.bold,
@@ -829,56 +547,63 @@ const styles = StyleSheet.create({
     color: theme.colors.foreground,
   },
   input: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    flexShrink: 1,
     backgroundColor: theme.colors.card,
     borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 12,
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: theme.typography.sizes.base,
-    color: theme.colors.foreground,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.base,
+    color: theme.colors.foreground,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  inputFlex: {
+    flex: 1,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.base,
+    color: theme.colors.foreground,
   },
   genderRow: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
-    width: '100%',
-    maxWidth: '100%',
+    gap: 8,
   },
   genderPill: {
     flex: 1,
-    minWidth: 0,
-    flexShrink: 1,
     backgroundColor: theme.colors.card,
     borderRadius: theme.borderRadius.md,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.border,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
   genderPillActive: {
-    backgroundColor: theme.colors.secondary,
+    backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
   },
   genderText: {
-    fontFamily: theme.typography.fontFamily.medium,
+    fontFamily: theme.typography.fontFamily.bold,
     fontSize: theme.typography.sizes.sm,
     color: theme.colors.mutedForeground,
   },
   genderTextActive: {
-    color: theme.colors.primary,
-    fontFamily: theme.typography.fontFamily.bold,
+    color: '#fff',
   },
   genderHint: {
     fontFamily: theme.typography.fontFamily.regular,
-    fontSize: 12,
+    fontSize: 11,
     color: theme.colors.mutedForeground,
-    marginTop: 6,
-    lineHeight: 16,
+    lineHeight: 15,
   },
   button: {
     backgroundColor: theme.colors.primary,
@@ -891,25 +616,119 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.muted,
   },
   buttonText: {
-    color: '#fff',
     fontFamily: theme.typography.fontFamily.bold,
     fontSize: theme.typography.sizes.base,
+    color: '#fff',
   },
-  inputRow: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+  },
+  modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  modalTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 18,
+    color: theme.colors.foreground,
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  searchInput: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.sizes.sm,
+    color: theme.colors.foreground,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginTop: 10,
+  },
+  tabBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: theme.borderRadius.pill,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  tabBtnActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  tabBtnText: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 12,
+    color: theme.colors.mutedForeground,
+  },
+  tabBtnTextActive: {
+    color: '#fff',
+  },
+  avatarOption: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: theme.colors.card,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  avatarSelected: {
+    borderColor: theme.colors.primary,
+  },
+  locationModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  locationModalContent: {
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '75%',
+  },
+  locationModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  locationModalTitle: {
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: 18,
+    color: theme.colors.foreground,
+  },
+  locationSearchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: theme.colors.card,
+    paddingHorizontal: 12,
+    marginBottom: 16,
   },
-  inputFlex: {
+  locationInput: {
     flex: 1,
+    paddingVertical: 12,
     fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.sizes.base,
+    fontSize: theme.typography.sizes.sm,
     color: theme.colors.foreground,
   },
   locationResult: {
@@ -917,243 +736,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
-  locationMainText: { fontFamily: theme.typography.fontFamily.medium, fontSize: 15, color: theme.colors.foreground },
-  locationSubText: { fontFamily: theme.typography.fontFamily.regular, fontSize: 13, color: theme.colors.mutedForeground },
-
-  // ID Verification Styles
-  idVerificationCard: {
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-    borderRadius: theme.borderRadius.lg,
-    padding: 14,
-    marginBottom: 20,
-    gap: 12,
-  },
-  idVerificationCardVerified: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-  },
-  idCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  idShieldIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(29, 155, 240, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  idCardTitle: {
+  locationMainText: {
     fontFamily: theme.typography.fontFamily.bold,
     fontSize: 14,
     color: theme.colors.foreground,
   },
-  idCardSubtitle: {
+  locationSubText: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 12,
     color: theme.colors.mutedForeground,
-    marginTop: 1,
-  },
-  optionalPill: {
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: theme.borderRadius.pill,
-  },
-  optionalPillText: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: 9,
-    color: theme.colors.mutedForeground,
-    letterSpacing: 0.5,
-  },
-  verifiedPill: {
-    backgroundColor: '#DCFCE7',
-  },
-  verifiedPillText: {
-    color: '#15803D',
-  },
-  scanIdBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#1D9BF0',
-    paddingVertical: 10,
-    borderRadius: theme.borderRadius.md,
-  },
-  scanIdBtnText: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: 13,
-    color: '#FFF',
-  },
-  reVerifyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    paddingVertical: 2,
-  },
-  reVerifyBtnText: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: 12,
-    color: theme.colors.mutedForeground,
-    textDecorationLine: 'underline',
-  },
-
-  // Verification Modal Styles
-  verifyModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  verifyModalContent: {
-    backgroundColor: theme.colors.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: theme.spacing.lg,
-    paddingBottom: 36,
-  },
-  modalHeaderDrag: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.colors.border,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  verifyModalCloseBtn: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    padding: 6,
-    backgroundColor: theme.colors.card,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    zIndex: 10,
-  },
-  verifyModalTitle: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: 18,
-    color: theme.colors.foreground,
-  },
-  verifyModalSubtitle: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: 12,
-    color: theme.colors.mutedForeground,
-  },
-  verifyStepBox: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: 14,
-    marginBottom: 12,
-  },
-  verifyStepHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  verifyStepNum: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: theme.colors.primary,
-    color: '#fff',
-    fontSize: 11,
-    fontFamily: theme.typography.fontFamily.bold,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  verifyStepTitle: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: 13,
-    color: theme.colors.foreground,
-  },
-  verifyStepDesc: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: 11,
-    color: theme.colors.mutedForeground,
-    marginBottom: 10,
-  },
-  uploadDocBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: theme.colors.background,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderStyle: 'dashed',
-    paddingVertical: 12,
-    borderRadius: theme.borderRadius.sm,
-  },
-  uploadDocBtnText: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: 12,
-    color: theme.colors.foreground,
-  },
-  docPreviewRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: theme.colors.background,
-    padding: 8,
-    borderRadius: theme.borderRadius.sm,
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-  },
-  docThumbnail: {
-    width: 56,
-    height: 38,
-    borderRadius: 4,
-    backgroundColor: '#E2E8F0',
-  },
-  selfieThumbnail: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#E2E8F0',
-  },
-  docSelectedText: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: 12,
-    color: '#059669',
-  },
-  docReSelectText: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: 11,
-    color: theme.colors.primary,
     marginTop: 2,
-  },
-  runVerifyBtn: {
-    backgroundColor: '#1D9BF0',
-    paddingVertical: 14,
-    borderRadius: theme.borderRadius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-    shadowColor: '#1D9BF0',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  runVerifyBtnDisabled: {
-    backgroundColor: theme.colors.muted,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  runVerifyBtnText: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: 14,
-    color: '#FFF',
   },
   dobBadge: {
     backgroundColor: theme.colors.secondary,

@@ -6,29 +6,49 @@ import { Platform } from 'react-native';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
+const isWeb = Platform?.OS === 'web';
+
 // Platform-aware storage adapter:
 // - Native (iOS/Android): expo-secure-store (hardware-encrypted)
 // - Web (browser preview): localStorage (no native APIs available)
 const ExpoSecureStoreAdapter = {
-  getItem: (key: string): Promise<string | null> => {
-    if (Platform.OS === 'web') {
-      return Promise.resolve(localStorage.getItem(key));
+  getItem: async (key: string): Promise<string | null> => {
+    try {
+      if (isWeb) {
+        return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+      }
+      return await SecureStore.getItemAsync(key, {
+        keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
+      });
+    } catch {
+      return null;
     }
-    return SecureStore.getItemAsync(key);
   },
-  setItem: (key: string, value: string): Promise<void> => {
-    if (Platform.OS === 'web') {
-      localStorage.setItem(key, value);
-      return Promise.resolve();
+  setItem: async (key: string, value: string): Promise<void> => {
+    try {
+      if (isWeb) {
+        if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+        return;
+      }
+      await SecureStore.setItemAsync(key, value, {
+        keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
+      });
+    } catch {
+      // Gracefully handle write failure during locked state
     }
-    return SecureStore.setItemAsync(key, value);
   },
-  removeItem: (key: string): Promise<void> => {
-    if (Platform.OS === 'web') {
-      localStorage.removeItem(key);
-      return Promise.resolve();
+  removeItem: async (key: string): Promise<void> => {
+    try {
+      if (isWeb) {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+        return;
+      }
+      await SecureStore.deleteItemAsync(key, {
+        keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
+      });
+    } catch {
+      // Gracefully handle delete failure during locked state
     }
-    return SecureStore.deleteItemAsync(key);
   },
 };
 

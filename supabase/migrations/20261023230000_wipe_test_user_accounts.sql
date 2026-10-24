@@ -4,18 +4,18 @@
 BEGIN;
 
 -- 1. Wipe hangout activity, messages, and social connections
-DELETE FROM public.chat_messages;
-DELETE FROM public.plan_participants;
-DELETE FROM public.ratings;
-DELETE FROM public.venue_ratings;
-DELETE FROM public.reports;
-DELETE FROM public.blocks;
-DELETE FROM public.notifications;
-DELETE FROM public.plans;
+DELETE FROM public.chat_messages WHERE true;
+DELETE FROM public.plan_participants WHERE true;
+DELETE FROM public.ratings WHERE true;
+DELETE FROM public.venue_ratings WHERE true;
+DELETE FROM public.reports WHERE true;
+DELETE FROM public.blocks WHERE true;
+DELETE FROM public.notifications WHERE true;
+DELETE FROM public.plans WHERE true;
 
 -- 2. Wipe test user profiles and auth accounts
-DELETE FROM public.profiles;
-DELETE FROM auth.users;
+DELETE FROM public.profiles WHERE true;
+DELETE FROM auth.users WHERE true;
 
 -- 3. Install admin-callable reset RPC for future one-click resets
 CREATE OR REPLACE FUNCTION public.wipe_all_test_user_data(admin_secret TEXT)
@@ -26,16 +26,16 @@ SET search_path = public, auth
 AS $$
 BEGIN
     IF admin_secret = 'along2026' THEN
-        DELETE FROM public.chat_messages;
-        DELETE FROM public.plan_participants;
-        DELETE FROM public.ratings;
-        DELETE FROM public.venue_ratings;
-        DELETE FROM public.reports;
-        DELETE FROM public.blocks;
-        DELETE FROM public.notifications;
-        DELETE FROM public.plans;
-        DELETE FROM public.profiles;
-        DELETE FROM auth.users;
+        DELETE FROM public.chat_messages WHERE true;
+        DELETE FROM public.plan_participants WHERE true;
+        DELETE FROM public.ratings WHERE true;
+        DELETE FROM public.venue_ratings WHERE true;
+        DELETE FROM public.reports WHERE true;
+        DELETE FROM public.blocks WHERE true;
+        DELETE FROM public.notifications WHERE true;
+        DELETE FROM public.plans WHERE true;
+        DELETE FROM public.profiles WHERE true;
+        DELETE FROM auth.users WHERE true;
 
         RETURN jsonb_build_object('success', true, 'message', 'All user accounts and test activity cleared. Venues intact.');
     ELSE

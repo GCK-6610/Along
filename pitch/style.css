@@ -1086,6 +1086,151 @@ body {
   font-size: 14px;
 }
 
+/* Strategic Execution Roadmap Grid */
+.roadmap-phases-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.roadmap-phase-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-card);
+  border-top: 4px solid var(--primary);
+  transition: var(--transition-fast);
+}
+
+.roadmap-phase-card:nth-child(2) {
+  border-top-color: var(--trust-green);
+}
+
+.roadmap-phase-card:nth-child(3) {
+  border-top-color: #1D9BF0;
+}
+
+.roadmap-phase-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+}
+
+.rpc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.rpc-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rpc-badge.p1 {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.rpc-badge.p2 {
+  background: var(--trust-green-light);
+  color: var(--trust-green);
+}
+
+.rpc-badge.p3 {
+  background: #E0F2FE;
+  color: #0284C7;
+}
+
+.rpc-phase-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.rpc-title {
+  font-family: var(--font-heading);
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.rpc-plans-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.rpc-plans-list li {
+  font-size: 11.5px;
+  color: var(--text-body);
+  line-height: 1.4;
+  position: relative;
+  padding-left: 13px;
+}
+
+.rpc-plans-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1;
+  top: 1px;
+}
+
+.roadmap-phase-card:nth-child(2) .rpc-plans-list li::before {
+  color: var(--trust-green);
+}
+
+.roadmap-phase-card:nth-child(3) .rpc-plans-list li::before {
+  color: #0284C7;
+}
+
+.rpc-plans-list li strong {
+  color: var(--text-dark);
+}
+
+.rpc-milestone-footer {
+  border-top: 1px solid var(--border-light);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rpc-milestone-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.rpc-milestone-target {
+  font-family: var(--font-heading);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
 /* ==========================================================================
    Slide 10: The Ask & Call to Action
    ========================================================================== */

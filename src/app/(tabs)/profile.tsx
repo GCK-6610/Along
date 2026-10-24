@@ -202,14 +202,16 @@ export default function ProfileScreen() {
             <Text style={styles.menuArrow}>›</Text>
           </Pressable>
 
-          <Pressable style={styles.menuRow} onPress={() => router.push('/verification')}>
-            <View style={styles.menuIcon}><Shield size={20} color={theme.colors.primary} /></View>
-            <View style={styles.menuText}>
-              <Text style={styles.menuLabel}>Verification</Text>
-              <Text style={styles.menuSub}>{profile?.is_verified ? 'Verified ✓' : 'Get your blue tick'}</Text>
-            </View>
-            <Text style={styles.menuArrow}>›</Text>
-          </Pressable>
+          {!profile?.is_verified && (
+            <Pressable style={styles.menuRow} onPress={() => router.push('/verification')}>
+              <View style={styles.menuIcon}><Shield size={20} color={theme.colors.primary} /></View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>Verification</Text>
+                <Text style={styles.menuSub}>Get your blue tick</Text>
+              </View>
+              <Text style={styles.menuArrow}>›</Text>
+            </Pressable>
+          )}
         </View>
 
         {/* Sign Out */}
