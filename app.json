@@ -68,7 +68,8 @@
         {
           "iosGoogleMapsApiKey": "AIzaSyAJm7VOQbEPU8pzQWV2H-lcOo0sW9jBqzo"
         }
-      ]
+      ],
+      "expo-image"
     ]
   }
 }

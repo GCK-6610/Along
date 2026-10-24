@@ -17,7 +17,7 @@ export default function VerifyScreen() {
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(60);
-  const inputs = useRef<(TextInput | null)[]>([]);
+  const inputs = useRef<any[]>([]);
 
   // Countdown timer for resend
   useEffect(() => {

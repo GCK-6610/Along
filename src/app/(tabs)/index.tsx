@@ -1,6 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { View, Text, StyleSheet, FlatList, StatusBar, ScrollView, Pressable, RefreshControl, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ScrollView, Pressable, RefreshControl, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { Image } from 'expo-image';
 import { useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
@@ -227,7 +228,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <StatusBar style="dark" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -358,7 +359,7 @@ export default function HomeScreen() {
                 </>
               )}
             </View>
-          ) : null
+          ) : undefined
         }
       />
 

@@ -320,7 +320,7 @@ export default function MessagesScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isLoading}
-              onRefresh={refetchPlans}
+              onRefresh={() => { refetchPlans(); }}
               tintColor={theme.colors.primary}
             />
           }
